@@ -21,16 +21,19 @@ module Southy
     end
 
     def test(params)
-      puts "Testing..."
+      puts "Looking up itineraries..."
       visit('/flight/retrieveCheckinDoc.html?forceNewSession=yes')
-      puts "Made it to southwest.com..."
 
       within '#itineraryLookup' do
         fill_in 'confirmationNumber', :with => 'W8F25E'.ljust(12)
         fill_in 'First Name', :with => 'Michael'.ljust(30)
         fill_in 'Last Name', :with => 'Wynholds'.ljust(30)
-        puts "Looking up the itineraries..."
         find('#submitButton').click
+      end
+
+      if find('#checkinOptions') == nil
+        puts "Can't find and flights.  Sorry."
+        return
       end
 
       within '#checkinOptions' do
@@ -40,8 +43,8 @@ module Southy
       end
 
       all('.checkinDocument').each do |node|
-        checkin_doc = CheckinDocument.parse node
-        p checkin_doc
+        doc = CheckinDocument.parse node
+        puts "Checked in: #{doc.first_name} #{doc.last_name} - #{doc.group}#{doc.position}"
       end
 
     end
