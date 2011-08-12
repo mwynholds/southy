@@ -5,10 +5,10 @@ require 'optparse'
 require 'southy'
 
 CONFIG = { :verbose => false, :write => false }
-OPERATIONS = %w(start stop restart ls list status install edit history)
+OPERATIONS = %w(start stop restart ls list status install edit history test)
 
 option_parser = OptionParser.new do |opts|
-  opts.banner = "Southy #{southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [#{OPERATIONS.join('|')}] [options]"
+  opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [#{OPERATIONS.join('|')}] [options]"
 
   opts.on("-v", "--verbose", "Show command executions") do |verbose|
     CONFIG[:verbose] = true
@@ -50,7 +50,7 @@ option_parser.parse!
 op = ARGV.shift
 if OPERATIONS.include?(op)
   begin
-    Southy.new.send(op.to_sym, ARGV)
+    Southy::CLI.new.send(op.to_sym, ARGV)
   rescue ArgumentError => ex
     puts ex.message
   rescue Exception => e
