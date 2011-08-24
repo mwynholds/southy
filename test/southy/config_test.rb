@@ -15,7 +15,7 @@ class ConfigTest < MiniTest::Spec
     describe '#init' do
       before do
         @config.init 'First', 'Last'
-        @content = IO.read "#{@config_dir}/config"
+        @content = IO.read "#{@config_dir}/config.yml"
       end
 
       it 'adds the name' do
@@ -33,8 +33,8 @@ class ConfigTest < MiniTest::Spec
 
         it 'adds the flight' do
           @content.must_equal <<EOF
-ABCDEF,First,Last
-GHIJKL,One,Two
+ABCDEF,First,Last,,,,
+GHIJKL,One,Two,,,,
 EOF
         end
       end
@@ -48,7 +48,7 @@ EOF
 
         it 'adds the flight' do
           @content.must_equal <<EOF
-ABCDEF,First,Last
+ABCDEF,First,Last,,,,
 EOF
         end
       end
@@ -64,7 +64,7 @@ EOF
 
       it 'removes the flight' do
         @content.must_equal <<EOF
-GHIJKL,One,Two
+GHIJKL,One,Two,,,,
 EOF
       end
     end

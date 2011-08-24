@@ -21,12 +21,19 @@ module Southy
       puts "Stopping..."
     end
 
+    def init(params)
+      @config.init *params
+    end
+
     def add(params)
       @config.add *params
     end
 
     def remove(params)
       @config.remove *params
+    end
+    def list(params)
+      @config.list
     end
 
     def test(params)

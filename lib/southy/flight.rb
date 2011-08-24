@@ -1,4 +1,5 @@
 require 'date'
+require 'csv'
 
 class Southy::Flight
   attr_accessor :first_name, :last_name, :number, :depart_date, :confirmation_number, :depart_airport, :arrive_airport
@@ -26,20 +27,29 @@ class Southy::Flight
     flight
   end
 
-  def self.from_line(line)
-    pieces = line.split(',')
+  def self.from_csv(line)
+    pieces = line.parse_csv
     flight = Southy::Flight.new
-    flight.confirmation_number = pieces[0].trim
-    flight.first_name = pieces[1].trim
-    flight.last_name = pieces[2].trim
+    flight.confirmation_number = pieces[0]
+    flight.first_name = pieces[1]
+    flight.last_name = pieces[2]
+    flight.number = pieces[3]
+    flight.depart_date = pieces[4]
+    flight.depart_airport = pieces[5]
+    flight.arrive_airport = pieces[6]
     flight
   end
 
-  def to_line
-    "#{confirmation_number},#{first_name},#{last_name}"
+  def to_csv
+    [confirmation_number, first_name, last_name, number, depart_date, depart_airport, arrive_airport].to_csv
   end
 
   def to_s
-    "SW#{number}: #{first_name} #{last_name}, #{depart_date.strftime('%F %l:%M%P')} #{depart_airport} -> #{arrive_airport} (#{confirmation_number})"
+    if depart_date
+      "SW#{number}: #{first_name} #{last_name}, #{depart_date.strftime('%F %l:%M%P')} #{depart_airport} -> #{arrive_airport} (#{confirmation_number})"
+    else
+      "#{first_name} #{last_name}, no other info (#{confirmation_number})"
+    end
+
   end
 end

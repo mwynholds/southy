@@ -22,7 +22,7 @@ option_parser = OptionParser.new do |opts|
 
 Supported commands:
 
- init                                     Initialize Southy with your personal info
+ init <first_name> <last_name>            Initialize Southy with your personal info
  list                                     Display upcoming flight check-ins
  history                                  Display past flight check-ins
  add <conf> [<first_name> <last_name>]    Add a new check-in

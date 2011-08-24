@@ -3,7 +3,7 @@ require 'yaml'
 
 class Southy::Config
   def initialize(config_dir = nil)
-    @config_dir = config_dir || Dir.mktmpdir
+    @config_dir = config_dir || "#{ENV['HOME']}/.southy"
     FileUtils.mkdir @config_dir unless Dir.exists? @config_dir
 
     load_config
@@ -12,7 +12,7 @@ class Southy::Config
 
   def init(first_name, last_name)
     @config = {:first_name => first_name, :last_name => last_name}
-    File.open "#{@config_dir}/config", "w" do |f|
+    File.open config_file, "w" do |f|
       f.write(@config.to_yaml)
     end
   end
@@ -25,8 +25,8 @@ class Southy::Config
 
     @upcoming << flight
 
-    File.open "#{@config_dir}/upcoming", 'a' do |f|
-      f.write flight.to_line + "\n"
+    File.open upcoming_file, 'a' do |f|
+      f.write flight.to_csv
     end
   end
 
@@ -35,25 +35,38 @@ class Southy::Config
     dump_upcoming
   end
 
+  def list
+    puts "Upcoming Southwest flights:"
+    @upcoming.each do |flight|
+      puts flight.to_s
+    end
+  end
+
   private
 
   def load_config
-    config_file = "#{@config_dir}/config"
     @config = YAML.load( IO.read(config_file) ) if File.exists? config_file
     @config ||= {}
   end
 
   def load_upcoming
-    upcoming_file = "#{@config_dir}/upcoming"
-    @upcoming = IO.open(upcoming_file).split("\n").map {|line| Southy::Flight.from_line(line)} if File.exists? upcoming_file
+    @upcoming = IO.read(upcoming_file).split("\n").map {|line| Southy::Flight.from_csv(line)} if File.exists? upcoming_file
     @upcoming ||= []
   end
 
   def dump_upcoming
-    File.open "#{@config_dir}/upcoming", 'w' do |f|
+    File.open upcoming_file, 'w' do |f|
       @upcoming.each do |flight|
-        f.write flight.to_line + "\n"
+        f.write flight.to_csv
       end
     end
+  end
+
+  def config_file
+    "#{@config_dir}/config.yml"
+  end
+
+  def upcoming_file
+    "#{@config_dir}/upcoming"
   end
 end
