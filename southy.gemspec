@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
-require "./lib/southy"
+$LOAD_PATH << File.dirname(__FILE__) + "/lib"
+require 'southy'
 
 Gem::Specification.new do |s|
   s.name        = "southy"

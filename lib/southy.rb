@@ -3,12 +3,14 @@ module Southy
 
   require 'southy/monkey'
   require 'southy/service'
+  require 'southy/config'
   require 'southy/checkin_document'
   require 'southy/flight'
 
   class CLI
     def initialize
       @monkey = Monkey.new
+      @config = Config.new
     end
 
     def start(params)
@@ -17,6 +19,14 @@ module Southy
 
     def stop(params)
       puts "Stopping..."
+    end
+
+    def add(params)
+      @config.add *params
+    end
+
+    def remove(params)
+      @config.remove *params
     end
 
     def test(params)
