@@ -55,7 +55,18 @@ EOF
     end
 
     describe '#remove' do
-      
+      before do
+        @config.add 'ABCDEF', 'First', 'Last'
+        @config.add 'GHIJKL', 'One', 'Two'
+        @config.remove 'ABCDEF'
+        @content = IO.read "#{@config_dir}/upcoming"
+      end
+
+      it 'removes the flight' do
+        @content.must_equal <<EOF
+GHIJKL,One,Two
+EOF
+      end
     end
 
     after do

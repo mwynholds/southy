@@ -26,6 +26,19 @@ class Southy::Flight
     flight
   end
 
+  def self.from_line(line)
+    pieces = line.split(',')
+    flight = Southy::Flight.new
+    flight.confirmation_number = pieces[0].trim
+    flight.first_name = pieces[1].trim
+    flight.last_name = pieces[2].trim
+    flight
+  end
+
+  def to_line
+    "#{confirmation_number},#{first_name},#{last_name}"
+  end
+
   def to_s
     "SW#{number}: #{first_name} #{last_name}, #{depart_date.strftime('%F %l:%M%P')} #{depart_airport} -> #{arrive_airport} (#{confirmation_number})"
   end
