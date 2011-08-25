@@ -72,17 +72,13 @@ EOF
     describe '#confirm' do
       before do
         @config.add 'ABCDEF', 'First', 'Last'
-        flight = Southy::Flight.new
-        flight.confirmation_number = 'ABCDEF'
-        flight.first_name = 'Second'
-        flight.last_name = 'Last'
-        @config.confirm flight
+        @config.confirm Factory.build :confirmed_flight, :confirmation_number => 'ABCDEF'
         @content = IO.read "#{@config_dir}/upcoming"
       end
 
       it 'updates the flight' do
         @content.must_equal <<EOF
-ABCDEF,Second,Last,,,,
+ABCDEF,First,Last,1234,2015-01-01T00:00:00+00:00,LAX,SFO
 EOF
       end
     end
