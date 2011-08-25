@@ -34,10 +34,24 @@ class Southy::Flight
     flight.first_name = pieces[1]
     flight.last_name = pieces[2]
     flight.number = pieces[3]
-    flight.depart_date = pieces[4]
+    flight.depart_date = pieces[4] ? DateTime.parse(pieces[4]) : nil
     flight.depart_airport = pieces[5]
     flight.arrive_airport = pieces[6]
     flight
+  end
+
+  def initialize(attrs = {})
+    attrs.each do |n,v|
+      self.send "#{n}=".to_sym, v
+    end
+  end
+
+  def confirmed?
+    ! depart_date.nil?
+  end
+
+  def checkinable?
+    false
   end
 
   def to_csv
@@ -45,11 +59,17 @@ class Southy::Flight
   end
 
   def to_s
-    if depart_date
+    if confirmed?
       "SW#{number}: #{first_name} #{last_name}, #{depart_date.strftime('%F %l:%M%P')} #{depart_airport} -> #{arrive_airport} (#{confirmation_number})"
     else
-      "#{first_name} #{last_name}, no other info (#{confirmation_number})"
+      "Unconfirmed: #{first_name} #{last_name} (#{confirmation_number})"
     end
+  end
 
+  def <=>(fles)
+    return -1 if self.confirmed? && ! fles.confirmed?
+    return 1  if fles.confirmed? && ! self.confirmed?
+    return self.to_s <=> fles.to_s if ! self.confirmed?
+    self.depart_date <=> fles.depart_date
   end
 end

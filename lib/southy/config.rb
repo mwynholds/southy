@@ -2,12 +2,15 @@ require 'tmpdir'
 require 'yaml'
 
 class Southy::Config
+  attr_reader :config, :upcoming
+
   def initialize(config_dir = nil)
     @config_dir = config_dir || "#{ENV['HOME']}/.southy"
     FileUtils.mkdir @config_dir unless Dir.exists? @config_dir
 
-    load_config
-    load_upcoming
+    @timestamps = {}
+    load_config :force => true
+    load_upcoming :force => true
   end
 
   def init(first_name, last_name)
@@ -30,6 +33,13 @@ class Southy::Config
     end
   end
 
+  def confirm(flight)
+    existing = @upcoming.find { |f| f.confirmation_number = flight.confirmation_number }
+    @upcoming.delete existing
+    @upcoming << flight
+    dump_upcoming
+  end
+
   def remove(conf)
     @upcoming.delete_if { |flight| flight.confirmation_number == conf }
     dump_upcoming
@@ -42,15 +52,25 @@ class Southy::Config
     end
   end
 
+  def reload(options = {})
+    options = { :force => false }.merge options
+    load_config options
+    load_upcoming options
+  end
+
   private
 
-  def load_config
-    @config = YAML.load( IO.read(config_file) ) if File.exists? config_file
+  def load_config(options)
+    @config = if_updated? config_file, options do
+      YAML.load( IO.read(config_file) )
+    end
     @config ||= {}
   end
 
-  def load_upcoming
-    @upcoming = IO.read(upcoming_file).split("\n").map {|line| Southy::Flight.from_csv(line)} if File.exists? upcoming_file
+  def load_upcoming(options)
+    @upcoming = if_updated? upcoming_file, options do
+      IO.read(upcoming_file).split("\n").map {|line| Southy::Flight.from_csv(line)}
+    end
     @upcoming ||= []
   end
 
@@ -68,5 +88,18 @@ class Southy::Config
 
   def upcoming_file
     "#{@config_dir}/upcoming"
+  end
+
+  def if_updated?(file_name, options)
+    return nil if ! File.exists? file_name
+
+    file = File.new file_name
+    last_read = @timestamps[file_name]
+    stamp = file.mtime
+    if options[:force] || last_read.nil? || stamp > last_read
+      yield
+    else
+      nil
+    end
   end
 end

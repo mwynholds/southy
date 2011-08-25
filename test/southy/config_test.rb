@@ -2,7 +2,7 @@ require 'test_helper'
 require 'fileutils'
 require 'yaml'
 
-class ConfigTest < MiniTest::Spec
+class Southy::ConfigTest < MiniTest::Spec
   
   describe 'Config' do
 
@@ -65,6 +65,24 @@ EOF
       it 'removes the flight' do
         @content.must_equal <<EOF
 GHIJKL,One,Two,,,,
+EOF
+      end
+    end
+
+    describe '#confirm' do
+      before do
+        @config.add 'ABCDEF', 'First', 'Last'
+        flight = Southy::Flight.new
+        flight.confirmation_number = 'ABCDEF'
+        flight.first_name = 'Second'
+        flight.last_name = 'Last'
+        @config.confirm flight
+        @content = IO.read "#{@config_dir}/upcoming"
+      end
+
+      it 'updates the flight' do
+        @content.must_equal <<EOF
+ABCDEF,Second,Last,,,,
 EOF
       end
     end

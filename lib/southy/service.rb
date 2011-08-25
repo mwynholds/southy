@@ -1,6 +1,10 @@
 class Southy::Service
-  def initialize
+  def initialize(daemon)
+    @daemon = daemon
+  end
 
+  def run
+    @daemon.run
   end
 
   def start

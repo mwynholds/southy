@@ -5,7 +5,7 @@ require 'optparse'
 require 'southy'
 
 CONFIG = { :verbose => false, :write => false }
-OPERATIONS = %w(init start stop restart add remove list history test)
+OPERATIONS = %w(init run start stop restart add remove list history test)
 
 option_parser = OptionParser.new do |opts|
   opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [#{OPERATIONS.join('|')}] [options]"
@@ -27,10 +27,11 @@ Supported commands:
  history                                  Display past flight check-ins
  add <conf> [<first_name> <last_name>]    Add a new check-in
  remove <conf>                            Remove a check-in
+ run                                      Run Southy in the foreground (kill with ctrl-c)
  start [-w]                               Start Southy so that it can check you in
  stop [-w]                                Stop Southy
  restart                                  Stop and start Southy
- status                                   Show the PID and label Southy
+ status                                   Show Southy's status (and PID if running)
 
 -w will persist the start/stop command so the agent will load on startup or never load, respectively.
 
