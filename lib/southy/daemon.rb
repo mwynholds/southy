@@ -12,7 +12,7 @@ class Southy::Daemon
       @running = true
       @config.reload
       @config.upcoming.each do |flight|
-        if flight.checkinable?
+        if flight.checkin_available?
           puts "Should be checking in here"
         elsif !flight.confirmed?
           print "Confirming flight #{flight.confirmation_number}... "

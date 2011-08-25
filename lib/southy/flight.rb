@@ -50,8 +50,10 @@ class Southy::Flight
     ! depart_date.nil?
   end
 
-  def checkinable?
-    false
+  def checkin_available?
+    return false unless confirmed?
+    return false if depart_date < DateTime.now  #oops, missed this flight :-)
+    depart_date <= DateTime.now + 24 * 60 * 60
   end
 
   def to_csv
