@@ -43,15 +43,5 @@ module Southy
     def list(params)
       @config.list
     end
-
-    def test(params)
-      flights = @monkey.lookup 'WQNR57', 'Michael', 'Wynholds'
-      flights.each do |f|
-        puts f.to_s
-      end
-
-      docs = @monkey.checkin flights[0]
-      p docs
-    end
   end
 end
