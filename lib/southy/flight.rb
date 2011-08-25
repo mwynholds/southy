@@ -53,7 +53,7 @@ class Southy::Flight
   def checkin_available?
     return false unless confirmed?
     return false if depart_date < DateTime.now  #oops, missed this flight :-)
-    depart_date <= DateTime.now + 24 * 60 * 60
+    depart_date <= DateTime.now + 1
   end
 
   def to_csv

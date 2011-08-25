@@ -20,9 +20,9 @@ class Southy::FlightTest < MiniTest::Spec
     describe '#checkin_available?' do
       before do
         @unconfirmed = Factory.build :unconfirmed_flight
-        @past = Factory.build :confirmed_flight, :depart_date => DateTime.now - 1 * 60 * 60
-        @unavailable = Factory.build :confirmed_flight, :depart_date => DateTime.now + 25 * 60 * 60
-        @available = Factory.build :confirmed_flight, :depart_date => DateTime.now + 12 * 60 * 60
+        @past = Factory.build :confirmed_flight, :depart_date => DateTime.now - 1.0/24
+        @unavailable = Factory.build :confirmed_flight, :depart_date => DateTime.now + 25.0/24
+        @available = Factory.build :confirmed_flight, :depart_date => DateTime.now + 12.0/24
       end
 
       it 'rejects unconfirmed flights' do
