@@ -17,7 +17,12 @@ class Southy::Daemon
       @config.reload
       @config.upcoming.each do |flight|
         if flight.checkin_available?
-          puts "Should be checking in here"
+          docs = @monkey.checkin flight
+          if docs
+            docs.each do |doc|
+              puts "Should email PDF here"
+            end
+          end
         elsif !flight.confirmed?
           #print "Confirming flight #{flight.confirmation_number}... "
           confirmed = @monkey.lookup flight.confirmation_number, flight.first_name, flight.last_name

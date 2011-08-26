@@ -16,8 +16,12 @@ class Southy::Monkey
     find('#pnrFriendlyLookup_check_form_submitButton').click
 
     flights = []
-    all('.itinerary_container').each do |node|
-      flights << Southy::Flight.parse(node)
+    all('.itinerary_container').each do |container|
+      if container
+        container.all('.airProductItineraryTable').each do |node|
+          flights << Southy::Flight.from_dom(container, node)
+        end
+      end
     end
 
     flights

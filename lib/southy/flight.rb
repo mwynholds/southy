@@ -4,15 +4,14 @@ require 'csv'
 class Southy::Flight
   attr_accessor :first_name, :last_name, :number, :depart_date, :confirmation_number, :depart_airport, :arrive_airport
 
-  def self.parse(node)
+  def self.from_dom(container, leg)
     flight = Southy::Flight.new
-    names = node.find('.passenger_row_name').text.split.map &:capitalize
+    names = container.find('.passenger_row_name').text.split.map &:capitalize
     flight.first_name = names[0]
     flight.last_name = names[1]
 
-    flight.confirmation_number = node.find('.confirmation_number').text
+    flight.confirmation_number = container.find('.confirmation_number').text
 
-    leg = node.all('tr.whiteRow')[0]
     leg_pieces = leg.all('.segmentsCell.firstSegmentCell .segmentLegDetails')
     leg_depart = leg_pieces[0]
     leg_arrive = leg_pieces[1]
@@ -46,6 +45,10 @@ class Southy::Flight
     end
   end
 
+  def full_name
+    "#{first_name} #{last_name}"
+  end
+
   def confirmed?
     ! depart_date.nil?
   end
@@ -60,11 +63,13 @@ class Southy::Flight
     [confirmation_number, first_name, last_name, number, depart_date, depart_airport, arrive_airport].to_csv
   end
 
-  def to_s
+  def to_s(name_length = 0)
+    name = "#{full_name}"
+    name = name.ljust(name_length + 2, ' ') if name_length > 0
     if confirmed?
-      "SW#{number}: #{first_name} #{last_name}, #{depart_date.strftime('%F %l:%M%P')} #{depart_airport} -> #{arrive_airport} (#{confirmation_number})"
+      "#{confirmation_number} - SW#{number}: #{name} #{depart_date.strftime('%F %l:%M%P')} #{depart_airport} -> #{arrive_airport}"
     else
-      "Unconfirmed: #{first_name} #{last_name} (#{confirmation_number})"
+      "#{confirmation_number} - Unconfirmed: #{name}"
     end
   end
 

@@ -36,8 +36,7 @@ class Southy::Config
   end
 
   def confirm(flight)
-    existing = @upcoming.find { |f| f.confirmation_number = flight.confirmation_number }
-    @upcoming.delete existing
+    @upcoming.delete_if { |f| f.confirmation_number == flight.confirmation_number and ! f.confirmed? }
     @upcoming << flight
     dump_upcoming
   end
@@ -49,8 +48,9 @@ class Southy::Config
 
   def list
     puts "Upcoming Southwest flights:"
+    max = @upcoming.map { |f| f.full_name.length }.max
     @upcoming.each do |flight|
-      puts flight.to_s
+      puts flight.to_s(max)
     end
   end
 
@@ -81,6 +81,7 @@ class Southy::Config
   end
 
   def dump_upcoming
+    @upcoming.sort!
     File.open upcoming_file, 'w' do |f|
       @upcoming.each do |flight|
         f.write flight.to_csv

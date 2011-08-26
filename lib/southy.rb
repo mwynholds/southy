@@ -55,5 +55,11 @@ module Southy
     def history(params)
       @config.history
     end
+
+    def test(params)
+      flights = @monkey.lookup('WZAR5K', 'Madeleine', 'Wynholds')
+      flights += @monkey.lookup('WQNR57', 'Michael', 'Wynholds')
+      flights.each { |f| puts f }
+    end
   end
 end
