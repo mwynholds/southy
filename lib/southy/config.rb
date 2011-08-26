@@ -24,7 +24,7 @@ class Southy::Config
 
   def add(conf, first_name = nil, last_name = nil)
     flight = Southy::Flight.new
-    flight.confirmation_number = conf
+    flight.confirmation_number = conf.upcase.gsub(/0/, 'O')
     flight.first_name = first_name || @config[:first_name]
     flight.last_name = last_name || @config[:last_name]
 
@@ -42,7 +42,7 @@ class Southy::Config
   end
 
   def remove(conf)
-    @upcoming.delete_if { |flight| flight.confirmation_number == conf }
+    @upcoming.delete_if { |flight| flight.confirmation_number == conf.upcase.gsub(/0/, 'O') }
     dump_upcoming
   end
 

@@ -7,11 +7,19 @@ class Southy::Daemon
     @running = false
   end
 
-  def run
+  def start
+    Process.daemon
+    write_pid
+
     Signal.trap 'HUP' do
       kill
     end
 
+    run
+  end
+
+  def run
+    puts "Southy is running."
     while active? do
       @running = true
       @config.reload
@@ -24,12 +32,12 @@ class Southy::Daemon
             end
           end
         elsif !flight.confirmed?
-          #print "Confirming flight #{flight.confirmation_number}... "
-          confirmed = @monkey.lookup flight.confirmation_number, flight.first_name, flight.last_name
-          confirmed.each do |f|
+          print "Confirming flight #{flight.confirmation_number}... "
+          legs = @monkey.lookup flight.confirmation_number, flight.first_name, flight.last_name
+          legs.each do |f|
             @config.confirm f
           end
-          #puts "#{confirmed.length} successful"
+          puts "confirmed #{legs.length} leg#{legs.length == 1 ? '' : 's'}"
         end
       end
       sleep 2
@@ -44,5 +52,11 @@ class Southy::Daemon
 
   def kill
     @active = false
+  end
+
+  def write_pid
+    File.open @config.pid_file, 'w' do |f|
+      f.write Process.pid.to_s
+    end
   end
 end

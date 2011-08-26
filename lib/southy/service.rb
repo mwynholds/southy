@@ -16,11 +16,8 @@ class Southy::Service
     end
 
     print "Starting Southy... "
-    new_pid = Process.fork { @daemon.run }
+    new_pid = Process.fork { @daemon.start }
     Process.detach new_pid
-    File.open @config.pid_file, 'w' do |f|
-      f.write new_pid.to_s
-    end
     puts "started"
   end
 
