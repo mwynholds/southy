@@ -13,7 +13,7 @@ module Southy
       @monkey = Monkey.new
       @config = Config.new
       daemon = Daemon.new @config, @monkey
-      @service = Service.new daemon
+      @service = Service.new @config, daemon
     end
 
     def run(params)
@@ -21,11 +21,19 @@ module Southy
     end
 
     def start(params)
-      puts "Starting..."
+      @service.start
     end
 
     def stop(params)
-      puts "Stopping..."
+      @service.stop
+    end
+
+    def restart(params)
+      @service.restart
+    end
+
+    def status(params)
+      @service.status
     end
 
     def init(params)
@@ -42,6 +50,10 @@ module Southy
 
     def list(params)
       @config.list
+    end
+
+    def history(params)
+      @config.history
     end
   end
 end

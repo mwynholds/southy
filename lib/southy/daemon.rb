@@ -8,6 +8,10 @@ class Southy::Daemon
   end
 
   def run
+    Signal.trap 'HUP' do
+      kill
+    end
+
     while active? do
       @running = true
       @config.reload
@@ -15,19 +19,19 @@ class Southy::Daemon
         if flight.checkin_available?
           puts "Should be checking in here"
         elsif !flight.confirmed?
-          print "Confirming flight #{flight.confirmation_number}... "
+          #print "Confirming flight #{flight.confirmation_number}... "
           confirmed = @monkey.lookup flight.confirmation_number, flight.first_name, flight.last_name
           confirmed.each do |f|
             @config.confirm f
           end
-          puts "#{confirmed.length} successful"
-        else
-          puts "Waiting for something to do..."
+          #puts "#{confirmed.length} successful"
         end
       end
       sleep 2
     end
   end
+
+  private
 
   def active?
     @active
@@ -35,8 +39,5 @@ class Southy::Daemon
 
   def kill
     @active = false
-    while @running
-      sleep 0.25
-    end
   end
 end

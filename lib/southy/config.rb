@@ -2,11 +2,13 @@ require 'tmpdir'
 require 'yaml'
 
 class Southy::Config
-  attr_reader :config, :upcoming
+  attr_reader :config, :upcoming, :pid_file
 
   def initialize(config_dir = nil)
-    @config_dir = config_dir || "#{ENV['HOME']}/.southy"
-    FileUtils.mkdir @config_dir unless Dir.exists? @config_dir
+    @dir = config_dir || "#{ENV['HOME']}/.southy"
+    FileUtils.mkdir @dir unless Dir.exists? @dir
+
+    @pid_file = "#{@dir}/pid"
 
     @timestamps = {}
     load_config :force => true
@@ -52,6 +54,10 @@ class Southy::Config
     end
   end
 
+  def history
+    puts 'History is not yet implemented'
+  end
+
   def reload(options = {})
     options = { :force => false }.merge options
     load_config options
@@ -83,11 +89,11 @@ class Southy::Config
   end
 
   def config_file
-    "#{@config_dir}/config.yml"
+    "#{@dir}/config.yml"
   end
 
   def upcoming_file
-    "#{@config_dir}/upcoming"
+    "#{@dir}/upcoming"
   end
 
   def if_updated?(file_name, options)
