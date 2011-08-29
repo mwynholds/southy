@@ -51,10 +51,23 @@ module Southy
     def confirm(params)
       @config.upcoming.uniq {|f| f.confirmation_number}.each do |flight|
         @config.remove flight.confirmation_number
-        puts "Confirming #{flight.confirmation_number} for #{flight.full_name}"
+        print "Confirming #{flight.confirmation_number} for #{flight.full_name}... "
         @monkey.lookup(flight.confirmation_number, flight.first_name, flight.last_name).each do |f|
           f.email = flight.email
           @config.confirm f
+        end
+        puts "success"
+      end
+    end
+
+    def checkin(params)
+      @config.upcoming.each do |flight|
+        print "Checking in #{flight}... "
+        docs = @monkey.checkin flight
+        if docs.nil?
+          puts "failed"
+        else
+          puts "success"
         end
       end
     end

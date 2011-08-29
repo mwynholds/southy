@@ -9,22 +9,16 @@ class Southy::Monkey
   Capybara.app_host = 'http://www.southwest.com'
   include Capybara::DSL
 
+  def initialize
+    @http = Net::HTTP.new 'www.southwest.com'
+    @https = Net::HTTP.new 'www.southwest.com', 443
+    @https.use_ssl = true
+  end
+
   def lookup(conf, first_name, last_name)
-    http = Net::HTTP.new 'www.southwest.com'
-    https = Net::HTTP.new 'www.southwest.com', 443
-    https.use_ssl = true
     request = Net::HTTP::Post.new '/flight/view-air-reservation.html'
     request.set_form_data :confirmationNumber => conf, :confirmationNumberFirstName => first_name, :confirmationNumberLastName => last_name
-    response = https.request request
-
-    while response.is_a? Net::HTTPRedirection
-      location = response['Location']
-      if location =~ /^https:/
-        response = https.request Net::HTTP::Get.new(location)
-      else
-        response = http.request Net::HTTP::Get.new(location)
-      end
-    end
+    response = fetch @https.request(request)
 
     doc = Nokogiri::HTML response.body
     flights = []
@@ -37,6 +31,20 @@ class Southy::Monkey
   end
 
   def checkin(flight)
+    request = Net::HTTP::Post.new '/retrieveCheckinDoc.html'
+    request.set_form_data :confirmationNumber => flight.confirmation_number,
+                          :firstName => flight.first_name,
+                          :lastName => flight.last_name
+    response = fetch @http.request(request)
+
+    doc1 = Nokogiri::HTML response.body
+    checkinOptions = doc1.css '#itineraryLookup'
+    return nil unless checkinOptions
+
+    # still need to do the rest...
+  end
+
+  def checkin_old(flight)
     visit '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
 
     within '#itineraryLookup' do
@@ -63,5 +71,20 @@ class Southy::Monkey
     end
 
     docs
+  end
+
+  private
+
+  def fetch(response)
+    while response.is_a? Net::HTTPRedirection
+      location = response['Location']
+      if location =~ /^https:/
+        response = @https.request Net::HTTP::Get.new(location)
+      else
+        response = @http.request Net::HTTP::Get.new(location)
+      end
+    end
+
+    response
   end
 end
