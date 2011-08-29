@@ -30,20 +30,13 @@ class Southy::Service
 
     print "Stopping Southy..."
     Process.kill 'HUP', pid
-    alive = true
-    alive_count = 0
-    while alive
-      alive = `ps -p #{pid} | wc -l`.strip.to_i == 2
+    ticks = 0
+    while pid = get_pid && ticks < 40
       sleep 0.5
-      alive_count += 1
-      print '.' if alive_count % 10 == 0
-      if alive_count >= 120
-        puts " failed"
-        return
-      end
+      ticks += 1
+      print '.' if ticks % 4 == 0
     end
-    File.delete @config.pid_file
-    puts " stopped"
+    puts " #{pid.nil? ? 'stopped' : 'failed'}"
   end
 
   def restart
@@ -64,7 +57,6 @@ class Southy::Service
 
   def get_pid
     return nil unless File.exists? @config.pid_file
-
     IO.read(@config.pid_file).to_i
   end
 end

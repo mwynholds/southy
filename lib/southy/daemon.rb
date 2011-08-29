@@ -16,6 +16,7 @@ class Southy::Daemon
     end
 
     run
+    delete_pid
   end
 
   def run
@@ -59,5 +60,9 @@ class Southy::Daemon
     File.open @config.pid_file, 'w' do |f|
       f.write Process.pid.to_s
     end
+  end
+
+  def delete_pid
+    File.delete @config.pid_file
   end
 end
