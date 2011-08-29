@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_runtime_dependency 'capybara-webkit'
+  s.add_runtime_dependency 'nokogiri'
 
   s.add_development_dependency 'launchy'
   s.add_development_dependency 'factory_girl'

@@ -6,22 +6,22 @@ class Southy::Flight
 
   def self.from_dom(container, leg)
     flight = Southy::Flight.new
-    names = container.find('.passenger_row_name').text.split.map &:capitalize
+    names = container.css('.passenger_row_name').text.split.map &:capitalize
     flight.first_name = names[0]
     flight.last_name = names[1]
 
-    flight.confirmation_number = container.find('.confirmation_number').text
+    flight.confirmation_number = container.css('.confirmation_number').text
 
-    leg_pieces = leg.all('.segmentsCell.firstSegmentCell .segmentLegDetails')
+    leg_pieces = leg.css('.segmentsCell.firstSegmentCell .segmentLegDetails')
     leg_depart = leg_pieces[0]
     leg_arrive = leg_pieces[1]
     
-    date = leg.find('.travelTimeCell .departureLongDate').text
-    time = leg_depart.find('.segmentTime').text + leg_depart.find('.segmentTimeAMPM').text
-    flight.number = leg.all('.flightNumberCell.firstSegmentCell div')[1].text.sub(/^#/, '')
+    date = leg.css('.travelTimeCell .departureLongDate').text
+    time = leg_depart.css('.segmentTime').text + leg_depart.css('.segmentTimeAMPM').text
+    flight.number = leg.css('.flightNumberCell.firstSegmentCell div')[1].text.sub(/^#/, '')
     flight.depart_date = DateTime.parse("#{date} #{time}")
-    flight.depart_airport = leg_depart.find('.segmentCityName').text
-    flight.arrive_airport = leg_arrive.find('.segmentCityName').text
+    flight.depart_airport = leg_depart.css('.segmentCityName').text
+    flight.arrive_airport = leg_arrive.css('.segmentCityName').text
 
     flight
   end

@@ -1,5 +1,7 @@
 require 'capybara/dsl'
 require 'capybara-webkit'
+require 'nokogiri'
+require 'net/https'
 require 'fileutils'
 
 class Southy::Monkey
@@ -8,22 +10,29 @@ class Southy::Monkey
   include Capybara::DSL
 
   def lookup(conf, first_name, last_name)
-    visit 'https://www.southwest.com/flight/lookup-air-reservation.html'
+    http = Net::HTTP.new 'www.southwest.com'
+    https = Net::HTTP.new 'www.southwest.com', 443
+    https.use_ssl = true
+    request = Net::HTTP::Post.new '/flight/view-air-reservation.html'
+    request.set_form_data :confirmationNumber => conf, :confirmationNumberFirstName => first_name, :confirmationNumberLastName => last_name
+    response = https.request request
 
-    fill_in 'confirmationNumber', :with => conf.ljust(6)
-    fill_in 'confirmationNumberFirstName', :with => first_name.ljust(30)
-    fill_in 'confirmationNumberLastName', :with => last_name.ljust(30)
-    find('#pnrFriendlyLookup_check_form_submitButton').click
-
-    flights = []
-    all('.itinerary_container').each do |container|
-      if container
-        container.all('.airProductItineraryTable').each do |node|
-          flights << Southy::Flight.from_dom(container, node)
-        end
+    while response.is_a? Net::HTTPRedirection
+      location = response['Location']
+      if location =~ /^https:/
+        response = https.request Net::HTTP::Get.new(location)
+      else
+        response = http.request Net::HTTP::Get.new(location)
       end
     end
 
+    doc = Nokogiri::HTML response.body
+    flights = []
+    doc.css('.itinerary_container').each do |container|
+      container.css('.airProductItineraryTable').each do |node|
+        flights << Southy::Flight.from_dom(container, node)
+      end
+    end
     flights
   end
 

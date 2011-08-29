@@ -5,7 +5,7 @@ require 'optparse'
 require 'southy'
 
 CONFIG = { :verbose => false, :write => false }
-OPERATIONS = %w(init run start stop restart reconfirm status add remove list history test)
+OPERATIONS = %w(init run start stop restart confirm status add remove list history test)
 
 option_parser = OptionParser.new do |opts|
   opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [#{OPERATIONS.join('|')}] [options]"
@@ -14,7 +14,7 @@ option_parser = OptionParser.new do |opts|
     CONFIG[:verbose] = true
   end
 
-  opts.on("-w", "--write", "Persist command") do |verbose|
+  opts.on("-w", "--write", "Persist command") do |write|
     CONFIG[:write] = true
   end
 

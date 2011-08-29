@@ -48,9 +48,10 @@ module Southy
       @config.remove *params
     end
 
-    def reconfirm(params)
+    def confirm(params)
       @config.upcoming.uniq {|f| f.confirmation_number}.each do |flight|
         @config.remove flight.confirmation_number
+        puts "Confirming #{flight.confirmation_number} for #{flight.full_name}"
         @monkey.lookup(flight.confirmation_number, flight.first_name, flight.last_name).each do |f|
           f.email = flight.email
           @config.confirm f
@@ -68,7 +69,7 @@ module Southy
 
     def test(params)
       flights = @monkey.lookup('WZAR5K', 'Madeleine', 'Wynholds')
-      flights += @monkey.lookup('WQNR57', 'Michael', 'Wynholds')
+      #flights += @monkey.lookup('WQNR57', 'Michael', 'Wynholds')
       flights.each { |f| puts f }
     end
   end
