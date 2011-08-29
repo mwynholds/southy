@@ -5,7 +5,7 @@ require 'optparse'
 require 'southy'
 
 CONFIG = { :verbose => false, :write => false }
-OPERATIONS = %w(init run start stop restart status add remove list history test)
+OPERATIONS = %w(init run start stop restart reconfirm status add remove list history test)
 
 option_parser = OptionParser.new do |opts|
   opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [#{OPERATIONS.join('|')}] [options]"
@@ -22,16 +22,20 @@ option_parser = OptionParser.new do |opts|
 
 Supported commands:
 
- init <first_name> <last_name>            Initialize Southy with your personal info
- list                                     Display upcoming flight check-ins
- history                                  Display past flight check-ins
- add <conf> [<first_name> <last_name>]    Add a new check-in
- remove <conf>                            Remove a check-in
- run                                      Run Southy in the foreground (kill with ctrl-c)
- start [-w]                               Start Southy so that it can check you in
- stop [-w]                                Stop Southy
- restart                                  Stop and start Southy
- status                                   Show Southy's status (and PID if running)
+ init <personal_info>            Initialize Southy with your personal info
+ list                            Display upcoming flight check-ins
+ history                         Display past flight check-ins
+ add <conf> [<personal_info>]    Add a new check-in
+ remove <conf>                   Remove a check-in
+ confirm                         (Re)confirm all flights (picks up any ticketing changes)
+ run                             Run Southy in the foreground (kill with ctrl-c)
+ start [-w]                      Start Southy so that it can check you in
+ stop [-w]                       Stop Southy
+ restart                         Stop and start Southy
+ status                          Show Southy's status (and PID if running)
+
+<personal_info> is in the form of: <first_name> <last_name> <email>
+where email is always optional.  Southy will email your boarding pass to you if it can.
 
 -w will persist the start/stop command so the agent will load on startup or never load, respectively.
 

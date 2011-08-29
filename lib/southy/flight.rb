@@ -2,7 +2,7 @@ require 'date'
 require 'csv'
 
 class Southy::Flight
-  attr_accessor :first_name, :last_name, :number, :depart_date, :confirmation_number, :depart_airport, :arrive_airport
+  attr_accessor :first_name, :last_name, :email, :number, :depart_date, :confirmation_number, :depart_airport, :arrive_airport
 
   def self.from_dom(container, leg)
     flight = Southy::Flight.new
@@ -32,10 +32,11 @@ class Southy::Flight
     flight.confirmation_number = pieces[0]
     flight.first_name = pieces[1]
     flight.last_name = pieces[2]
-    flight.number = pieces[3]
-    flight.depart_date = pieces[4] ? DateTime.parse(pieces[4]) : nil
-    flight.depart_airport = pieces[5]
-    flight.arrive_airport = pieces[6]
+    flight.email = pieces[3]
+    flight.number = pieces[4]
+    flight.depart_date = pieces[5] ? DateTime.parse(pieces[5]) : nil
+    flight.depart_airport = pieces[6]
+    flight.arrive_airport = pieces[7]
     flight
   end
 
@@ -49,6 +50,10 @@ class Southy::Flight
     "#{first_name} #{last_name}"
   end
 
+  def full_name_with_email
+    "#{full_name} (#{email})"
+  end
+
   def confirmed?
     ! depart_date.nil?
   end
@@ -60,16 +65,16 @@ class Southy::Flight
   end
 
   def to_csv
-    [confirmation_number, first_name, last_name, number, depart_date, depart_airport, arrive_airport].to_csv
+    [confirmation_number, first_name, last_name, email, number, depart_date, depart_airport, arrive_airport].to_csv
   end
 
   def to_s(name_length = 0)
-    name = "#{full_name}"
+    name = "#{full_name_with_email}"
     name = name.ljust(name_length + 2, ' ') if name_length > 0
     if confirmed?
       "#{confirmation_number} - SW#{number}: #{name} #{depart_date.strftime('%F %l:%M%P')} #{depart_airport} -> #{arrive_airport}"
     else
-      "#{confirmation_number} - Unconfirmed: #{name}"
+      "#{confirmation_number} - SW????: #{name}"
     end
   end
 

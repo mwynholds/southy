@@ -35,6 +35,7 @@ class Southy::Daemon
           print "Confirming flight #{flight.confirmation_number}... "
           legs = @monkey.lookup flight.confirmation_number, flight.first_name, flight.last_name
           legs.each do |f|
+            f.email = flight.email
             @config.confirm f
           end
           puts "confirmed #{legs.length} leg#{legs.length == 1 ? '' : 's'}"

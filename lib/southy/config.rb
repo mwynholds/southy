@@ -15,18 +15,19 @@ class Southy::Config
     load_upcoming :force => true
   end
 
-  def init(first_name, last_name)
-    @config = {:first_name => first_name, :last_name => last_name}
+  def init(first_name, last_name, email = nil)
+    @config = {:first_name => first_name, :last_name => last_name, :email => email}
     File.open config_file, "w" do |f|
       f.write(@config.to_yaml)
     end
   end
 
-  def add(conf, first_name = nil, last_name = nil)
+  def add(conf, first_name = nil, last_name = nil, email = nil)
     flight = Southy::Flight.new
     flight.confirmation_number = conf.upcase.gsub(/0/, 'O')
     flight.first_name = first_name || @config[:first_name]
     flight.last_name = last_name || @config[:last_name]
+    flight.email = email || @config[:email]
 
     @upcoming << flight
 
@@ -48,7 +49,7 @@ class Southy::Config
 
   def list
     puts "Upcoming Southwest flights:"
-    max = @upcoming.map { |f| f.full_name.length }.max
+    max = @upcoming.map { |f| f.full_name_with_email.length }.max
     @upcoming.each do |flight|
       puts flight.to_s(max)
     end
