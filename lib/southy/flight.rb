@@ -40,6 +40,21 @@ class Southy::Flight
     flight
   end
 
+  def self.list(flights)
+    max_name = flights.map { |f| f.full_name.length }.max
+    max_email = flights.map { |f| f.email ? f.email.length : 0 }.max
+    flights.each do |f|
+      num = lj "SW#{f.number}", 6
+      fn = lj f.full_name, max_name
+      em = lj(f.email || "--", max_email)
+      if f.confirmed?
+        puts "#{f.confirmation_number} - #{num}: #{fn}  #{em}  #{f.depart_date.strftime('%F %l:%M%P')} #{f.depart_airport} -> #{f.arrive_airport}"
+      else
+        puts "#{f.confirmation_number} - SW????: #{fn}  #{em}"
+      end
+    end
+  end
+
   def initialize(attrs = {})
     attrs.each do |n,v|
       self.send "#{n}=".to_sym, v
@@ -68,14 +83,8 @@ class Southy::Flight
     [confirmation_number, first_name, last_name, email, number, depart_date, depart_airport, arrive_airport].to_csv
   end
 
-  def to_s(name_length = 0)
-    name = "#{full_name_with_email}"
-    name = name.ljust(name_length + 2, ' ') if name_length > 0
-    if confirmed?
-      "#{confirmation_number} - SW#{number}: #{name} #{depart_date.strftime('%F %l:%M%P')} #{depart_airport} -> #{arrive_airport}"
-    else
-      "#{confirmation_number} - SW????: #{name}"
-    end
+  def to_s
+    self.list [self]
   end
 
   def <=>(fles)
@@ -83,5 +92,11 @@ class Southy::Flight
     return 1  if fles.confirmed? && ! self.confirmed?
     return self.to_s <=> fles.to_s if ! self.confirmed?
     self.depart_date <=> fles.depart_date
+  end
+
+  private
+
+  def self.lj(str, max)
+    str and max > 0 ? str.ljust(max, ' ') : str
   end
 end

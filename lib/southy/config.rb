@@ -49,10 +49,7 @@ class Southy::Config
 
   def list
     puts "Upcoming Southwest flights:"
-    max = @upcoming.map { |f| f.full_name_with_email.length }.max
-    @upcoming.each do |flight|
-      puts flight.to_s(max)
-    end
+    Southy::Flight.list @upcoming
   end
 
   def history
