@@ -1,13 +1,13 @@
-require 'capybara/dsl'
-require 'capybara-webkit'
+#require 'capybara/dsl'
+#require 'capybara-webkit'
 require 'nokogiri'
 require 'net/https'
 require 'fileutils'
 
 class Southy::Monkey
-  Capybara.default_driver = :webkit
-  Capybara.app_host = 'http://www.southwest.com'
-  include Capybara::DSL
+  #Capybara.default_driver = :webkit
+  #Capybara.app_host = 'http://www.southwest.com'
+  #include Capybara::DSL
 
   def initialize
     @http = Net::HTTP.new 'www.southwest.com'
@@ -44,34 +44,34 @@ class Southy::Monkey
     # still need to do the rest...
   end
 
-  def checkin_old(flight)
-    visit '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
-
-    within '#itineraryLookup' do
-      fill_in 'confirmationNumber', :with => flight.confirmation_number.ljust(12)
-      fill_in 'First Name', :with => flight.first_name.ljust(30)
-      fill_in 'Last Name', :with => flight.last_name.ljust(30)
-      find('#submitButton').click
-    end
-
-    if ! has_css?('#checkinOptions')
-      return nil
-    end
-
-    within '#checkinOptions' do
-      all('input[type="checkbox"]').each {|i| check i[:id] }
-      find('#printDocumentsButton').click
-    end
-
-    docs = []
-    all('.checkinDocument').each do |node|
-      doc = Southy::CheckingDocument.parse(node)
-      doc.flight = flight
-      docs << doc
-    end
-
-    docs
-  end
+  #def checkin_old(flight)
+  #  visit '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
+  #
+  #  within '#itineraryLookup' do
+  #    fill_in 'confirmationNumber', :with => flight.confirmation_number.ljust(12)
+  #    fill_in 'First Name', :with => flight.first_name.ljust(30)
+  #    fill_in 'Last Name', :with => flight.last_name.ljust(30)
+  #    find('#submitButton').click
+  #  end
+  #
+  #  if ! has_css?('#checkinOptions')
+  #    return nil
+  #  end
+  #
+  #  within '#checkinOptions' do
+  #    all('input[type="checkbox"]').each {|i| check i[:id] }
+  #    find('#printDocumentsButton').click
+  #  end
+  #
+  #  docs = []
+  #  all('.checkinDocument').each do |node|
+  #    doc = Southy::CheckingDocument.parse(node)
+  #    doc.flight = flight
+  #    docs << doc
+  #  end
+  #
+  #  docs
+  #end
 
   private
 

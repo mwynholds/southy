@@ -1,18 +1,15 @@
 #!/usr/bin/env ruby
 
 $LOAD_PATH << File.dirname(__FILE__) + "/../lib" if $0 == __FILE__
+puts $LOAD_PATH
 require 'optparse'
 require 'southy'
 
-CONFIG = { :verbose => false, :write => false }
+CONFIG = { :write => false }
 OPERATIONS = %w(init run start stop restart confirm checkin status add remove list history test)
 
 option_parser = OptionParser.new do |opts|
-  opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [#{OPERATIONS.join('|')}] [options]"
-
-  opts.on("-v", "--verbose", "Show command executions") do |verbose|
-    CONFIG[:verbose] = true
-  end
+  opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [command] [options]"
 
   opts.on("-w", "--write", "Persist command") do |write|
     CONFIG[:write] = true
@@ -22,18 +19,18 @@ option_parser = OptionParser.new do |opts|
 
 Supported commands:
 
- init <personal_info>            Initialize Southy with your personal info
- list                            Display upcoming flight check-ins
- history                         Display past flight check-ins
- add <conf> [<personal_info>]    Add a new check-in
- remove <conf>                   Remove a check-in
- confirm                         (Re)confirm all flights (picks up any ticketing changes)
- checkin                         (Re)check-in for all flights
- run                             Run Southy in the foreground (kill with ctrl-c)
- start [-w]                      Start Southy so that it can check you in
- stop [-w]                       Stop Southy
- restart                         Stop and start Southy
- status                          Show Southy's status (and PID if running)
+ init <personal_info>                Initialize Southy with your personal info
+ list                                Display upcoming flight check-ins
+ history                             Display past flight check-ins
+ add <conf> [<personal_info>]        Add a new check-in
+ remove <conf>                       Remove a check-in
+ confirm                             (Re)confirm all flights (picks up any ticketing changes)
+ checkin                             (Re)check-in for all flights
+ run                                 Run Southy in the foreground (kill with ctrl-c)
+ start [-w]                          Start Southy so that it can check you in
+ stop [-w]                           Stop Southy
+ restart                             Stop and start Southy
+ status                              Show Southy's status (and PID if running)
 
 <personal_info> is in the form of: <first_name> <last_name> <email>
 where email is always optional.  Southy will email your boarding pass to you if it can.

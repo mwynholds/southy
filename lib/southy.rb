@@ -1,6 +1,5 @@
 module Southy
-  VERSION = "0.0.1"
-
+  require 'southy/version'
   require 'southy/monkey'
   require 'southy/service'
   require 'southy/config'

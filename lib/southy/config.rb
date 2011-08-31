@@ -6,7 +6,7 @@ class Southy::Config
 
   def initialize(config_dir = nil)
     @dir = config_dir || "#{ENV['HOME']}/.southy"
-    FileUtils.mkdir @dir unless Dir.exists? @dir
+    FileUtils.mkdir @dir unless File.directory? @dir
 
     @pid_file = "#{@dir}/pid"
 
