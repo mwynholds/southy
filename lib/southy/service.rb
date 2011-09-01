@@ -1,3 +1,5 @@
+require 'fileutils'
+
 class Southy::Service
   def initialize(config, daemon)
     @config = config
@@ -8,7 +10,7 @@ class Southy::Service
     @daemon.run
   end
 
-  def start
+  def start(persist = false)
     pid = get_pid
     if pid
       puts "Southy is already running with PID #{pid}"
@@ -18,10 +20,11 @@ class Southy::Service
     print "Starting Southy... "
     new_pid = Process.fork { @daemon.start }
     Process.detach new_pid
+    persist_start if persist
     puts "started"
   end
 
-  def stop
+  def stop(persist = false)
     pid = get_pid
     unless pid
       puts "Southy is not running"
@@ -29,6 +32,7 @@ class Southy::Service
     end
 
     print "Stopping Southy..."
+    persist_stop if persist
     Process.kill 'HUP', pid
     ticks = 0
     while pid = get_pid && ticks < 40
@@ -58,5 +62,16 @@ class Southy::Service
   def get_pid
     return nil unless File.exists? @config.pid_file
     IO.read(@config.pid_file).to_i
+  end
+
+  PLIST_SRC = File.join(File.dirname(__FILE__), '../../etc/wynholds.mike.southy.plist')
+  PLIST_DEST = "#{ENV['HOME']}/Library/LaunchAgents/wynholds.mike.southy.plist"
+
+  def persist_start
+    FileUtils.cp PLIST_SRC, PLIST_DEST
+  end
+
+  def persist_stop
+    File.delete PLIST_DEST if File.exists? PLIST_DEST
   end
 end

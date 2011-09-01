@@ -1,4 +1,4 @@
-unless defined? String.parse_csv
+if RUBY_VERSION =~ /^1\.8/
   require 'csv'
 
   class String
@@ -12,25 +12,19 @@ unless defined? String.parse_csv
       CSV.generate_line(self) + "\n"
     end
   end
-end
 
-unless defined? Process.daemon
   module Process
     def self.daemon
       $stdout = File.new('/dev/null', 'w')
     end
   end
-end
 
-unless defined? Dir.exists?
   class Dir
     def self.exists?(dir)
       File.directory? dir
     end
   end
-end
 
-if RUBY_VERSION =~ /^1\.8/
   module Kernel
     alias :print_without_flush :print
     def print(obj, *smth)
@@ -58,4 +52,5 @@ if RUBY_VERSION =~ /^1\.8/
       end
     end
   end
+
 end

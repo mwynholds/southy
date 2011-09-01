@@ -9,7 +9,10 @@ module Southy
   require 'southy/flight'
 
   class CLI
-    def initialize
+    def initialize(opts)
+      @options = { :write => false }.merge opts
+      check_options
+
       @monkey = Monkey.new
       @config = Config.new
       daemon = Daemon.new @config, @monkey
@@ -21,11 +24,11 @@ module Southy
     end
 
     def start(params)
-      @service.start
+      @service.start @options[:write]
     end
 
     def stop(params)
-      @service.stop
+      @service.stop @options[:write]
     end
 
     def restart(params)
@@ -84,6 +87,17 @@ module Southy
       flights = @monkey.lookup('WZAR5K', 'Madeleine', 'Wynholds')
       #flights += @monkey.lookup('WQNR57', 'Michael', 'Wynholds')
       flights.each { |f| puts f }
+    end
+
+    private
+
+    def check_options
+      if @options[:write]
+        unless RUBY_PLATFORM =~ /darwin/
+          puts "The -w option is only implemented for OS X.  That option will be ignored."
+          @options[:write] = false
+        end
+      end
     end
   end
 end

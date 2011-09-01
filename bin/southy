@@ -4,14 +4,14 @@ $LOAD_PATH << File.dirname(__FILE__) + "/../lib" if $0 == __FILE__
 require 'optparse'
 require 'southy'
 
-CONFIG = { :write => false }
-OPERATIONS = %w(init run start stop restart confirm checkin status add remove list history test)
+config = { :write => false }
+operations = %w(init run start stop restart confirm checkin status add remove list history test)
 
 option_parser = OptionParser.new do |opts|
   opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [command] [options]"
 
-  opts.on("-w", "--write", "Persist command") do |write|
-    CONFIG[:write] = true
+  opts.on("-w", "--write", "Persist command") do
+    config[:write] = true
   end
 
   opts.separator <<-EOS
@@ -45,9 +45,10 @@ option_parser.parse!
 
 
 op = ARGV.shift
-if OPERATIONS.include?(op)
+if operations.include?(op)
   begin
-    Southy::CLI.new.send(op.to_sym, ARGV)
+    cli = Southy::CLI.new :write => config[:write]
+    cli.send(op.to_sym, ARGV)
   rescue ArgumentError => ex
     puts ex.message
   rescue Exception => e
