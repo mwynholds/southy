@@ -9,7 +9,7 @@ unless defined? String.parse_csv
 
   class Array
     def to_csv
-      CSV.generate_line self
+      CSV.generate_line(self) + "\n"
     end
   end
 end
@@ -18,6 +18,14 @@ unless defined? Process.daemon
   module Process
     def self.daemon
       # noop?
+    end
+  end
+end
+
+unless defined? Dir.exists?
+  class Dir
+    def self.exists?(dir)
+      File.directory? dir
     end
   end
 end
