@@ -1,8 +1,15 @@
 unless defined? String.parse_csv
   require 'csv'
+
   class String
     def parse_csv
       CSV.parse_line self
+    end
+  end
+
+  class Array
+    def to_csv
+      CSV.generate_line self
     end
   end
 end
