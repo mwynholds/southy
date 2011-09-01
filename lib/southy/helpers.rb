@@ -17,7 +17,7 @@ end
 unless defined? Process.daemon
   module Process
     def self.daemon
-      # noop?
+      $stdout = File.new('/dev/null', 'w')
     end
   end
 end
@@ -36,6 +36,26 @@ if RUBY_VERSION =~ /^1\.8/
     def print(obj, *smth)
       print_without_flush obj, smth
       STDOUT.flush
+    end
+  end
+
+  class Array
+    alias :uniq_without_block :uniq
+    def uniq
+      if !block_given?
+        uniq_without_block
+      else
+        keys = []
+        unique = []
+        self.each do |elm|
+          key = yield elm
+          unless keys.include? key
+            unique << elm
+            keys << key
+          end
+        end
+        unique
+      end
     end
   end
 end

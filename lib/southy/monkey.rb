@@ -13,6 +13,15 @@ class Southy::Monkey
     @http = Net::HTTP.new 'www.southwest.com'
     @https = Net::HTTP.new 'www.southwest.com', 443
     @https.use_ssl = true
+
+    certs = File.join File.dirname(__FILE__), "../../etc/certs"
+    if (File.directory? certs)
+      @https.ca_path = certs
+      @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      @https.verify_depth = 5
+    else
+      @https.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
   end
 
   def lookup(conf, first_name, last_name)
