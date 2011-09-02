@@ -7,7 +7,7 @@ class Southy::Service
   end
 
   def run
-    @daemon.run
+    @daemon.start false
   end
 
   def start(persist = false)
@@ -33,7 +33,11 @@ class Southy::Service
 
     print "Stopping Southy..."
     persist_stop if persist
-    Process.kill 'HUP', pid
+    begin
+      Process.kill 'HUP', pid
+    rescue => e
+      @daemon.cleanup
+    end
     ticks = 0
     while pid = get_pid && ticks < 40
       sleep 0.5

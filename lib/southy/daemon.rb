@@ -7,12 +7,12 @@ class Southy::Daemon
     @running = false
   end
 
-  def start
-    Process.daemon
+  def start(daemonize = true)
+    Process.daemon if daemonize
     write_pid
 
-    Signal.trap 'HUP' do
-      kill
+    [ 'HUP', 'INT', 'QUIT' ].each do |sig|
+      Signal.trap(sig) { kill }
     end
 
     run
@@ -42,8 +42,12 @@ class Southy::Daemon
           puts "confirmed #{legs.length} leg#{legs.length == 1 ? '' : 's'}"
         end
       end
-      sleep 2
+      sleep 0.5
     end
+  end
+
+  def cleanup
+    delete_pid
   end
 
   private

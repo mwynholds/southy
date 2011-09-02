@@ -13,7 +13,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/southy</string>
-    <string>start</string>
+    <string>run</string>
   </array>
 </dict>
 </plist>
