@@ -11,7 +11,7 @@ class Southy::Daemon
     Process.daemon if daemonize
     write_pid
 
-    [ 'HUP', 'INT', 'QUIT' ].each do |sig|
+    [ 'HUP', 'INT', 'QUIT', 'TERM' ].each do |sig|
       Signal.trap(sig) { kill }
     end
 
@@ -67,6 +67,6 @@ class Southy::Daemon
   end
 
   def delete_pid
-    File.delete @config.pid_file
+    File.delete @config.pid_file if File.exists? @config.pid_file
   end
 end

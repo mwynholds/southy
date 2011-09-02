@@ -32,12 +32,17 @@ class Southy::Service
     end
 
     print "Stopping Southy..."
-    persist_stop if persist
-    begin
-      Process.kill 'HUP', pid
-    rescue => e
-      @daemon.cleanup
+
+    if persist
+      persist_stop
+    else
+      begin
+        Process.kill 'HUP', pid
+      rescue => e
+        @daemon.cleanup
+      end
     end
+
     ticks = 0
     while pid = get_pid && ticks < 40
       sleep 0.5
@@ -73,9 +78,12 @@ class Southy::Service
 
   def persist_start
     FileUtils.cp PLIST_SRC, PLIST_DEST
+    system "launchctl load -w #{PLIST_DEST}"
   end
 
   def persist_stop
+    system "launchctl unload -w #{File.basename PLIST_DEST}"
     File.delete PLIST_DEST if File.exists? PLIST_DEST
   end
+
 end
