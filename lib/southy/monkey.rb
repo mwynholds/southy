@@ -1,16 +1,12 @@
-#require 'capybara/dsl'
-#require 'capybara-webkit'
 require 'nokogiri'
 require 'net/https'
 require 'fileutils'
 
 class Southy::Monkey
-  #Capybara.default_driver = :webkit
-  #Capybara.app_host = 'http://www.southwest.com'
-  #include Capybara::DSL
 
   def initialize
     @http = Net::HTTP.new 'www.southwest.com'
+    #@http = Net::HTTP.new 'localhost', 9000
     @https = Net::HTTP.new 'www.southwest.com', 443
     @https.use_ssl = true
 
@@ -26,8 +22,10 @@ class Southy::Monkey
 
   def lookup(conf, first_name, last_name)
     request = Net::HTTP::Post.new '/flight/view-air-reservation.html'
-    request.set_form_data :confirmationNumber => conf, :confirmationNumberFirstName => first_name, :confirmationNumberLastName => last_name
-    response = fetch @https.request(request)
+    request.set_form_data :confirmationNumber => conf,
+                          :confirmationNumberFirstName => first_name,
+                          :confirmationNumberLastName => last_name
+    _, response = fetch({}, request, true)
 
     doc = Nokogiri::HTML response.body
     flights = []
@@ -40,60 +38,83 @@ class Southy::Monkey
   end
 
   def checkin(flight)
-    request = Net::HTTP::Post.new '/retrieveCheckinDoc.html'
+    all_cookies = {}
+
+    request = Net::HTTP::Get.new '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
+    _, _ = fetch all_cookies, request
+
+    request = Net::HTTP::Post.new '/flight/retrieveCheckinDoc.html'
+    request['Referer'] = 'http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes'
     request.set_form_data :confirmationNumber => flight.confirmation_number,
                           :firstName => flight.first_name,
-                          :lastName => flight.last_name
-    response = fetch @http.request(request)
+                          :lastName => flight.last_name,
+                          :submitButton => 'Check In'
+    referer, response = fetch all_cookies, request
 
-    doc1 = Nokogiri::HTML response.body
-    checkinOptions = doc1.css '#itineraryLookup'
-    return nil unless checkinOptions
+    doc = Nokogiri::HTML response.body
+    checkin_options = doc.css '#checkinOptions'
+    return nil unless checkin_options
 
-    # still need to do the rest...
+    request = Net::HTTP::Post.new '/flight/selectPrintDocument.html'
+    data = { :printDocuments => 'Check In' }
+    checkin_options.css('.passengerRow').each_with_index do |_, i|
+      data["_checkinPassengers[#{i}].selected"] = 'on'
+      data["checkinPassengers[#{i}].selected"] = 'true'
+    end
+    request['Referer'] = referer
+    request['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:6.0.1) Gecko/20100101 Firefox/6.0.1'
+    request.set_form_data data
+    _, response = fetch all_cookies, request
+
+    doc = Nokogiri::HTML response.body
+    checkin_docs = doc.css '.checkinDocument'
+    return nil unless checkin_docs.length > 0
+
+    docs = []
+    checkin_docs.each do |node|
+      doc = Southy::CheckinDocument.parse(node)
+      doc.flight = flight
+      docs << doc
+    end
+
+    docs
   end
-
-  #def checkin_old(flight)
-  #  visit '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
-  #
-  #  within '#itineraryLookup' do
-  #    fill_in 'confirmationNumber', :with => flight.confirmation_number.ljust(12)
-  #    fill_in 'First Name', :with => flight.first_name.ljust(30)
-  #    fill_in 'Last Name', :with => flight.last_name.ljust(30)
-  #    find('#submitButton').click
-  #  end
-  #
-  #  if ! has_css?('#checkinOptions')
-  #    return nil
-  #  end
-  #
-  #  within '#checkinOptions' do
-  #    all('input[type="checkbox"]').each {|i| check i[:id] }
-  #    find('#printDocumentsButton').click
-  #  end
-  #
-  #  docs = []
-  #  all('.checkinDocument').each do |node|
-  #    doc = Southy::CheckingDocument.parse(node)
-  #    doc.flight = flight
-  #    docs << doc
-  #  end
-  #
-  #  docs
-  #end
 
   private
 
-  def fetch(response)
+  def fetch(all_cookies, request, https = false)
+    set_cookies all_cookies, request
+    response = https ? @https.request(request) : @http.request(request)
+    grab_cookies all_cookies, response
+
+    location = nil
     while response.is_a? Net::HTTPRedirection
       location = response['Location']
+      path = location.sub /^https?:\/\/[^\/]+/, ''
+      request = Net::HTTP::Get.new path
+      set_cookies all_cookies, request
       if location =~ /^https:/
-        response = @https.request Net::HTTP::Get.new(location)
+        response = @https.request request
       else
-        response = @http.request Net::HTTP::Get.new(location)
+        response = @http.request request
       end
+      grab_cookies all_cookies, response
     end
 
-    response
+    [location, response]
+  end
+
+  def set_cookies(all_cookies, request)
+    request['Cookie'] = all_cookies.values.join('; ') if all_cookies.length > 0
+  end
+
+  def grab_cookies(all_cookies, response)
+    cookies = response.get_fields 'Set-Cookie'
+    if cookies
+      cookies.each do |c|
+        name = c.match(/^([^=]+)=/)[1]
+        all_cookies[name] = c.split(';')[0]
+      end
+    end
   end
 end

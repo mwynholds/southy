@@ -84,13 +84,13 @@ class Southy::Flight
   end
 
   def to_s
-    self.list [self]
+    Southy::Flight.list [self]
   end
 
   def <=>(fles)
     return -1 if self.confirmed? && ! fles.confirmed?
     return 1  if fles.confirmed? && ! self.confirmed?
-    return self.to_s <=> fles.to_s if ! self.confirmed?
+    return self.confirmation_number <=> fles.confirmation_number if ! self.confirmed?
     self.depart_date <=> fles.depart_date
   end
 
