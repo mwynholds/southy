@@ -2,7 +2,8 @@ require 'date'
 require 'csv'
 
 class Southy::Flight
-  attr_accessor :first_name, :last_name, :email, :number, :depart_date, :confirmation_number, :depart_airport, :arrive_airport
+  attr_accessor :first_name, :last_name, :email, :number, :depart_date, :confirmation_number,
+                :depart_airport, :arrive_airport, :group, :position
 
   def self.from_dom(container, leg)
     flight = Southy::Flight.new
@@ -37,6 +38,8 @@ class Southy::Flight
     flight.depart_date = pieces[5] ? DateTime.parse(pieces[5]) : nil
     flight.depart_airport = pieces[6]
     flight.arrive_airport = pieces[7]
+    flight.group = pieces[8]
+    flight.position = pieces[9] ? pieces[9].to_i : nil
     flight
   end
 
@@ -69,6 +72,10 @@ class Southy::Flight
     "#{full_name} (#{email})"
   end
 
+  def seat
+    "#{group}#{position}"
+  end
+
   def confirmed?
     ! depart_date.nil?
   end
@@ -78,9 +85,13 @@ class Southy::Flight
     return false if depart_date < DateTime.now  #oops, missed this flight :-)
     depart_date <= DateTime.now + 1
   end
+  
+  def checked_in?
+    group && position
+  end
 
   def to_csv
-    [confirmation_number, first_name, last_name, email, number, depart_date, depart_airport, arrive_airport].to_csv
+    [confirmation_number, first_name, last_name, email, number, depart_date, depart_airport, arrive_airport, group, position].to_csv
   end
 
   def to_s
