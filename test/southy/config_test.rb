@@ -12,6 +12,18 @@ class Southy::ConfigTest < MiniTest::Spec
     def config
       IO.read "#{@config_dir}/config.yml"
     end
+
+    def populate
+      File.open "#{@config_dir}/flights.csv", 'w' do |file|
+        file.puts "AA,F,L,,,,,"
+        file.puts "BB,F,L,,,,,"
+        file.puts "CC,F,L,,1,#{DateTime.now + 2},LAX,SFO"
+        file.puts "DD,F,L,,1,#{DateTime.now + 1},LAX,SFO"
+        file.puts "EE,F,L,,1,#{DateTime.now - 1},LAX,SFO"
+        file.puts "FF,F,L,,1,#{DateTime.now - 2},LAX,SFO"
+      end
+      @config.reload
+    end
   end
 
   describe 'Config' do
@@ -114,9 +126,31 @@ class Southy::ConfigTest < MiniTest::Spec
       end
     end
 
+    describe '#unconfirmed' do
+      it 'returns unconfirmed flights' do
+        populate
+        @config.unconfirmed.map(&:confirmation_number).must_equal ['AA', 'BB']
+      end
+    end
+
+    describe '#upcoming' do
+      it 'returns upcoming flights' do
+        populate
+        @config.upcoming.map(&:confirmation_number).must_equal ['CC', 'DD']
+      end
+    end
+
+    describe '#past' do
+      it 'returns past flights' do
+        populate
+        @config.past.map(&:confirmation_number).must_equal ['EE', 'FF']
+      end
+    end
+
     after do
       FileUtils.remove_entry_secure @config_dir if Dir.exists? @config_dir
     end
 
   end
+
 end

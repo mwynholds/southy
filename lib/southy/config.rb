@@ -47,8 +47,16 @@ class Southy::Config
     dump_flights
   end
 
+  def unconfirmed
+    @flights.select { |f| ! f.confirmed? }
+  end
+
   def upcoming
-    @flights
+    @flights.select { |f| f.confirmed? && f.depart_date > DateTime.now }
+  end
+
+  def past
+    @flights.select { |f| f.confirmed? && f.depart_date <= DateTime.now }
   end
 
   def list
