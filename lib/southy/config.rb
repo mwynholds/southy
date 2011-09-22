@@ -60,12 +60,14 @@ class Southy::Config
   end
 
   def list
-    puts "Upcoming Southwest flights:"
-    Southy::Flight.list @flights
+    puts 'Upcoming Southwest flights:'
+    Southy::Flight.list upcoming
+    Southy::Flight.list unconfirmed
   end
 
   def history
-    puts 'History is not yet implemented'
+    puts 'Previous Southwest flights:'
+    Southy::Flight.list past
   end
 
   def reload(options = {})
