@@ -7,16 +7,18 @@ module Southy
   require 'southy/daemon'
   require 'southy/checkin_document'
   require 'southy/flight'
+  require 'southy/travel_agent'
 
   class CLI
     def initialize(opts)
       @options = { :write => false }.merge opts
       check_options
 
-      @monkey = Monkey.new
-      @config = Config.new
-      daemon = Daemon.new @config, @monkey
-      @service = Service.new @config, daemon
+      config = Config.new
+      monkey = TestMonkey.new
+      @agent = TravelAgent.new(config, monkey)
+      daemon = Daemon.new(@agent)
+      @service = Service.new(@agent, daemon)
     end
 
     def run(params)
@@ -40,27 +42,27 @@ module Southy
     end
 
     def init(params)
-      @config.init *params
+      @agent.config.init *params
     end
 
     def add(params)
-      @config.add *params
+      @agent.config.add *params
     end
 
     def remove(params)
-      @config.remove *params
+      @agent.config.remove *params
     end
 
     def confirm(params)
-      @config.upcoming.uniq {|f| f.confirmation_number}.each do |flight|
+      @agent.config.unconfirmed.uniq {|f| f.confirmation_number}.each do |flight|
 
         print "Confirming #{flight.confirmation_number} for #{flight.full_name}... "
-        flights = @monkey.lookup(flight.confirmation_number, flight.first_name, flight.last_name)
+        flights = @agent.monkey.lookup(flight.confirmation_number, flight.first_name, flight.last_name)
         if flights.length > 0
-          @config.remove flight.confirmation_number
+          @agent.config.remove flight.confirmation_number
           flights.each do |f|
             f.email = flight.email
-            @config.confirm f
+            @agent.config.confirm f
           end
           puts "success"
         else
@@ -70,14 +72,14 @@ module Southy
     end
 
     def checkin(params)
-      @config.upcoming.each do |flight|
+      @agent.config.upcoming.each do |flight|
         print "Checking in #{flight.confirmation_number}... "
         if flight.checkin_available?
-          docs = @monkey.checkin flight
-          if docs.nil?
+          flights = @agent.monkey.checkin flight
+          if flights.nil?
             puts "failed"
           else
-            puts docs.map(&:seat).join(', ')
+            puts flights.map(&:seat).join(', ')
           end
         else
           puts "not available"
@@ -86,15 +88,15 @@ module Southy
     end
 
     def list(params)
-      @config.list
+      @agent.config.list
     end
 
     def history(params)
-      @config.history
+      @agent.config.history
     end
 
     def test(params)
-      flights = @monkey.lookup('WZAR5K', 'Madeleine', 'Wynholds')
+      flights = @agent.monkey.lookup('WZAR5K', 'Madeleine', 'Wynholds')
       #flights += @monkey.lookup('WQNR57', 'Michael', 'Wynholds')
       flights.each { |f| puts f }
     end

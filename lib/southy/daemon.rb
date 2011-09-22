@@ -1,8 +1,7 @@
 class Southy::Daemon
 
-  def initialize(config, monkey)
-    @config = config
-    @monkey = monkey
+  def initialize(travel_agent)
+    @agent = travel_agent
     @active = true
     @running = false
   end
@@ -23,10 +22,10 @@ class Southy::Daemon
     puts "Southy is running."
     while active? do
       @running = true
-      @config.reload
-      @config.upcoming.each do |flight|
+      @agent.config.reload
+      @agent.config.upcoming.each do |flight|
         if flight.checkin_available?
-          docs = @monkey.checkin flight
+          docs = @agent.monkey.checkin flight
           if docs
             docs.each do |doc|
               puts "Should email PDF here"
@@ -34,10 +33,10 @@ class Southy::Daemon
           end
         elsif !flight.confirmed?
           print "Confirming flight #{flight.confirmation_number}... "
-          legs = @monkey.lookup flight.confirmation_number, flight.first_name, flight.last_name
+          legs = @agent.monkey.lookup flight.confirmation_number, flight.first_name, flight.last_name
           legs.each do |f|
             f.email = flight.email
-            @config.confirm f
+            @agent.config.confirm f
           end
           puts "confirmed #{legs.length} leg#{legs.length == 1 ? '' : 's'}"
         end
@@ -61,12 +60,12 @@ class Southy::Daemon
   end
 
   def write_pid
-    File.open @config.pid_file, 'w' do |f|
+    File.open @agent.config.pid_file, 'w' do |f|
       f.write Process.pid.to_s
     end
   end
 
   def delete_pid
-    File.delete @config.pid_file if File.exists? @config.pid_file
+    File.delete @agent.config.pid_file if File.exists? @agent.config.pid_file
   end
 end

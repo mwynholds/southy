@@ -70,14 +70,16 @@ class Southy::Monkey
     checkin_docs = doc.css '.checkinDocument'
     return nil unless checkin_docs.length > 0
 
-    docs = []
+    flights = []
     checkin_docs.each do |node|
       doc = Southy::CheckinDocument.parse(node)
-      doc.flight = flight
-      docs << doc
+      f = flight.dup
+      f.group = doc.group
+      f.position = doc.position
+      flights << f
     end
 
-    docs
+    flights
   end
 
   private
@@ -116,5 +118,19 @@ class Southy::Monkey
         all_cookies[name] = c.split(';')[0]
       end
     end
+  end
+end
+
+class Southy::TestMonkey
+  def lookup(conf, first_name, last_name)
+    date = DateTime.now + rand(20) + 1
+    [ Southy::Flight.new(:first_name => first_name, :last_name => last_name, :confirmation_number => conf,
+                         :number => 123, :depart_date => date, :depart_airport => 'LAX', :arrive_airport => 'SFO') ]
+  end
+
+  def checkin(flight)
+    flight.group = %w(A B C)[rand(3)]
+    flight.position = rand(60) + 1
+    [ flight ]
   end
 end

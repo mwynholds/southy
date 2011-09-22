@@ -1,8 +1,8 @@
 require 'fileutils'
 
 class Southy::Service
-  def initialize(config, daemon)
-    @config = config
+  def initialize(travel_agent, daemon)
+    @agent = travel_agent
     @daemon = daemon
   end
 
@@ -69,8 +69,8 @@ class Southy::Service
   private
 
   def get_pid
-    return nil unless File.exists? @config.pid_file
-    IO.read(@config.pid_file).to_i
+    return nil unless File.exists? @agent.config.pid_file
+    IO.read(@agent.config.pid_file).to_i
   end
 
   PLIST_SRC = File.join(File.dirname(__FILE__), '../../etc/wynholds.mike.southy.plist')
