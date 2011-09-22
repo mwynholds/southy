@@ -5,12 +5,24 @@ require 'yaml'
 class Southy::ConfigTest < MiniTest::Spec
 
   module Helpers
-    def upcoming
-      IO.read "#{@config_dir}/upcoming"
+    def flights
+      IO.read "#{@config_dir}/flights.csv"
     end
 
     def config
       IO.read "#{@config_dir}/config.yml"
+    end
+
+    def populate
+      File.open "#{@config_dir}/flights.csv", 'w' do |file|
+        file.puts "AA,F,L,,,,,,,"
+        file.puts "BB,F,L,,,,,,,"
+        file.puts "CC,F,L,,1,#{DateTime.now + 2},LAX,SFO,,"
+        file.puts "DD,F,L,,1,#{DateTime.now + 1},LAX,SFO,,"
+        file.puts "EE,F,L,,1,#{DateTime.now - 1},LAX,SFO,,"
+        file.puts "FF,F,L,,1,#{DateTime.now - 2},LAX,SFO,,"
+      end
+      @config.reload
     end
   end
 
@@ -41,7 +53,7 @@ class Southy::ConfigTest < MiniTest::Spec
             @config.add 'GHIJKL', 'One', 'Two', 'otwo@internet.com'
           end
           it 'adds the flight' do
-            upcoming.must_equal "ABCDEF,First,Last,,,,,\nGHIJKL,One,Two,otwo@internet.com,,,,\n"
+            flights.must_equal "ABCDEF,First,Last,,,,,,,\nGHIJKL,One,Two,otwo@internet.com,,,,,,\n"
           end
         end
       end
@@ -53,7 +65,7 @@ class Southy::ConfigTest < MiniTest::Spec
             @config.add 'ABCDEF', 'One', 'Two'
           end
           it 'adds the flight' do
-            upcoming.must_equal "ABCDEF,One,Two,,,,,\n"
+            flights.must_equal "ABCDEF,One,Two,,,,,,,\n"
           end
         end
 
@@ -63,7 +75,7 @@ class Southy::ConfigTest < MiniTest::Spec
             @config.add 'ABCDEF'
           end
           it 'adds the flight' do
-            upcoming.must_equal "ABCDEF,First,Last,,,,,\n"
+            flights.must_equal "ABCDEF,First,Last,,,,,,,\n"
           end
         end
       end
@@ -75,7 +87,7 @@ class Southy::ConfigTest < MiniTest::Spec
             @config.add 'ABCDEF', 'One', 'Two'
           end
           it 'adds the flight' do
-            upcoming.must_equal "ABCDEF,One,Two,flast@internet.com,,,,\n"
+            flights.must_equal "ABCDEF,One,Two,flast@internet.com,,,,,,\n"
           end
         end
 
@@ -85,7 +97,7 @@ class Southy::ConfigTest < MiniTest::Spec
             @config.add 'ABCDEF'
           end
           it 'adds the flight' do
-            upcoming.must_equal "ABCDEF,First,Last,flast@internet.com,,,,\n"
+            flights.must_equal "ABCDEF,First,Last,flast@internet.com,,,,,,\n"
           end
         end
       end
@@ -98,7 +110,7 @@ class Southy::ConfigTest < MiniTest::Spec
         @config.remove 'ABCDEF'
       end
       it 'removes the flight' do
-        upcoming.must_equal "GHIJKL,One,Two,,,,,\n"
+        flights.must_equal "GHIJKL,One,Two,,,,,,,\n"
       end
     end
 
@@ -110,7 +122,28 @@ class Southy::ConfigTest < MiniTest::Spec
       end
 
       it 'updates the flight' do
-        upcoming.must_equal "ABCDEF,First,Last,,1234,2015-01-01T00:00:00+00:00,LAX,SFO\nGHIJKL,First,Last,,,,,\n"
+        flights.must_equal "ABCDEF,First,Last,,1234,2015-01-01T00:00:00+00:00,LAX,SFO,,\nGHIJKL,First,Last,,,,,,,\n"
+      end
+    end
+
+    describe '#unconfirmed' do
+      it 'returns unconfirmed flights' do
+        populate
+        @config.unconfirmed.map(&:confirmation_number).must_equal ['AA', 'BB']
+      end
+    end
+
+    describe '#upcoming' do
+      it 'returns upcoming flights' do
+        populate
+        @config.upcoming.map(&:confirmation_number).must_equal ['CC', 'DD']
+      end
+    end
+
+    describe '#past' do
+      it 'returns past flights' do
+        populate
+        @config.past.map(&:confirmation_number).must_equal ['EE', 'FF']
       end
     end
 
@@ -119,4 +152,5 @@ class Southy::ConfigTest < MiniTest::Spec
     end
 
   end
+
 end

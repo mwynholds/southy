@@ -2,7 +2,7 @@ require 'tmpdir'
 require 'yaml'
 
 class Southy::Config
-  attr_reader :config, :upcoming, :pid_file
+  attr_reader :config, :flights, :pid_file
 
   def initialize(config_dir = nil)
     @dir = config_dir || "#{ENV['HOME']}/.southy"
@@ -12,7 +12,7 @@ class Southy::Config
 
     @timestamps = {}
     load_config :force => true
-    load_upcoming :force => true
+    load_flights :force => true
   end
 
   def init(first_name, last_name, email = nil)
@@ -29,37 +29,51 @@ class Southy::Config
     flight.last_name = last_name || @config[:last_name]
     flight.email = email || @config[:email]
 
-    @upcoming << flight
+    @flights << flight
 
-    File.open upcoming_file, 'a' do |f|
+    File.open flights_file, 'a' do |f|
       f.write flight.to_csv
     end
   end
 
   def confirm(flight)
-    @upcoming.delete_if { |f| f.confirmation_number == flight.confirmation_number and ! f.confirmed? }
-    @upcoming << flight
-    dump_upcoming
+    @flights.delete_if { |f| f.confirmation_number == flight.confirmation_number and ! f.confirmed? }
+    @flights << flight
+    dump_flights
   end
 
   def remove(conf)
-    @upcoming.delete_if { |flight| flight.confirmation_number == conf.upcase.gsub(/0/, 'O') }
-    dump_upcoming
+    @flights.delete_if { |flight| flight.confirmation_number == conf.upcase.gsub(/0/, 'O') }
+    dump_flights
+  end
+
+  def unconfirmed
+    @flights.select { |f| ! f.confirmed? }
+  end
+
+  def upcoming
+    @flights.select { |f| f.confirmed? && f.depart_date > DateTime.now }
+  end
+
+  def past
+    @flights.select { |f| f.confirmed? && f.depart_date <= DateTime.now }
   end
 
   def list
-    puts "Upcoming Southwest flights:"
-    Southy::Flight.list @upcoming
+    puts 'Upcoming Southwest flights:'
+    Southy::Flight.list upcoming
+    Southy::Flight.list unconfirmed
   end
 
   def history
-    puts 'History is not yet implemented'
+    puts 'Previous Southwest flights:'
+    Southy::Flight.list past
   end
 
   def reload(options = {})
     options = { :force => false }.merge options
     load_config options
-    load_upcoming options
+    load_flights options
   end
 
   private
@@ -71,17 +85,17 @@ class Southy::Config
     @config ||= {}
   end
 
-  def load_upcoming(options)
-    @upcoming = if_updated? upcoming_file, options do
-      IO.read(upcoming_file).split("\n").map {|line| Southy::Flight.from_csv(line)}
+  def load_flights(options)
+    @flights = if_updated? flights_file, options do
+      IO.read(flights_file).split("\n").map {|line| Southy::Flight.from_csv(line)}
     end
-    @upcoming ||= []
+    @flights ||= []
   end
 
-  def dump_upcoming
-    @upcoming.sort!
-    File.open upcoming_file, 'w' do |f|
-      @upcoming.each do |flight|
+  def dump_flights
+    @flights.sort!
+    File.open flights_file, 'w' do |f|
+      @flights.each do |flight|
         f.write flight.to_csv
       end
     end
@@ -91,8 +105,8 @@ class Southy::Config
     "#{@dir}/config.yml"
   end
 
-  def upcoming_file
-    "#{@dir}/upcoming"
+  def flights_file
+    "#{@dir}/flights.csv"
   end
 
   def if_updated?(file_name, options)
