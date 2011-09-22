@@ -28,13 +28,13 @@ class Southy::Monkey
     _, response = fetch({}, request, true)
 
     doc = Nokogiri::HTML response.body
-    flights = []
+    legs = []
     doc.css('.itinerary_container').each do |container|
       container.css('.airProductItineraryTable').each do |node|
-        flights << Southy::Flight.from_dom(container, node)
+        legs << Southy::Flight.from_dom(container, node)
       end
     end
-    flights
+    legs
   end
 
   def checkin(flight)

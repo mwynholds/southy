@@ -50,8 +50,10 @@ class Southy::Flight
       num = lj "SW#{f.number}", 6
       fn = lj f.full_name, max_name
       em = lj(f.email || "--", max_email)
+      seat = f.checked_in? ? " --> #{f.seat}" : ''
       if f.confirmed?
-        puts "#{f.confirmation_number} - #{num}: #{fn}  #{em}  #{f.depart_date.strftime('%F %l:%M%P')} #{f.depart_airport} -> #{f.arrive_airport}"
+        print "#{f.confirmation_number} - #{num}: #{fn}  #{em}  #{f.depart_date.strftime('%F %l:%M%P')} "
+        puts "#{f.depart_airport} -> #{f.arrive_airport}#{seat}"
       else
         puts "#{f.confirmation_number} - SW????: #{fn}  #{em}"
       end
@@ -82,6 +84,7 @@ class Southy::Flight
 
   def checkin_available?
     return false unless confirmed?
+    return false if checked_in?
     return false if depart_date < DateTime.now  #oops, missed this flight :-)
     depart_date <= DateTime.now + 1
   end

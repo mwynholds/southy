@@ -14,9 +14,9 @@ module Southy
       @options = { :write => false }.merge opts
       check_options
 
-      config = Config.new
+      @config = Config.new
       monkey = TestMonkey.new
-      @agent = TravelAgent.new(config, monkey)
+      @agent = TravelAgent.new(@config, monkey)
       daemon = Daemon.new(@agent)
       @service = Service.new(@agent, daemon)
     end
@@ -42,28 +42,21 @@ module Southy
     end
 
     def init(params)
-      @agent.config.init *params
+      @config.init *params
     end
 
     def add(params)
-      @agent.config.add *params
+      @config.add *params
     end
 
     def remove(params)
-      @agent.config.remove *params
+      @config.remove *params
     end
 
     def confirm(params)
-      @agent.config.unconfirmed.uniq {|f| f.confirmation_number}.each do |flight|
-
+      @config.unconfirmed.uniq {|f| f.confirmation_number}.each do |flight|
         print "Confirming #{flight.confirmation_number} for #{flight.full_name}... "
-        flights = @agent.monkey.lookup(flight.confirmation_number, flight.first_name, flight.last_name)
-        if flights.length > 0
-          @agent.config.remove flight.confirmation_number
-          flights.each do |f|
-            f.email = flight.email
-            @agent.config.confirm f
-          end
+        if @agent.confirm(flight)
           puts "success"
         else
           puts "failure"
@@ -72,27 +65,23 @@ module Southy
     end
 
     def checkin(params)
-      @agent.config.upcoming.each do |flight|
+      @config.upcoming.each do |flight|
         print "Checking in #{flight.confirmation_number}... "
-        if flight.checkin_available?
-          flights = @agent.monkey.checkin flight
-          if flights.nil?
-            puts "failed"
-          else
-            puts flights.map(&:seat).join(', ')
-          end
+        flights = @agent.checkin(flight)
+        if flights.nil?
+          puts 'not available'
         else
-          puts "not available"
+          puts flights.map(&:seat).join(', ')
         end
       end
     end
 
     def list(params)
-      @agent.config.list
+      @config.list
     end
 
     def history(params)
-      @agent.config.history
+      @config.history
     end
 
     def test(params)

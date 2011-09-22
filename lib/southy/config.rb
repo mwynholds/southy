@@ -42,6 +42,16 @@ class Southy::Config
     dump_flights
   end
 
+  def checkin(flight)
+    @flights.delete_if do |f|
+      f.confirmation_number == flight.confirmation_number &&
+      f.depart_date == flight.depart_date &&
+      f.full_name == flight.full_name
+    end
+    @flights << flight
+    dump_flights
+  end
+
   def remove(conf)
     @flights.delete_if { |flight| flight.confirmation_number == conf.upcase.gsub(/0/, 'O') }
     dump_flights
