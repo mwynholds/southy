@@ -31,7 +31,7 @@ class Southy::Monkey
     legs = []
     doc.css('.itinerary_container').each do |container|
       container.css('.airProductItineraryTable').each do |node|
-        legs << Southy::Flight.from_dom(container, node)
+        legs << Southy::Flight.new.apply_confirmation(container, node)
       end
     end
     legs
@@ -72,11 +72,7 @@ class Southy::Monkey
 
     flights = []
     checkin_docs.each do |node|
-      doc = Southy::CheckinDocument.parse(node)
-      f = flight.dup
-      f.group = doc.group
-      f.position = doc.position
-      flights << f
+      flights << flight.dup.apply_checkin(node)
     end
 
     flights

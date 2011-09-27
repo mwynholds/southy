@@ -5,7 +5,6 @@ module Southy
   require 'southy/service'
   require 'southy/config'
   require 'southy/daemon'
-  require 'southy/checkin_document'
   require 'southy/flight'
   require 'southy/travel_agent'
 

@@ -5,28 +5,6 @@ class Southy::Flight
   attr_accessor :first_name, :last_name, :email, :number, :depart_date, :confirmation_number,
                 :depart_airport, :arrive_airport, :group, :position
 
-  def self.from_dom(container, leg)
-    flight = Southy::Flight.new
-    names = container.css('.passenger_row_name').text.split.map &:capitalize
-    flight.first_name = names[0]
-    flight.last_name = names[1]
-
-    flight.confirmation_number = container.css('.confirmation_number').text
-
-    leg_pieces = leg.css('.segmentsCell.firstSegmentCell .segmentLegDetails')
-    leg_depart = leg_pieces[0]
-    leg_arrive = leg_pieces[1]
-    
-    date = leg.css('.travelTimeCell .departureLongDate').text
-    time = leg_depart.css('.segmentTime').text + leg_depart.css('.segmentTimeAMPM').text
-    flight.number = leg.css('.flightNumberCell.firstSegmentCell div')[1].text.sub(/^#/, '')
-    flight.depart_date = DateTime.parse("#{date} #{time}")
-    flight.depart_airport = leg_depart.css('.segmentCityName').text
-    flight.arrive_airport = leg_arrive.css('.segmentCityName').text
-
-    flight
-  end
-
   def self.from_csv(line)
     pieces = line.parse_csv
     flight = Southy::Flight.new
@@ -64,6 +42,35 @@ class Southy::Flight
     attrs.each do |n,v|
       self.send "#{n}=".to_sym, v
     end
+  end
+
+  def apply_confirmation(container, leg)
+    names = container.css('.passenger_row_name').text.split.map &:capitalize
+    self.first_name = names[0]
+    self.last_name = names[1]
+
+    self.confirmation_number = container.css('.confirmation_number').text
+
+    leg_pieces = leg.css('.segmentsCell.firstSegmentCell .segmentLegDetails')
+    leg_depart = leg_pieces[0]
+    leg_arrive = leg_pieces[1]
+
+    date = leg.css('.travelTimeCell .departureLongDate').text
+    time = leg_depart.css('.segmentTime').text + leg_depart.css('.segmentTimeAMPM').text
+    self.number = leg.css('.flightNumberCell.firstSegmentCell div')[1].text.sub(/^#/, '')
+    self.depart_date = DateTime.parse("#{date} #{time}")
+    self.depart_airport = leg_depart.css('.segmentCityName').text
+    self.arrive_airport = leg_arrive.css('.segmentCityName').text
+
+    self
+  end
+
+  def apply_checkin(node)
+    self.group = node.css('.group')[0][:alt]
+    digits = node.css('.position').map { |p| p[:alt].to_i }
+    self.position = digits[0] * 10 + digits[1]
+
+    self
   end
 
   def full_name
