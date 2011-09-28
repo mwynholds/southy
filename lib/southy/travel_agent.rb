@@ -7,12 +7,12 @@ class Southy::TravelAgent
     @monkey = monkey
   end
 
-  def confirm(flight)
-    legs = @monkey.lookup(flight.confirmation_number, flight.first_name, flight.last_name)
+  def confirm(flight_info)
+    legs = @monkey.lookup(flight_info.confirmation_number, flight_info.first_name, flight_info.last_name)
     if legs.length > 0
-      @config.remove flight.confirmation_number
+      @config.remove flight_info.confirmation_number
       legs.each do |leg|
-        leg.email = flight.email
+        leg.email = flight_info.email
         @config.confirm leg
       end
     end

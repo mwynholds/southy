@@ -51,13 +51,13 @@ class Southy::Flight
 
     self.confirmation_number = container.css('.confirmation_number').text
 
-    leg_pieces = leg.css('.segmentsCell.firstSegmentCell .segmentLegDetails')
+    leg_pieces = leg.css('.segmentsCell .segmentLegDetails')
     leg_depart = leg_pieces[0]
     leg_arrive = leg_pieces[1]
 
     date = leg.css('.travelTimeCell .departureLongDate').text
     time = leg_depart.css('.segmentTime').text + leg_depart.css('.segmentTimeAMPM').text
-    self.number = leg.css('.flightNumberCell.firstSegmentCell div')[1].text.sub(/^#/, '')
+    self.number = leg.css('.flightNumberCell div')[1].text.sub(/^#/, '')
     self.depart_date = DateTime.parse("#{date} #{time}")
     self.depart_airport = leg_depart.css('.segmentCityName').text
     self.arrive_airport = leg_arrive.css('.segmentCityName').text

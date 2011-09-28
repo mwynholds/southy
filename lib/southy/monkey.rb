@@ -29,9 +29,12 @@ class Southy::Monkey
 
     doc = Nokogiri::HTML response.body
     legs = []
-    doc.css('.itinerary_container').each do |container|
-      container.css('.airProductItineraryTable').each do |node|
-        legs << Southy::Flight.new.apply_confirmation(container, node)
+    doc.css('.itinerary_container').each do |container_node|
+      container_node.css('.airProductItineraryTable').each do |table_node|
+        leg_nodes = table_node.css('tr.whiteRow') + table_node.css('tr.grayRow')
+        leg_nodes.each do |leg_node|
+          legs << Southy::Flight.new.apply_confirmation(container_node, leg_node)
+        end
       end
     end
     legs
