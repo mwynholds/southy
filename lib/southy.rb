@@ -14,7 +14,7 @@ module Southy
       check_options
 
       @config = Config.new
-      monkey = Monkey.new
+      monkey = TestMonkey.new
       @agent = TravelAgent.new(@config, monkey)
       daemon = Daemon.new(@agent)
       @service = Service.new(@agent, daemon)
@@ -55,7 +55,8 @@ module Southy
     def confirm(params)
       @config.unconfirmed.uniq {|f| f.confirmation_number}.each do |flight|
         print "Confirming #{flight.confirmation_number} for #{flight.full_name}... "
-        if @agent.confirm(flight)
+        flights = @agent.confirm(flight)
+        if flights && ! flights.empty?
           puts "success"
         else
           puts "failure"

@@ -35,10 +35,6 @@ Supported commands:
 where email is always optional.  Southy will email your boarding pass to you if it can.
 
 -w will persist the start/stop command so the agent will load on startup or never load, respectively.
-
-Example:
-
-
 EOS
 end
 option_parser.parse!
