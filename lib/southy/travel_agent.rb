@@ -24,10 +24,11 @@ class Southy::TravelAgent
   def checkin(flight)
     if flight.checkin_available?
       legs = @monkey.checkin(flight)
-      raise "Too many legs for flight: #{flight.confirmation_number}" if legs.size > 1
       if legs.size > 0
-        @config.checkin(legs[0]) if legs.size > 0
-        send_email(legs[0])
+        legs.each do |leg|
+          @config.checkin(leg)
+          send_email(leg)
+        end
       end
       legs
     else

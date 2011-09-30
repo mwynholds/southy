@@ -25,16 +25,7 @@ class Southy::Flight
     max_name = flights.map { |f| f.full_name.length }.max
     max_email = flights.map { |f| f.email ? f.email.length : 0 }.max
     flights.each do |f|
-      num = lj "SW#{f.number}", 6
-      fn = lj f.full_name, max_name
-      em = lj(f.email || "--", max_email)
-      seat = f.checked_in? ? " *** #{f.seat}" : ''
-      if f.confirmed?
-        print "#{f.confirmation_number} - #{num}: #{fn}  #{em}  #{f.depart_date.strftime('%F %l:%M%P')} "
-        puts "#{f.depart_airport} -> #{f.arrive_airport}#{seat}"
-      else
-        puts "#{f.confirmation_number} - SW????: #{fn}  #{em}"
-      end
+      puts f.to_s(max_name, max_email)
     end
   end
 
@@ -44,23 +35,24 @@ class Southy::Flight
     end
   end
 
-  def apply_confirmation(container, leg)
+  def apply_confirmation(container, first_leg, leg)
     names = container.css('.passenger_row_name').text.split.map &:capitalize
     self.first_name = names[0]
     self.last_name = names[1]
 
-    self.confirmation_number = container.css('.confirmation_number').text
+    self.confirmation_number = container.css('.confirmation_number').text.strip
 
     leg_pieces = leg.css('.segmentsCell .segmentLegDetails')
     leg_depart = leg_pieces[0]
     leg_arrive = leg_pieces[1]
 
-    date = leg.css('.travelTimeCell .departureLongDate').text
-    time = leg_depart.css('.segmentTime').text + leg_depart.css('.segmentTimeAMPM').text
+    date = leg.css('.travelTimeCell .departureLongDate').text.strip
+    date = first_leg.css('.travelTimeCell .departureLongDate').text.strip if date.empty?
+    time = leg_depart.css('.segmentTime').text + leg_depart.css('.segmentTimeAMPM').text.strip
     self.number = leg.css('.flightNumberCell div')[1].text.sub(/^#/, '')
     self.depart_date = DateTime.parse("#{date} #{time}")
-    self.depart_airport = leg_depart.css('.segmentCityName').text
-    self.arrive_airport = leg_arrive.css('.segmentCityName').text
+    self.depart_airport = leg_depart.css('.segmentCityName').text.strip
+    self.arrive_airport = leg_arrive.css('.segmentCityName').text.strip
 
     self
   end
@@ -95,7 +87,7 @@ class Southy::Flight
     return false if depart_date < DateTime.now  #oops, missed this flight :-)
     depart_date <= DateTime.now + 1
   end
-  
+
   def checked_in?
     group && position
   end
@@ -104,8 +96,18 @@ class Southy::Flight
     [confirmation_number, first_name, last_name, email, number, depart_date, depart_airport, arrive_airport, group, position].to_csv
   end
 
-  def to_s
-    Southy::Flight.list [self]
+  def to_s(max_name = 0, max_email = 0)
+    f = self
+    num = lj "SW#{f.number}", 6
+    fn = lj f.full_name, max_name
+    em = lj(f.email || "--", max_email)
+    seat = f.checked_in? ? " *** #{f.seat}" : ''
+    if f.confirmed?
+      "#{f.confirmation_number} - #{num}: #{fn}  #{em}  #{f.depart_date.strftime('%F %l:%M%P')} " + \
+      "#{f.depart_airport} -> #{f.arrive_airport}#{seat}"
+    else
+      "#{f.confirmation_number} - SW????: #{fn}  #{em}"
+    end
   end
 
   def <=>(fles)
@@ -117,7 +119,7 @@ class Southy::Flight
 
   private
 
-  def self.lj(str, max)
+  def lj(str, max)
     str and max > 0 ? str.ljust(max, ' ') : str
   end
 end

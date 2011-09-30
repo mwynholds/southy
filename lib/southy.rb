@@ -14,7 +14,7 @@ module Southy
       check_options
 
       @config = Config.new
-      monkey = TestMonkey.new
+      monkey = Monkey.new
       @agent = TravelAgent.new(@config, monkey)
       daemon = Daemon.new(@agent)
       @service = Service.new(@agent, daemon)
@@ -66,7 +66,7 @@ module Southy
 
     def checkin(params)
       @config.upcoming.each do |flight|
-        print "Checking in #{flight.confirmation_number}... "
+        print "Checking in #{flight.confirmation_number} (SW#{flight.number}) for #{flight.full_name}... "
         flights = @agent.checkin(flight)
         if flights.nil?
           puts 'not available'

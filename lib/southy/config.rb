@@ -45,6 +45,7 @@ class Southy::Config
   def checkin(flight)
     @flights.delete_if do |f|
       f.confirmation_number == flight.confirmation_number &&
+      f.number == flight.number &&
       f.depart_date == flight.depart_date &&
       f.full_name == flight.full_name
     end

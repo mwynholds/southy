@@ -32,8 +32,11 @@ class Southy::Monkey
     doc.css('.itinerary_container').each do |container_node|
       container_node.css('.airProductItineraryTable').each do |table_node|
         leg_nodes = table_node.css('tr.whiteRow') + table_node.css('tr.grayRow')
-        leg_nodes.each do |leg_node|
-          legs << Southy::Flight.new.apply_confirmation(container_node, leg_node)
+        if leg_nodes.length > 0
+          first_leg_node = leg_nodes[0]
+          leg_nodes.each do |leg_node|
+            legs << Southy::Flight.new.apply_confirmation(container_node, first_leg_node, leg_node)
+          end
         end
       end
     end
@@ -75,7 +78,9 @@ class Southy::Monkey
 
     flights = []
     checkin_docs.each do |node|
-      flights << flight.dup.apply_checkin(node)
+      if node.css('.flight_number').text.strip == flight.number
+        flights << flight.clone.apply_checkin(node)
+      end
     end
 
     flights
