@@ -3,6 +3,7 @@ PATH
   specs:
     southy (0.1)
       nokogiri
+      tzinfo
 
 GEM
   remote: http://rubygems.org/
@@ -14,6 +15,7 @@ GEM
     minitest (2.5.1)
     nokogiri (1.5.0)
     rake (0.8.7)
+    tzinfo (0.3.30)
 
 PLATFORMS
   ruby
