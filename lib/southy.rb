@@ -7,6 +7,7 @@ module Southy
   require 'southy/daemon'
   require 'southy/flight'
   require 'southy/travel_agent'
+  require 'southy/timezones'
 
   class CLI
     def initialize(opts)
@@ -53,15 +54,11 @@ module Southy
     end
 
     def confirm(params)
-      @config.unconfirmed.uniq {|f| f.confirmation_number}.each do |flight|
-        print "Confirming #{flight.confirmation_number} for #{flight.full_name}... "
-        flights = @agent.confirm(flight)
-        if flights && ! flights.empty?
-          puts "success"
-        else
-          puts "failure"
-        end
-      end
+      confirm_flights(@config.unconfirmed)
+    end
+
+    def reconfirm(params)
+      confirm_flights(@config.unconfirmed + @config.upcoming)
     end
 
     def checkin(params)
@@ -100,5 +97,18 @@ module Southy
         end
       end
     end
+
+    def confirm_flights(to_confirm)
+      to_confirm.uniq {|f| f.confirmation_number}.each do |flight|
+        print "Confirming #{flight.confirmation_number} for #{flight.full_name}... "
+        flights = @agent.confirm(flight)
+        if flights && ! flights.empty?
+          puts "success"
+        else
+          puts "failure"
+        end
+      end
+    end
+
   end
 end

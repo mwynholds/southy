@@ -5,7 +5,7 @@ require 'optparse'
 require 'southy'
 
 config = { :write => false }
-operations = %w(init run start stop restart confirm checkin status add remove list history test)
+operations = %w(init run start stop restart confirm reconfirm checkin status add remove list history test)
 
 option_parser = OptionParser.new do |opts|
   opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [command] [options]"
@@ -23,8 +23,9 @@ Supported commands:
  history                             Display past flight check-ins
  add <conf> [<personal_info>]        Add a new check-in
  remove <conf>                       Remove a check-in
- confirm                             (Re)confirm all flights (picks up any ticketing changes)
- checkin                             (Re)check-in for all flights
+ confirm                             Confirm all unconfirmed flights
+ reconfirm                           Reconfirm all flights (picks up any ticketing changes)
+ checkin                             Check-in for all available flights
  run                                 Run Southy in the foreground (kill with ctrl-c)
  start [-w]                          Start Southy so that it can check you in
  stop [-w]                           Stop Southy

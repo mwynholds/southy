@@ -1,9 +1,11 @@
 require 'date'
 require 'csv'
+require 'tzinfo'
 
 class Southy::Flight
   attr_accessor :first_name, :last_name, :email, :number, :depart_date, :confirmation_number,
-                :depart_airport, :arrive_airport, :group, :position
+                :depart_airport, :depart_code, :arrive_airport, :arrive_code,
+                :group, :position
 
   def self.from_csv(line)
     pieces = line.parse_csv
@@ -13,11 +15,19 @@ class Southy::Flight
     flight.last_name = pieces[2]
     flight.email = pieces[3]
     flight.number = pieces[4]
-    flight.depart_date = pieces[5] ? DateTime.parse(pieces[5]) : nil
     flight.depart_airport = pieces[6]
-    flight.arrive_airport = pieces[7]
-    flight.group = pieces[8]
-    flight.position = pieces[9] ? pieces[9].to_i : nil
+    flight.depart_code = pieces[7]
+    flight.arrive_airport = pieces[8]
+    flight.arrive_code = pieces[9]
+    flight.depart_date = pieces[5] ? DateTime.parse(pieces[5]) : nil
+
+    if flight.depart_code && flight.depart_date
+      tz = TZInfo::Timezone.get(Southy::Timezones.lookup(flight.depart_code))
+      flight.depart_date = flight.depart_date.new_offset(tz.strftime("%Z"))
+    end
+
+    flight.group = pieces[10]
+    flight.position = pieces[11] ? pieces[11].to_i : nil
     flight
   end
 
@@ -46,13 +56,17 @@ class Southy::Flight
     leg_depart = leg_pieces[0]
     leg_arrive = leg_pieces[1]
 
+    self.number = leg.css('.flightNumberCell div')[1].text.sub(/^#/, '')
+    self.depart_airport = leg_depart.css('.segmentCityName').text.strip
+    self.depart_code = leg_depart.css('.segmentStation').text.strip.scan(/([A-Z]{3})/)[0][0]
+    self.arrive_airport = leg_arrive.css('.segmentCityName').text.strip
+    self.arrive_code = leg_arrive.css('.segmentStation').text.strip.scan(/([A-Z]{3})/)[0][0]
+
     date = leg.css('.travelTimeCell .departureLongDate').text.strip
     date = first_leg.css('.travelTimeCell .departureLongDate').text.strip if date.empty?
     time = leg_depart.css('.segmentTime').text + leg_depart.css('.segmentTimeAMPM').text.strip
-    self.number = leg.css('.flightNumberCell div')[1].text.sub(/^#/, '')
-    self.depart_date = DateTime.parse("#{date} #{time}")
-    self.depart_airport = leg_depart.css('.segmentCityName').text.strip
-    self.arrive_airport = leg_arrive.css('.segmentCityName').text.strip
+    tz = TZInfo::Timezone.get(Southy::Timezones.lookup(self.depart_code))
+    self.depart_date = tz.local_to_utc DateTime.parse("#{date} #{time}")
 
     self
   end
@@ -93,7 +107,8 @@ class Southy::Flight
   end
 
   def to_csv
-    [confirmation_number, first_name, last_name, email, number, depart_date, depart_airport, arrive_airport, group, position].to_csv
+    [ confirmation_number, first_name, last_name, email, number, depart_date,
+      depart_airport, depart_code, arrive_airport, arrive_code, group, position ].to_csv
   end
 
   def to_s(max_name = 0, max_email = 0)
@@ -103,8 +118,8 @@ class Southy::Flight
     em = lj(f.email || "--", max_email)
     seat = f.checked_in? ? " *** #{f.seat}" : ''
     if f.confirmed?
-      "#{f.confirmation_number} - #{num}: #{fn}  #{em}  #{f.depart_date.strftime('%F %l:%M%P')} " + \
-      "#{f.depart_airport} -> #{f.arrive_airport}#{seat}"
+      "#{f.confirmation_number} - #{num}: #{fn}  #{em}  #{f.depart_date.strftime('%F %l:%M%P %Z')} " + \
+      "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})#{seat}"
     else
       "#{f.confirmation_number} - SW????: #{fn}  #{em}"
     end
