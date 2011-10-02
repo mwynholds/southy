@@ -31,11 +31,11 @@ class Southy::Flight
     flight
   end
 
-  def self.list(flights)
+  def self.list(flights, options = {})
     max_name = flights.map { |f| f.full_name.length }.max
     max_email = flights.map { |f| f.email ? f.email.length : 0 }.max
     flights.each do |f|
-      puts f.to_s(max_name, max_email)
+      puts f.to_s(max_name, max_email, options[:verbose])
     end
   end
 
@@ -111,17 +111,25 @@ class Southy::Flight
       depart_airport, depart_code, arrive_airport, arrive_code, group, position ].to_csv
   end
 
-  def to_s(max_name = 0, max_email = 0)
+  def to_s(max_name = 0, max_email = 0, verbose = false)
     f = self
     num = lj "SW#{f.number}", 6
     fn = lj f.full_name, max_name
-    em = lj(f.email || "--", max_email)
     seat = f.checked_in? ? " *** #{f.seat}" : ''
-    if f.confirmed?
-      "#{f.confirmation_number} - #{num}: #{fn}  #{em}  #{f.depart_date.strftime('%F %l:%M%P %Z')} " + \
-      "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})#{seat}"
+    if verbose
+      em = '  ' + lj(f.email || "--", max_email)
+      date = f.depart_date.strftime('%F %l:%M%P %Z')
+      route = "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})"
     else
-      "#{f.confirmation_number} - SW????: #{fn}  #{em}"
+      em = ''
+      date = f.depart_date.strftime('%F %l:%M%P')
+      route = "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})"
+# route = "#{f.depart_code} -> #{f.arrive_code}"
+    end
+    if f.confirmed?
+      "#{f.confirmation_number} - #{num}: #{fn}#{em}  #{date}  #{route}#{seat}"
+    else
+      "#{f.confirmation_number} - SW????: #{fn}#{em}"
     end
   end
 

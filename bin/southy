@@ -10,6 +10,10 @@ operations = %w(init run start stop restart confirm reconfirm checkin status add
 option_parser = OptionParser.new do |opts|
   opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [command] [options]"
 
+  opts.on("-v", "--verbose", "Be verbose") do
+    config[:verbose] = true
+  end
+
   opts.on("-w", "--write", "Persist command") do
     config[:write] = true
   end
@@ -44,7 +48,7 @@ option_parser.parse!
 op = ARGV.shift
 if operations.include?(op)
   begin
-    cli = Southy::CLI.new :write => config[:write]
+    cli = Southy::CLI.new config
     cli.send(op.to_sym, ARGV)
   rescue ArgumentError => ex
     puts ex.message

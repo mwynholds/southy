@@ -11,7 +11,7 @@ module Southy
 
   class CLI
     def initialize(opts)
-      @options = { :write => false }.merge opts
+      @options = { :verbose => false, :write => false }.merge opts
       check_options
 
       @config = Config.new
@@ -74,11 +74,11 @@ module Southy
     end
 
     def list(params)
-      @config.list
+      @config.list :verbose => @options[:verbose]
     end
 
     def history(params)
-      @config.history
+      @config.history :verbose => @options[:verbose]
     end
 
     def test(params)

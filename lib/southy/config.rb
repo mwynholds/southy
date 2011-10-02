@@ -70,15 +70,15 @@ class Southy::Config
     @flights.select { |f| f.confirmed? && f.depart_date <= DateTime.now }
   end
 
-  def list
+  def list(options = {})
     puts 'Upcoming Southwest flights:'
-    Southy::Flight.list upcoming
-    Southy::Flight.list unconfirmed
+    Southy::Flight.list upcoming, options
+    Southy::Flight.list unconfirmed, options
   end
 
-  def history
+  def history(options = {})
     puts 'Previous Southwest flights:'
-    Southy::Flight.list past
+    Southy::Flight.list past, options
   end
 
   def reload(options = {})
