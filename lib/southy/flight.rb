@@ -23,7 +23,7 @@ class Southy::Flight
 
     if flight.depart_code && flight.depart_date
       tz = TZInfo::Timezone.get(Southy::Timezones.lookup(flight.depart_code))
-      flight.depart_date = flight.depart_date.new_offset(tz.strftime("%Z"))
+      flight.depart_date = tz.utc_to_local flight.depart_date
     end
 
     flight.group = pieces[10]
