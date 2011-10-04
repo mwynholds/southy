@@ -7,7 +7,7 @@ module Southy
   require 'southy/daemon'
   require 'southy/flight'
   require 'southy/travel_agent'
-  require 'southy/timezones'
+  require 'southy/airport'
 
   class CLI
     def initialize(opts)
@@ -82,9 +82,7 @@ module Southy
     end
 
     def test(params)
-      flights = @agent.monkey.lookup('WZAR5K', 'Madeleine', 'Wynholds')
-      #flights += @monkey.lookup('WQNR57', 'Michael', 'Wynholds')
-      flights.each { |f| puts f }
+      Southy::Airport.dump
     end
 
     private

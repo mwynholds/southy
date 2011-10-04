@@ -22,8 +22,9 @@ class Southy::Flight
     flight.depart_date = pieces[5] ? DateTime.parse(pieces[5]) : nil
 
     if flight.depart_code && flight.depart_date
-      tz = TZInfo::Timezone.get(Southy::Timezones.lookup(flight.depart_code))
-      flight.depart_date = tz.utc_to_local flight.depart_date
+      tz = TZInfo::Timezone.get(Southy::Airport.lookup(flight.depart_code).timezone)
+      local = tz.utc_to_local(flight.depart_date).to_s.sub('+00:00', tz.strftime('%Z'))
+      flight.depart_date = DateTime.parse(local)
     end
 
     flight.group = pieces[10]
@@ -65,7 +66,7 @@ class Southy::Flight
     date = leg.css('.travelTimeCell .departureLongDate').text.strip
     date = first_leg.css('.travelTimeCell .departureLongDate').text.strip if date.empty?
     time = leg_depart.css('.segmentTime').text + leg_depart.css('.segmentTimeAMPM').text.strip
-    tz = TZInfo::Timezone.get(Southy::Timezones.lookup(self.depart_code))
+    tz = TZInfo::Timezone.get(Southy::Airport.lookup(self.depart_code).timezone)
     self.depart_date = tz.local_to_utc DateTime.parse("#{date} #{time}")
 
     self
@@ -108,7 +109,7 @@ class Southy::Flight
 
   def to_csv
     [ confirmation_number, first_name, last_name, email, number, depart_date,
-      depart_airport, depart_code, arrive_airport, arrive_code, group, position ].to_csv
+      depart_airport, depart_code, arrive_airport, arrive_code, group, position ].to_csv.gsub(/,*$/, '')
   end
 
   def to_s(max_name = 0, max_email = 0, verbose = false)
@@ -118,13 +119,17 @@ class Southy::Flight
     seat = f.checked_in? ? " *** #{f.seat}" : ''
     if verbose
       em = '  ' + lj(f.email || "--", max_email)
-      date = f.depart_date.strftime('%F %l:%M%P %Z')
-      route = "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})"
+      if confirmed?
+        date = f.depart_date.strftime('%F %l:%M%P %Z')
+        route = "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})"
+      end
     else
       em = ''
-      date = f.depart_date.strftime('%F %l:%M%P')
-      route = "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})"
-# route = "#{f.depart_code} -> #{f.arrive_code}"
+      if confirmed?
+        date = f.depart_date.strftime('%F %l:%M%P')
+        route = "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})"
+        # route = "#{f.depart_code} -> #{f.arrive_code}"
+      end
     end
     if f.confirmed?
       "#{f.confirmation_number} - #{num}: #{fn}#{em}  #{date}  #{route}#{seat}"
