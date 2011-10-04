@@ -33,7 +33,7 @@ class Southy::Airport
   end
 
   def to_s
-    "#{name} (#{code}) - #{tz_offset}"
+    "#{name} (#{code}): #{tz_offset} #{timezone}"
   end
 
   private
@@ -54,20 +54,4 @@ class Southy::Airport
     end
   end
 
-end
-
-
-class Southy::Timezones
-  LOOKUP =
-          {
-                  'DEN' => 'America/Denver',
-                  'HOU' => 'America/Chicago',
-                  'LAX' => 'America/Los_Angeles',
-                  'MSY' => 'America/Chicago',
-                  'SFO' => 'America/Los_Angeles'
-          }
-
-  def self.lookup(code)
-    LOOKUP[code]
-  end
 end

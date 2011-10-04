@@ -65,9 +65,10 @@ class Southy::Flight
 
     date = leg.css('.travelTimeCell .departureLongDate').text.strip
     date = first_leg.css('.travelTimeCell .departureLongDate').text.strip if date.empty?
-    time = leg_depart.css('.segmentTime').text + leg_depart.css('.segmentTimeAMPM').text.strip
+    time = leg_depart.css('.segmentTime').text.strip + leg_depart.css('.segmentTimeAMPM').text.strip
     tz = TZInfo::Timezone.get(Southy::Airport.lookup(self.depart_code).timezone)
-    self.depart_date = tz.local_to_utc DateTime.parse("#{date} #{time}")
+    puts "#{date} #{time} #{tz.strftime('%Z')}"
+    self.depart_date = DateTime.parse("#{date} #{time} #{tz.strftime('%Z')}")
 
     self
   end

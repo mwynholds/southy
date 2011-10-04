@@ -20,14 +20,18 @@ class Southy::Monkey
     end
   end
 
-  def lookup(conf, first_name, last_name)
+  def pre_lookup(conf, first_name, last_name)
     request = Net::HTTP::Post.new '/flight/view-air-reservation.html'
     request.set_form_data :confirmationNumber => conf,
                           :confirmationNumberFirstName => first_name,
                           :confirmationNumberLastName => last_name
     _, response = fetch({}, request, true)
+    Nokogiri::HTML response.body
+  end
 
-    doc = Nokogiri::HTML response.body
+  def lookup(conf, first_name, last_name)
+    doc = pre_lookup conf, first_name, last_name
+
     legs = []
     doc.css('.itinerary_container').each do |container_node|
       container_node.css('.airProductItineraryTable').each do |table_node|
@@ -43,7 +47,7 @@ class Southy::Monkey
     legs
   end
 
-  def checkin(flight)
+  def pre_checkin(flight)
     all_cookies = {}
 
     request = Net::HTTP::Get.new '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
@@ -72,7 +76,12 @@ class Southy::Monkey
     request.set_form_data data
     _, response = fetch all_cookies, request
 
-    doc = Nokogiri::HTML response.body
+    Nokogiri::HTML response.body
+  end
+
+  def checkin(flight)
+    doc = pre_checkin flight
+
     checkin_docs = doc.css '.checkinDocument'
     return nil unless checkin_docs.length > 0
 
@@ -125,16 +134,14 @@ class Southy::Monkey
   end
 end
 
-class Southy::TestMonkey
-  def lookup(conf, first_name, last_name)
-    date = DateTime.now + rand(20) + 1
-    [ Southy::Flight.new(:first_name => first_name, :last_name => last_name, :confirmation_number => conf,
-                         :number => 123, :depart_date => date, :depart_airport => 'LAX', :arrive_airport => 'SFO') ]
+class Southy::TestMonkey < Southy::Monkey
+  def pre_lookup(conf, first_name, last_name)
+    lookup_file = File.dirname(__FILE__) + "/../../test/fixtures/confirm/1.html"
+    Nokogiri::HTML IO.read(lookup_file)
   end
 
   def checkin(flight)
-    flight.group = %w(A B C)[rand(3)]
-    flight.position = rand(60) + 1
-    [ flight ]
+    checkin_file = File.dirname(__FILE__) + "/../../test/fixtures/checkin/1-2.html"
+    Nokogiri::HTML IO.read(checkin_file)
   end
 end
