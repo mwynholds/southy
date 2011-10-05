@@ -20,7 +20,7 @@ class Southy::Monkey
     end
   end
 
-  def pre_lookup(conf, first_name, last_name)
+  def fetch_confirmation_page(conf, first_name, last_name)
     request = Net::HTTP::Post.new '/flight/view-air-reservation.html'
     request.set_form_data :confirmationNumber => conf,
                           :confirmationNumberFirstName => first_name,
@@ -30,7 +30,7 @@ class Southy::Monkey
   end
 
   def lookup(conf, first_name, last_name)
-    doc = pre_lookup conf, first_name, last_name
+    doc = fetch_confirmation_page conf, first_name, last_name
 
     legs = []
     doc.css('.itinerary_container').each do |container_node|
@@ -44,10 +44,11 @@ class Southy::Monkey
         end
       end
     end
+
     legs
   end
 
-  def pre_checkin(flight)
+  def fetch_flight_documents_page(flight)
     all_cookies = {}
 
     request = Net::HTTP::Get.new '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
@@ -80,7 +81,7 @@ class Southy::Monkey
   end
 
   def checkin(flight)
-    doc = pre_checkin flight
+    doc = fetch_flight_documents_page flight
 
     checkin_docs = doc.css '.checkinDocument'
     return nil unless checkin_docs.length > 0
@@ -135,13 +136,30 @@ class Southy::Monkey
 end
 
 class Southy::TestMonkey < Southy::Monkey
-  def pre_lookup(conf, first_name, last_name)
-    lookup_file = File.dirname(__FILE__) + "/../../test/fixtures/confirm/1.html"
+  def fetch_confirmation_page(conf, first_name, last_name)
+    lookup_file = File.dirname(__FILE__) + "/../../test/fixtures/itinerary-1/confirm.html"
     Nokogiri::HTML IO.read(lookup_file)
   end
 
-  def checkin(flight)
-    checkin_file = File.dirname(__FILE__) + "/../../test/fixtures/checkin/1-2.html"
+  alias_method :lookup_alias, :lookup
+  def lookup(conf, first_name, last_name)
+    legs = lookup_alias conf, first_name, last_name
+
+    legs.each do |leg|
+      leg.confirmation_number = conf
+      leg.first_name = first_name
+      leg.last_name = last_name
+    end
+
+    while legs[0].depart_date < DateTime.now
+      legs.each { |leg| leg.depart_date += 1 }
+    end
+    
+    legs
+  end
+
+  def fetch_flight_documents_page(flight)
+    checkin_file = File.dirname(__FILE__) + "/../../test/fixtures/itinerary-1/#{flight.number}-checkin.html"
     Nokogiri::HTML IO.read(checkin_file)
   end
 end

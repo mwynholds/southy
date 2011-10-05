@@ -53,6 +53,10 @@ module Southy
       @config.remove *params
     end
 
+    def delete(params)
+      remove(params)
+    end
+
     def confirm(params)
       confirm_flights(@config.unconfirmed)
     end
