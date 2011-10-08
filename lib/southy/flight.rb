@@ -106,29 +106,28 @@ class Southy::Flight
   end
 
   def to_s(max_name = 0, max_email = 0, verbose = false)
-    f = self
-    num = lj "SW#{f.number}", 6
-    fn = lj f.full_name, max_name
-    seat = f.checked_in? ? " *** #{f.seat}" : ''
-    local = Southy::Flight.local_date_time(f.depart_date, f.depart_code) if confirmed?
+    num = lj "SW#{number}", 6
+    fn = lj full_name, max_name
+    seat = checked_in? ? " *** #{self.seat}" : ''
     if verbose
-      em = '  ' + lj(f.email || "--", max_email)
+      em = '  ' + lj(email || "--", max_email)
       if confirmed?
+        local = Southy::Flight.local_date_time(depart_date, depart_code)
         date = local.strftime('%F %l:%M%P %Z')
-        route = "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})"
+        route = "#{depart_airport} (#{depart_code}) -> #{arrive_airport} (#{arrive_code})"
       end
     else
       em = ''
       if confirmed?
+        local = Southy::Flight.local_date_time(depart_date, depart_code)
         date = local.strftime('%F %l:%M%P')
-        route = "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})"
-        # route = "#{f.depart_code} -> #{f.arrive_code}"
+        route = "#{depart_airport} (#{depart_code}) -> #{arrive_airport} (#{arrive_code})"
       end
     end
-    if f.confirmed?
-      "#{f.confirmation_number} - #{num}: #{fn}#{em}  #{date}  #{route}#{seat}"
+    if confirmed?
+      "#{confirmation_number} - #{num}: #{fn}#{em}  #{date}  #{route}#{seat}"
     else
-      "#{f.confirmation_number} - SW????: #{fn}#{em}"
+      "#{confirmation_number} - SW????: #{fn}#{em}"
     end
   end
 
