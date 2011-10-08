@@ -20,13 +20,6 @@ class Southy::Flight
     flight.arrive_airport = pieces[8]
     flight.arrive_code = pieces[9]
     flight.depart_date = pieces[5] ? DateTime.parse(pieces[5]) : nil
-
-    if flight.depart_code && flight.depart_date
-      tz = TZInfo::Timezone.get(Southy::Airport.lookup(flight.depart_code).timezone)
-      local = tz.utc_to_local(flight.depart_date).to_s.sub('+00:00', tz.strftime('%Z'))
-      flight.depart_date = DateTime.parse(local)
-    end
-
     flight.group = pieces[10]
     flight.position = pieces[11] ? pieces[11].to_i : nil
     flight
@@ -66,8 +59,8 @@ class Southy::Flight
     date = leg.css('.travelTimeCell .departureLongDate').text.strip
     date = first_leg.css('.travelTimeCell .departureLongDate').text.strip if date.empty?
     time = leg_depart.css('.segmentTime').text.strip + leg_depart.css('.segmentTimeAMPM').text.strip
-    tz = TZInfo::Timezone.get(Southy::Airport.lookup(self.depart_code).timezone)
-    self.depart_date = DateTime.parse("#{date} #{time} #{tz.strftime('%Z')}")
+    local = DateTime.parse("#{date} #{time}")
+    self.depart_date = Southy::Flight.utc_date_time(local, self.depart_code)
 
     self
   end
@@ -117,16 +110,17 @@ class Southy::Flight
     num = lj "SW#{f.number}", 6
     fn = lj f.full_name, max_name
     seat = f.checked_in? ? " *** #{f.seat}" : ''
+    local = Southy::Flight.local_date_time(f.depart_date, f.depart_code)
     if verbose
       em = '  ' + lj(f.email || "--", max_email)
       if confirmed?
-        date = f.depart_date.strftime('%F %l:%M%P %Z')
+        date = local.strftime('%F %l:%M%P %Z')
         route = "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})"
       end
     else
       em = ''
       if confirmed?
-        date = f.depart_date.strftime('%F %l:%M%P')
+        date = local.strftime('%F %l:%M%P')
         route = "#{f.depart_airport} (#{f.depart_code}) -> #{f.arrive_airport} (#{f.arrive_code})"
         # route = "#{f.depart_code} -> #{f.arrive_code}"
       end
@@ -149,5 +143,17 @@ class Southy::Flight
 
   def lj(str, max)
     str and max > 0 ? str.ljust(max, ' ') : str
+  end
+
+  def self.utc_date_time(local, airport_code)
+    tz = TZInfo::Timezone.get(Southy::Airport.lookup(airport_code).timezone)
+    tz.local_to_utc(local)
+  end
+
+  def self.local_date_time(utc, airport_code)
+    tz = TZInfo::Timezone.get(Southy::Airport.lookup(airport_code).timezone)
+    local = tz.utc_to_local(utc)
+    offset = tz.period_for_local(local).utc_total_offset / (68 * 60)
+    DateTime.parse( local.to_s.sub('+00:00', "#{offset}:00") )
   end
 end
