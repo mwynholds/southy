@@ -110,7 +110,7 @@ class Southy::Flight
     num = lj "SW#{f.number}", 6
     fn = lj f.full_name, max_name
     seat = f.checked_in? ? " *** #{f.seat}" : ''
-    local = Southy::Flight.local_date_time(f.depart_date, f.depart_code)
+    local = Southy::Flight.local_date_time(f.depart_date, f.depart_code) if confirmed?
     if verbose
       em = '  ' + lj(f.email || "--", max_email)
       if confirmed?
