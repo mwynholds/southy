@@ -34,12 +34,14 @@ class Southy::Monkey
 
     legs = []
     doc.css('.itinerary_container').each do |container_node|
-      container_node.css('.airProductItineraryTable').each do |table_node|
-        leg_nodes = table_node.css('tr.whiteRow') + table_node.css('tr.grayRow')
-        if leg_nodes.length > 0
-          first_leg_node = leg_nodes[0]
-          leg_nodes.each do |leg_node|
-            legs << Southy::Flight.new.apply_confirmation(container_node, first_leg_node, leg_node)
+      container_node.css('.passenger_row_name').each do |passenger_node|
+        container_node.css('.airProductItineraryTable').each do |table_node|
+          leg_nodes = table_node.css('tr.whiteRow') + table_node.css('tr.grayRow')
+          if leg_nodes.length > 0
+            first_leg_node = leg_nodes[0]
+            leg_nodes.each do |leg_node|
+              legs << Southy::Flight.new.apply_confirmation(container_node, passenger_node, first_leg_node, leg_node)
+            end
           end
         end
       end
@@ -154,7 +156,7 @@ class Southy::TestMonkey < Southy::Monkey
     while legs[0].depart_date < DateTime.now
       legs.each { |leg| leg.depart_date += 1 }
     end
-    
+
     legs
   end
 

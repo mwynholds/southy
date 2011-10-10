@@ -26,18 +26,11 @@ class Southy::Daemon
       @config.reload
 
       @config.unconfirmed.each do |flight|
-        print "Confirming flight #{flight.confirmation_number}... "
-        legs = @agent.confirm(flight)
-        puts "confirmed #{legs.length} leg#{legs.length == 1 ? '' : 's'}"
+        @agent.confirm(flight)
       end
 
       @config.upcoming.each do |flight|
-        flights = @agent.checkin(flight)
-        if flights
-          flights.each do |f|
-            puts "Should email PDF here"
-          end
-        end
+        @agent.checkin(flight)
       end
 
       sleep 0.5

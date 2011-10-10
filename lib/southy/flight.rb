@@ -39,8 +39,8 @@ class Southy::Flight
     end
   end
 
-  def apply_confirmation(container, first_leg, leg)
-    names = container.css('.passenger_row_name').text.split.map &:capitalize
+  def apply_confirmation(container, passenger, first_leg, leg)
+    names = passenger.text.split.map &:capitalize
     self.first_name = names[0]
     self.last_name = names[1]
 
