@@ -28,8 +28,12 @@ class Southy::Flight
   def self.list(flights, options = {})
     max_name = flights.map { |f| f.full_name.length }.max
     max_email = flights.map { |f| f.email ? f.email.length : 0 }.max
+
+    last = nil
     flights.each do |f|
-      puts f.to_s(max_name, max_email, options[:verbose])
+      subordinate = last && last.conf == f.conf && last.number == f.number
+      puts f.to_s(:max_name => max_name, :max_email => max_email, :subordinate => subordinate, :verbose => options[:verbose])
+      last = f
     end
   end
 
@@ -73,6 +77,10 @@ class Southy::Flight
     self
   end
 
+  def conf
+    confirmation_number
+  end
+
   def full_name
     "#{first_name} #{last_name}"
   end
@@ -105,30 +113,32 @@ class Southy::Flight
       depart_airport, depart_code, arrive_airport, arrive_code, group, position ].to_csv.gsub(/,*$/, '')
   end
 
-  def to_s(max_name = 0, max_email = 0, verbose = false)
-    num = lj "SW#{number}", 6
-    fn = lj full_name, max_name
-    seat = checked_in? ? " *** #{self.seat}" : ''
-    if verbose
-      em = '  ' + lj(email || "--", max_email)
-      if confirmed?
-        local = Southy::Flight.local_date_time(depart_date, depart_code)
-        date = local.strftime('%F %l:%M%P %Z')
-        route = "#{depart_airport} (#{depart_code}) -> #{arrive_airport} (#{arrive_code})"
-      end
+  def to_s(opts = {})
+    opts = { :max_name => 0, :max_email => 0, :subordinate => false, :verbose => false }.merge opts
+
+    out = ''
+    if opts[:subordinate]
+      out += (' ' * 17)
     else
-      em = ''
-      if confirmed?
-        local = Southy::Flight.local_date_time(depart_date, depart_code)
-        date = local.strftime('%F %l:%M%P')
-        route = "#{depart_airport} (#{depart_code}) -> #{arrive_airport} (#{arrive_code})"
-      end
+      out += conf + " - "
+      out += 'SW' + ( confirmed? ? lj(number, 4) : '????' )
+      out += ': '
     end
+
+    out += lj(full_name, opts[:max_name])
+    out += ( '  ' + lj(email || "--", opts[:max_email]) ) if opts[:verbose]
+
     if confirmed?
-      "#{confirmation_number} - #{num}: #{fn}#{em}  #{date}  #{route}#{seat}"
-    else
-      "#{confirmation_number} - SW????: #{fn}#{em}"
+      local = Southy::Flight.local_date_time(depart_date, depart_code)
+
+      out += '  '
+      out += local.strftime( opts[:verbose] ? '%F %l:%M%P %Z' : '%F %l:%M%P' )
+      out += '  '
+      out += "#{depart_airport} (#{depart_code}) -> #{arrive_airport} (#{arrive_code})"
+      out += " *** #{seat}" if checked_in?
     end
+
+    out
   end
 
   def <=>(fles)
