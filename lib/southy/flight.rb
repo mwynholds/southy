@@ -162,7 +162,7 @@ class Southy::Flight
   def self.local_date_time(utc, airport_code)
     tz = TZInfo::Timezone.get(Southy::Airport.lookup(airport_code).timezone)
     local = tz.utc_to_local(utc)
-    offset = tz.period_for_local(local).utc_total_offset / (68 * 60)
+    offset = tz.period_for_local(local).utc_total_offset / (60 * 60)
     DateTime.parse( local.to_s.sub('+00:00', "#{offset}:00") )
   end
 end
