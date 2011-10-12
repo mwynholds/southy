@@ -121,7 +121,7 @@ class Southy::Flight
       out += (' ' * 17)
     else
       out += conf + " - "
-      out += 'SW' + ( confirmed? ? lj(number, 4) : '????' )
+      out += confirmed? ? ( 'SW' + lj(number, 4) ) : '------'
       out += ': '
     end
 
