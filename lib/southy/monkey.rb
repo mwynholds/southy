@@ -40,7 +40,31 @@ class Southy::Monkey
           if leg_nodes.length > 0
             first_leg_node = leg_nodes[0]
             leg_nodes.each do |leg_node|
-              legs << Southy::Flight.new.apply_confirmation(container_node, passenger_node, first_leg_node, leg_node)
+              flight = Southy::Flight.new
+
+              names = passenger_node.text.split.map &:capitalize
+              flight.first_name = names[0]
+              flight.last_name = names[1]
+
+              flight.confirmation_number = container_node.css('.confirmation_number').text.strip
+
+              leg_pieces = leg_node.css('.segmentsCell .segmentLegDetails')
+              leg_depart = leg_pieces[0]
+              leg_arrive = leg_pieces[1]
+
+              flight.number = leg_node.css('.flightNumberCell div')[1].text.sub(/^#/, '')
+              flight.depart_airport = leg_depart.css('.segmentCityName').text.strip
+              flight.depart_code = leg_depart.css('.segmentStation').text.strip.scan(/([A-Z]{3})/)[0][0]
+              flight.arrive_airport = leg_arrive.css('.segmentCityName').text.strip
+              flight.arrive_code = leg_arrive.css('.segmentStation').text.strip.scan(/([A-Z]{3})/)[0][0]
+
+              date = leg_node.css('.travelTimeCell .departureLongDate').text.strip
+              date = first_leg_node.css('.travelTimeCell .departureLongDate').text.strip if date.empty?
+              time = leg_depart.css('.segmentTime').text.strip + leg_depart.css('.segmentTimeAMPM').text.strip
+              local = DateTime.parse("#{date} #{time}")
+              flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
+
+              legs << flight
             end
           end
         end
@@ -91,7 +115,13 @@ class Southy::Monkey
     flights = []
     checkin_docs.each do |node|
       if node.css('.flight_number').text.strip == flight.number
-        flights << flight.clone.apply_checkin(node)
+        clone = flight.clone
+
+        clone.group = node.css('.group')[0][:alt]
+        digits = node.css('.position').map { |p| p[:alt].to_i }
+        clone.position = digits[0] * 10 + digits[1]
+
+        flights << clone
       end
     end
 

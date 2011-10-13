@@ -61,13 +61,13 @@ class Southy::FlightTest < MiniTest::Spec
       it 'handles different time zones' do
         local = DateTime.parse '2000-02-01T02:00:00'
         Southy::Flight.utc_date_time(local, 'SFO').to_s.must_equal('2000-02-01T10:00:00+00:00')
-        Southy::Flight.utc_date_time(local, 'JFK').to_s.must_equal('2000-02-01T07:00:00+00:00')
+        Southy::Flight.utc_date_time(local, 'LGA').to_s.must_equal('2000-02-01T07:00:00+00:00')
       end
 
       it 'handles daylight savings time' do
         local = DateTime.parse '2000-08-01T02:00:00'
         Southy::Flight.utc_date_time(local, 'SFO').to_s.must_equal('2000-08-01T09:00:00+00:00')
-        Southy::Flight.utc_date_time(local, 'JFK').to_s.must_equal('2000-08-01T06:00:00+00:00')
+        Southy::Flight.utc_date_time(local, 'LGA').to_s.must_equal('2000-08-01T06:00:00+00:00')
       end
     end
 
@@ -75,13 +75,13 @@ class Southy::FlightTest < MiniTest::Spec
       it 'handles different time zones' do
         utc = DateTime.parse '2000-02-01T10:00:00'
         Southy::Flight.local_date_time(utc, 'SFO').to_s.must_equal('2000-02-01T02:00:00-08:00')
-        Southy::Flight.local_date_time(utc, 'JFK').to_s.must_equal('2000-02-01T05:00:00-05:00')
+        Southy::Flight.local_date_time(utc, 'LGA').to_s.must_equal('2000-02-01T05:00:00-05:00')
       end
 
       it 'handles daylight savings time' do
         utc = DateTime.parse '2000-08-01T10:00:00'
         Southy::Flight.local_date_time(utc, 'SFO').to_s.must_equal('2000-08-01T03:00:00-07:00')
-        Southy::Flight.local_date_time(utc, 'JFK').to_s.must_equal('2000-08-01T06:00:00-04:00')
+        Southy::Flight.local_date_time(utc, 'LGA').to_s.must_equal('2000-08-01T06:00:00-04:00')
       end
     end
   end

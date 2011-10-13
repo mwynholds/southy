@@ -43,40 +43,6 @@ class Southy::Flight
     end
   end
 
-  def apply_confirmation(container, passenger, first_leg, leg)
-    names = passenger.text.split.map &:capitalize
-    self.first_name = names[0]
-    self.last_name = names[1]
-
-    self.confirmation_number = container.css('.confirmation_number').text.strip
-
-    leg_pieces = leg.css('.segmentsCell .segmentLegDetails')
-    leg_depart = leg_pieces[0]
-    leg_arrive = leg_pieces[1]
-
-    self.number = leg.css('.flightNumberCell div')[1].text.sub(/^#/, '')
-    self.depart_airport = leg_depart.css('.segmentCityName').text.strip
-    self.depart_code = leg_depart.css('.segmentStation').text.strip.scan(/([A-Z]{3})/)[0][0]
-    self.arrive_airport = leg_arrive.css('.segmentCityName').text.strip
-    self.arrive_code = leg_arrive.css('.segmentStation').text.strip.scan(/([A-Z]{3})/)[0][0]
-
-    date = leg.css('.travelTimeCell .departureLongDate').text.strip
-    date = first_leg.css('.travelTimeCell .departureLongDate').text.strip if date.empty?
-    time = leg_depart.css('.segmentTime').text.strip + leg_depart.css('.segmentTimeAMPM').text.strip
-    local = DateTime.parse("#{date} #{time}")
-    self.depart_date = Southy::Flight.utc_date_time(local, self.depart_code)
-
-    self
-  end
-
-  def apply_checkin(node)
-    self.group = node.css('.group')[0][:alt]
-    digits = node.css('.position').map { |p| p[:alt].to_i }
-    self.position = digits[0] * 10 + digits[1]
-
-    self
-  end
-
   def conf
     confirmation_number
   end
