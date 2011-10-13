@@ -136,14 +136,14 @@ class Southy::ConfigTest < MiniTest::Spec
     describe '#upcoming' do
       it 'returns upcoming flights' do
         populate
-        @config.upcoming.map(&:confirmation_number).must_equal ['CC', 'DD']
+        @config.upcoming.map(&:confirmation_number).must_equal ['DD', 'CC']
       end
     end
 
     describe '#past' do
       it 'returns past flights' do
         populate
-        @config.past.map(&:confirmation_number).must_equal ['EE', 'FF']
+        @config.past.map(&:confirmation_number).must_equal ['FF', 'EE']
       end
     end
 
