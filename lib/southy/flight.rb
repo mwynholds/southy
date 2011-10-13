@@ -110,11 +110,20 @@ class Southy::Flight
   def <=>(fles)
     return -1 if self.confirmed? && ! fles.confirmed?
     return 1  if fles.confirmed? && ! self.confirmed?
-    return self.confirmation_number <=> fles.confirmation_number if ! self.confirmed?
-    self.depart_date <=> fles.depart_date
+    return self.conf <=> fles.conf if ! self.confirmed?
+    Southy::Flight.compare(self, fles, :depart_date, :conf, :number, :full_name)
   end
 
   private
+
+  def self.compare(obj1, obj2, *attrs)
+    attrs.each do |attr|
+      comp = obj1.send(attr) <=> obj2.send(attr)
+      return comp unless comp == 0
+    end
+
+    0
+  end
 
   def lj(str, max)
     str and max > 0 ? str.ljust(max, ' ') : str

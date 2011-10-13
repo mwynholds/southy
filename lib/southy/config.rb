@@ -101,6 +101,7 @@ class Southy::Config
       IO.read(flights_file).split("\n").map {|line| Southy::Flight.from_csv(line)}
     end
     @flights ||= []
+    @flights.sort!
   end
 
   def dump_flights
