@@ -11,7 +11,11 @@ class Southy::Monkey
     @https.use_ssl = true
 
     certs = File.join File.dirname(__FILE__), "../../etc/certs"
-    if (File.directory? certs)
+    if File.exists? '/etc/ssl/certs'  # Ubuntu
+      @https.ca_path = '/etc/ssl/certs'
+      @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      @https.verify_depth = 5
+    elsif File.directory? certs
       @https.ca_path = certs
       @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
       @https.verify_depth = 5
