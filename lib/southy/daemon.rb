@@ -15,8 +15,11 @@ class Southy::Daemon
       Signal.trap(sig) { kill }
     end
 
-    run
-    delete_pid
+    begin
+      run
+    ensure
+      delete_pid
+    end
   end
 
   def run
