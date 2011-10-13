@@ -86,7 +86,7 @@ module Southy
     end
 
     def test(params)
-      Southy::Airport.dump
+      p Southy::Airport.all.map(&:timezone).uniq
     end
 
     private
