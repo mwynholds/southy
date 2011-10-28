@@ -82,9 +82,6 @@ class Southy::Monkey
     flight = flights[0]
     all_cookies = {}
 
-    request = Net::HTTP::Get.new '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
-    _ = fetch all_cookies, request
-
     request = Net::HTTP::Post.new '/flight/retrieveCheckinDoc.html'
     request['Referer'] = 'http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes'
     request.set_form_data :confirmationNumber => flight.confirmation_number,
