@@ -27,8 +27,8 @@ class Southy::TravelAgent
       if checked_in_flights.size > 0
         checked_in_flights.each do |checked_in_flight|
           @config.checkin(checked_in_flight)
-          send_email(checked_in_flight)
         end
+        send_email(checked_in_flights)
       end
       checked_in_flights
     else
@@ -38,22 +38,30 @@ class Southy::TravelAgent
 
   private
 
-  def send_email(flight)
+  def send_email(flights)
+    flight = flights[0]
     return unless flight.email
 
+    seats = ""
+    flights.each do |f|
+      seats += "#{f.full_name} : #{f.seat}\n"
+    end
+
+    local = Southy::Flight.local_date_time(flight.depart_date, flight.depart_code)
+
     message = <<EOM
-From: Southy <do-not-reply@internet.com>
-To: #{flight.full_name}<#{flight.email}>
-Subject: Check-in for Southwest SW#{flight.number} - #{flight.confirmation_number}
+From: Southy <southy@carbonfive.com>
+To: #{flight.full_name} <#{flight.email}>
+Subject: You are checked in for Southwest flight #{flight.number} to #{flight.arrive_airport} (#{flight.arrive_code})
 
-You have been successfully checked in to your flight.  Details are as follows:
+You have been successfully checked in to your flight(s).  Details are as follows:
 
-Boarding position: #{flight.seat}
+Confirmation number : #{flight.confirmation_number}
+Flight : SW#{flight.number}
+Departing : #{local.strftime('%F %l:%M%P')}
+Route : #{flight.depart_airport} (#{flight.depart_code}) --> #{flight.arrive_airport} (#{flight.arrive_code})
 
-Confirmation number: #{flight.confirmation_number}
-Flight: SW#{flight.number}
-Departing: #{flight.depart_date.strftime('%F %l:%M%P')}
-Route: #{flight.depart_airport}  -->  #{flight.arrive_airport}
+#{seats}
 
 Please note that you must print your boarding pass online or at the airport:
 http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes
