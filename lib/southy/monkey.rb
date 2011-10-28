@@ -6,7 +6,6 @@ class Southy::Monkey
 
   def initialize
     @http = Net::HTTP.new 'www.southwest.com'
-    #@http = Net::HTTP.new 'localhost', 9000
     @https = Net::HTTP.new 'www.southwest.com', 443
     @https.use_ssl = true
 
