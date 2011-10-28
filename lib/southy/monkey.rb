@@ -29,7 +29,7 @@ class Southy::Monkey
     request.set_form_data :confirmationNumber => conf,
                           :confirmationNumberFirstName => first_name,
                           :confirmationNumberLastName => last_name
-    response = fetch({}, request, true)
+    response = fetch request, true
     Nokogiri::HTML response.body
   end
 
@@ -80,7 +80,6 @@ class Southy::Monkey
 
   def fetch_flight_documents_page(flights)
     flight = flights[0]
-    all_cookies = {}
 
     request = Net::HTTP::Post.new '/flight/retrieveCheckinDoc.html'
     request['Referer'] = 'http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes'
@@ -88,7 +87,7 @@ class Southy::Monkey
                           :firstName => flight.first_name,
                           :lastName => flight.last_name,
                           :submitButton => 'Check In'
-    response = fetch all_cookies, request
+    response = fetch request
 
     doc = Nokogiri::HTML response.body
     checkin_options = doc.css '#checkinOptions'
@@ -102,7 +101,8 @@ class Southy::Monkey
     end
     request['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:6.0.1) Gecko/20100101 Firefox/6.0.1'
     request.set_form_data data
-    response = fetch all_cookies, request
+    set_cookies response, request
+    response = fetch request
 
     Nokogiri::HTML response.body
   end
@@ -133,40 +133,31 @@ class Southy::Monkey
 
   private
 
-  def fetch(all_cookies, request, https = false)
-    set_cookies all_cookies, request
+  def fetch(request, https = false)
     response = https ? @https.request(request) : @http.request(request)
-    grab_cookies all_cookies, response
 
-    location = nil
     while response.is_a? Net::HTTPRedirection
       location = response['Location']
       path = location.sub /^https?:\/\/[^\/]+/, ''
       request = Net::HTTP::Get.new path
-      set_cookies all_cookies, request
-      if location =~ /^https:/
-        response = @https.request request
-      else
-        response = @http.request request
-      end
-      grab_cookies all_cookies, response
+      set_cookies response, request
+      response = (location =~ /^https:/) ? @https.request(request) : @http.request(request)
     end
 
     response
   end
 
-  def set_cookies(all_cookies, request)
-    request['Cookie'] = all_cookies.values.join('; ') if all_cookies.length > 0
-  end
-
-  def grab_cookies(all_cookies, response)
-    cookies = response.get_fields 'Set-Cookie'
-    if cookies
-      cookies.each do |c|
+  def set_cookies(response, request)
+    cookie_header = response.get_fields 'Set-Cookie'
+    cookies = {}
+    if cookie_header
+      cookie_header.each do |c|
         name = c.match(/^([^=]+)=/)[1]
-        all_cookies[name] = c.split(';')[0]
+        cookies[name] = c.split(';')[0]
       end
     end
+
+    request['Cookie'] = cookies.values.join('; ') if cookies.length > 0
   end
 end
 
