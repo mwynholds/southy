@@ -99,7 +99,6 @@ class Southy::Monkey
       data["_checkinPassengers[#{i}].selected"] = 'on'
       data["checkinPassengers[#{i}].selected"] = 'true'
     end
-    request['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:6.0.1) Gecko/20100101 Firefox/6.0.1'
     request.set_form_data data
     set_cookies response, request
     response = fetch request
