@@ -32,8 +32,9 @@ class Southy::Daemon
         @agent.confirm(flight)
       end
 
-      @config.upcoming.each do |flight|
-        @agent.checkin(flight)
+      groups = @config.upcoming.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
+      groups.values.each do |flights|
+        @agent.checkin(flights)
       end
 
       sleep 0.5
