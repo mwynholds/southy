@@ -9,17 +9,21 @@ class Southy::Monkey
     @https = Net::HTTP.new 'www.southwest.com', 443
     @https.use_ssl = true
 
+    verify_https = false
     certs = File.join File.dirname(__FILE__), "../../etc/certs"
     if File.exists? '/etc/ssl/certs'  # Ubuntu
       @https.ca_path = '/etc/ssl/certs'
-      @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      @https.verify_depth = 5
+      verify_https = true
     elsif File.directory? certs
       @https.ca_path = certs
-      @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      @https.verify_depth = 5
+      verify_https = true
     else
       @https.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
+
+    if verify_https
+      @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      @https.verify_depth = 5
     end
   end
 
