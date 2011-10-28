@@ -6,21 +6,24 @@ class Southy::Monkey
 
   def initialize
     @http = Net::HTTP.new 'www.southwest.com'
-    #@http = Net::HTTP.new 'localhost', 9000
     @https = Net::HTTP.new 'www.southwest.com', 443
     @https.use_ssl = true
 
+    verify_https = false
     certs = File.join File.dirname(__FILE__), "../../etc/certs"
     if File.exists? '/etc/ssl/certs'  # Ubuntu
       @https.ca_path = '/etc/ssl/certs'
-      @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      @https.verify_depth = 5
+      verify_https = true
     elsif File.directory? certs
       @https.ca_path = certs
-      @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      @https.verify_depth = 5
+      verify_https = true
     else
       @https.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
+
+    if verify_https
+      @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      @https.verify_depth = 5
     end
   end
 
@@ -29,7 +32,7 @@ class Southy::Monkey
     request.set_form_data :confirmationNumber => conf,
                           :confirmationNumberFirstName => first_name,
                           :confirmationNumberLastName => last_name
-    _, response = fetch({}, request, true)
+    response = fetch request, true
     Nokogiri::HTML response.body
   end
 
@@ -80,10 +83,6 @@ class Southy::Monkey
 
   def fetch_flight_documents_page(flights)
     flight = flights[0]
-    all_cookies = {}
-
-    request = Net::HTTP::Get.new '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
-    _, _ = fetch all_cookies, request
 
     request = Net::HTTP::Post.new '/flight/retrieveCheckinDoc.html'
     request['Referer'] = 'http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes'
@@ -91,7 +90,7 @@ class Southy::Monkey
                           :firstName => flight.first_name,
                           :lastName => flight.last_name,
                           :submitButton => 'Check In'
-    referer, response = fetch all_cookies, request
+    response = fetch request
 
     doc = Nokogiri::HTML response.body
     checkin_options = doc.css '#checkinOptions'
@@ -103,10 +102,9 @@ class Southy::Monkey
       data["_checkinPassengers[#{i}].selected"] = 'on'
       data["checkinPassengers[#{i}].selected"] = 'true'
     end
-    request['Referer'] = referer
-    request['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:6.0.1) Gecko/20100101 Firefox/6.0.1'
     request.set_form_data data
-    _, response = fetch all_cookies, request
+    set_cookies response, request
+    response = fetch request
 
     Nokogiri::HTML response.body
   end
@@ -137,40 +135,31 @@ class Southy::Monkey
 
   private
 
-  def fetch(all_cookies, request, https = false)
-    set_cookies all_cookies, request
+  def fetch(request, https = false)
     response = https ? @https.request(request) : @http.request(request)
-    grab_cookies all_cookies, response
 
-    location = nil
     while response.is_a? Net::HTTPRedirection
       location = response['Location']
       path = location.sub /^https?:\/\/[^\/]+/, ''
       request = Net::HTTP::Get.new path
-      set_cookies all_cookies, request
-      if location =~ /^https:/
-        response = @https.request request
-      else
-        response = @http.request request
-      end
-      grab_cookies all_cookies, response
+      set_cookies response, request
+      response = (location =~ /^https:/) ? @https.request(request) : @http.request(request)
     end
 
-    [location, response]
+    response
   end
 
-  def set_cookies(all_cookies, request)
-    request['Cookie'] = all_cookies.values.join('; ') if all_cookies.length > 0
-  end
-
-  def grab_cookies(all_cookies, response)
-    cookies = response.get_fields 'Set-Cookie'
-    if cookies
-      cookies.each do |c|
+  def set_cookies(response, request)
+    cookie_header = response.get_fields 'Set-Cookie'
+    cookies = {}
+    if cookie_header
+      cookie_header.each do |c|
         name = c.match(/^([^=]+)=/)[1]
-        all_cookies[name] = c.split(';')[0]
+        cookies[name] = c.split(';')[0]
       end
     end
+
+    request['Cookie'] = cookies.values.join('; ') if cookies.length > 0
   end
 end
 
