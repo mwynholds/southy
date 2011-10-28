@@ -29,7 +29,7 @@ class Southy::Monkey
     request.set_form_data :confirmationNumber => conf,
                           :confirmationNumberFirstName => first_name,
                           :confirmationNumberLastName => last_name
-    _, response = fetch({}, request, true)
+    response = fetch({}, request, true)
     Nokogiri::HTML response.body
   end
 
@@ -83,7 +83,7 @@ class Southy::Monkey
     all_cookies = {}
 
     request = Net::HTTP::Get.new '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
-    _, _ = fetch all_cookies, request
+    _ = fetch all_cookies, request
 
     request = Net::HTTP::Post.new '/flight/retrieveCheckinDoc.html'
     request['Referer'] = 'http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes'
@@ -91,7 +91,7 @@ class Southy::Monkey
                           :firstName => flight.first_name,
                           :lastName => flight.last_name,
                           :submitButton => 'Check In'
-    referer, response = fetch all_cookies, request
+    response = fetch all_cookies, request
 
     doc = Nokogiri::HTML response.body
     checkin_options = doc.css '#checkinOptions'
@@ -103,10 +103,9 @@ class Southy::Monkey
       data["_checkinPassengers[#{i}].selected"] = 'on'
       data["checkinPassengers[#{i}].selected"] = 'true'
     end
-    request['Referer'] = referer
     request['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:6.0.1) Gecko/20100101 Firefox/6.0.1'
     request.set_form_data data
-    _, response = fetch all_cookies, request
+    response = fetch all_cookies, request
 
     Nokogiri::HTML response.body
   end
@@ -156,7 +155,7 @@ class Southy::Monkey
       grab_cookies all_cookies, response
     end
 
-    [location, response]
+    response
   end
 
   def set_cookies(all_cookies, request)
