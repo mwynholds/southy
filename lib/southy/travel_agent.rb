@@ -21,16 +21,16 @@ class Southy::TravelAgent
     legs
   end
 
-  def checkin(flight)
-    if flight.checkin_available?
-      legs = @monkey.checkin(flight)
-      if legs.size > 0
-        legs.each do |leg|
-          @config.checkin(leg)
-          send_email(leg)
+  def checkin(flights)
+    if flights[0].checkin_available?
+      checked_in_flights = @monkey.checkin(flights)
+      if checked_in_flights.size > 0
+        checked_in_flights.each do |checked_in_flight|
+          @config.checkin(checked_in_flight)
+          send_email(checked_in_flight)
         end
       end
-      legs
+      checked_in_flights
     else
       nil
     end

@@ -66,13 +66,19 @@ module Southy
     end
 
     def checkin(params)
-      @config.upcoming.each do |flight|
-        print "Checking in #{flight.confirmation_number} (SW#{flight.number}) for #{flight.full_name}... "
-        flights = @agent.checkin(flight)
-        if flights.nil?
+      groups = @config.upcoming.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
+
+      groups.values.each do |flights|
+        flight = flights[0]
+        name = flight.full_name
+        len = flights.length
+        name += " (and #{len - 1} other passenger#{len > 2 ? 's' : ''})" if len > 1
+        print "Checking in #{flight.confirmation_number} (SW#{flight.number}) for #{name}... "
+        checked_in_flights = @agent.checkin(flights)
+        if checked_in_flights.nil?
           puts 'not available'
         else
-          puts flights.map(&:seat).join(', ')
+          puts checked_in_flights.map(&:seat).join(', ')
         end
       end
     end

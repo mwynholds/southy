@@ -11,6 +11,17 @@ if RUBY_VERSION =~ /^1\.8/
     def to_csv
       CSV.generate_line(self) + "\n"
     end
+
+    def group_by(&block)
+      groups = {}
+      each do |item|
+        key = block.call(item)
+        groups[key] ||= []
+        groups[key] << item
+      end
+
+      groups
+    end
   end
 
   module Process

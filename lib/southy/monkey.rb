@@ -78,7 +78,8 @@ class Southy::Monkey
     legs
   end
 
-  def fetch_flight_documents_page(flight)
+  def fetch_flight_documents_page(flights)
+    flight = flights[0]
     all_cookies = {}
 
     request = Net::HTTP::Get.new '/flight/retrieveCheckinDoc.html?forceNewSession=yes'
@@ -110,26 +111,28 @@ class Southy::Monkey
     Nokogiri::HTML response.body
   end
 
-  def checkin(flight)
-    doc = fetch_flight_documents_page flight
+  def checkin(flights)
+    doc = fetch_flight_documents_page flights
 
     checkin_docs = doc.css '.checkinDocument'
     return nil unless checkin_docs.length > 0
 
-    flights = []
+    checked_in_flights = []
     checkin_docs.each do |node|
-      if node.css('.flight_number').text.strip == flight.number
-        clone = flight.clone
-
-        clone.group = node.css('.group')[0][:alt]
+      number = node.css('.flight_number').text.strip
+      first_name = node.css('.passengerFirstName').text.strip.capitalize
+      last_name = node.css('.passengerLastName').text.strip.capitalize
+      checked_in_flight = flights.find { |f| f.number == number && f.first_name == first_name && f.last_name == last_name }
+      if checked_in_flight
+        checked_in_flight.group = node.css('.group')[0][:alt]
         digits = node.css('.position').map { |p| p[:alt].to_i }
-        clone.position = digits[0] * 10 + digits[1]
+        checked_in_flight.position = digits[0] * 10 + digits[1]
 
-        flights << clone
+        checked_in_flights << checked_in_flight
       end
     end
 
-    flights
+    checked_in_flights
   end
 
   private
