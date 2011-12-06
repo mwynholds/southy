@@ -163,30 +163,20 @@ class Southy::Monkey
 end
 
 class Southy::TestMonkey < Southy::Monkey
+  attr_writer :itinerary
+
+  def initialize(itinerary = nil)
+    @itinerary = itinerary
+  end
+
   def fetch_confirmation_page(conf, first_name, last_name)
-    lookup_file = File.dirname(__FILE__) + "/../../test/fixtures/itinerary-1/confirm.html"
+    lookup_file = File.dirname(__FILE__) + "/../../test/fixtures/#{@itinerary}/confirm.html"
     Nokogiri::HTML IO.read(lookup_file)
   end
 
-  alias_method :lookup_alias, :lookup
-  def lookup(conf, first_name, last_name)
-    legs = lookup_alias conf, first_name, last_name
-
-    legs.each do |leg|
-      leg.confirmation_number = conf
-      leg.first_name = first_name
-      leg.last_name = last_name
-    end
-
-    while legs[0].depart_date < DateTime.now
-      legs.each { |leg| leg.depart_date += 1 }
-    end
-
-    legs
-  end
-
-  def fetch_flight_documents_page(flight)
-    checkin_file = File.dirname(__FILE__) + "/../../test/fixtures/itinerary-1/#{flight.number}-checkin.html"
+  def fetch_flight_documents_page(flights)
+    flight = flights[0]
+    checkin_file = File.dirname(__FILE__) + "/../../test/fixtures/#{@itinerary}/#{flight.number}-checkin.html"
     Nokogiri::HTML IO.read(checkin_file)
   end
 end

@@ -1,4 +1,3 @@
-require 'tmpdir'
 require 'yaml'
 
 class Southy::Config

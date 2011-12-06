@@ -4,9 +4,11 @@ class Southy::TravelAgent
 
   attr_reader :config, :monkey
 
-  def initialize(config, monkey)
+  def initialize(config, opts = {})
+    is_test = opts[:test] == true
+
     @config = config
-    @monkey = monkey
+    @monkey = is_test ? Southy::TestMonkey.new : Southy::Monkey.new
   end
 
   def confirm(flight_info)

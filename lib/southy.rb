@@ -15,8 +15,7 @@ module Southy
       check_options
 
       @config = Config.new
-      monkey = Monkey.new
-      @agent = TravelAgent.new(@config, monkey)
+      @agent = TravelAgent.new(@config)
       daemon = Daemon.new(@agent)
       @service = Service.new(@agent, daemon)
     end
