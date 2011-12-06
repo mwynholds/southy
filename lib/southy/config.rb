@@ -81,6 +81,16 @@ class Southy::Config
     Southy::Flight.list past, options
   end
 
+  def prune
+    past_flights = past
+    past_flights.each do |flight|
+      remove flight.conf
+    end
+
+    n = past_flights.length
+    puts "Removed #{n} flight#{n == 1 ? '' : 's'}."
+  end
+
   def reload(options = {})
     options = { :force => false }.merge options
     load_config options

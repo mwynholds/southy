@@ -91,6 +91,10 @@ module Southy
       @config.history :verbose => @options[:verbose]
     end
 
+    def prune(params)
+      @config.prune
+    end
+
     def test(params)
       p Southy::Airport.all.map(&:timezone).uniq
     end
