@@ -74,11 +74,17 @@ module Southy
         len = flights.length
         name += " (and #{len - 1} other passenger#{len > 2 ? 's' : ''})" if len > 1
         print "Checking in #{flight.confirmation_number} (SW#{flight.number}) for #{name}... "
-        checked_in_flights = @agent.checkin(flights)
-        if checked_in_flights.nil?
-          puts 'not available'
+        if flight.checked_in?
+          puts "#{flights.map(&:seat).join(', ')}"
         else
-          puts checked_in_flights.map(&:seat).join(', ')
+          checked_in_flights = @agent.checkin(flights)
+          if checked_in_flights.nil?
+            puts 'not available'
+          elsif checked_in_flights.empty?
+            puts 'unable to check in at this time'
+          else
+            puts checked_in_flights.map(&:seat).join(', ')
+          end
         end
       end
     end

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    southy (1.0)
+    southy (1.0.1)
       nokogiri
       tzinfo
 

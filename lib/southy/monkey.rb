@@ -113,7 +113,6 @@ class Southy::Monkey
     doc = fetch_flight_documents_page flights
 
     checkin_docs = doc.css '.checkinDocument'
-    return nil unless checkin_docs.length > 0
 
     checked_in_flights = []
     checkin_docs.each do |node|
