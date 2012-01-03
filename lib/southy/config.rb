@@ -1,4 +1,5 @@
 require 'yaml'
+require 'time'
 
 class Southy::Config
   attr_reader :config, :flights, :pid_file
@@ -96,6 +97,17 @@ class Southy::Config
     load_flights options
   end
 
+  def log(msg, ex = nil)
+    log = File.new(log_file, 'a')
+    timestamp = Time.now.strftime('%Y-%m-%d %H:%M:%S')
+    type = ex ? 'ERROR' : ' INFO'
+    log.puts "#{type}  #{timestamp}  #{msg}"
+    if ex
+      log.puts ex.message
+      log.puts ex.backtrace.join("\n")
+    end
+  end
+
   private
 
   def load_config(options)
@@ -128,6 +140,10 @@ class Southy::Config
 
   def flights_file
     "#{@dir}/flights.csv"
+  end
+
+  def log_file
+    "#{@dir}/southy.log"
   end
 
   def if_updated?(file_name, options)

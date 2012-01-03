@@ -17,10 +17,18 @@ class Southy::Daemon
 
     begin
       run
+    rescue => e
+      @config.log "Unexpected error", e
     ensure
       delete_pid
     end
   end
+
+  def cleanup
+    delete_pid
+  end
+
+  private
 
   def run
     puts "Southy is running."
@@ -40,12 +48,6 @@ class Southy::Daemon
       sleep 0.5
     end
   end
-
-  def cleanup
-    delete_pid
-  end
-
-  private
 
   def active?
     @active

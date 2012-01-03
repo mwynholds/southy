@@ -20,6 +20,7 @@ class Southy::TravelAgent
         @config.confirm leg
       end
     end
+    @config.log "Confirmed #{flight_info.conf} - #{legs.length} legs"
     legs
   end
 
@@ -32,8 +33,10 @@ class Southy::TravelAgent
         end
         send_email(checked_in_flights)
       end
+      @config.log "Checked in #{flights[0].conf} - #{checked_in_flights.length} boarding passes"
       checked_in_flights
     else
+      @config.log "Checkin not available for #{flights[0].conf}"
       nil
     end
   end
