@@ -36,7 +36,6 @@ class Southy::TravelAgent
       @config.log "Checked in #{flights[0].conf} - #{checked_in_flights.length} boarding passes"
       checked_in_flights
     else
-      @config.log "Checkin not available for #{flights[0].conf}"
       nil
     end
   end
