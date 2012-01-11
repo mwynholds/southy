@@ -4,7 +4,9 @@ require 'fileutils'
 
 class Southy::Monkey
 
-  def initialize
+  def initialize(config = nil)
+    @config = config
+
     @http = Net::HTTP.new 'www.southwest.com'
     @https = Net::HTTP.new 'www.southwest.com', 443
     @https.use_ssl = true
@@ -33,6 +35,7 @@ class Southy::Monkey
                           :confirmationNumberFirstName => first_name,
                           :confirmationNumberLastName => last_name
     response = fetch request, true
+    @config.save_file conf, "confirm.html", response.body
     Nokogiri::HTML response.body
   end
 
@@ -98,14 +101,17 @@ class Southy::Monkey
 
     request = Net::HTTP::Post.new '/flight/selectPrintDocument.html'
     data = { :printDocuments => 'Check In' }
-    checkin_options.css('.passengerRow').each_with_index do |_, i|
-      data["_checkinPassengers[#{i}].selected"] = 'on'
-      data["checkinPassengers[#{i}].selected"] = 'true'
+    checkin_options.css('input').each_with_index do |input_node, i|
+      input_id = input_node['id']
+      if input_id =~ /^checkinPassengers/
+        data[input_id] = 'true'
+      end
     end
     request.set_form_data data
     set_cookies response, request
     response = fetch request
 
+    @config.save_file flight.conf, "#{flight.number}-checkin.html", response.body
     Nokogiri::HTML response.body
   end
 

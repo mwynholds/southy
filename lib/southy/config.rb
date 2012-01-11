@@ -108,6 +108,17 @@ class Southy::Config
     end
   end
 
+  def save_file(conf, name, contents)
+    saved_files = saved_files_dir
+    FileUtils.mkdir saved_files unless File.directory? saved_files
+    itinerary_dir = "#{saved_files}/#{conf}"
+    FileUtils.mkdir itinerary_dir unless File.directory? itinerary_dir
+
+    File.open("#{itinerary_dir}/#{name}", 'w') do |f|
+      f.print contents
+    end
+  end
+
   private
 
   def load_config(options)
@@ -144,6 +155,10 @@ class Southy::Config
 
   def log_file
     "#{@dir}/southy.log"
+  end
+
+  def saved_files_dir
+    "#{@dir}/saved_files"
   end
 
   def if_updated?(file_name, options)

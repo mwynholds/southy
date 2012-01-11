@@ -8,7 +8,7 @@ class Southy::TravelAgent
     is_test = opts[:test] == true
 
     @config = config
-    @monkey = is_test ? Southy::TestMonkey.new : Southy::Monkey.new
+    @monkey = is_test ? Southy::TestMonkey.new : Southy::Monkey.new(config)
   end
 
   def confirm(flight_info)
