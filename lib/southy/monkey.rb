@@ -111,8 +111,11 @@ class Southy::Monkey
     set_cookies response, request
     response = fetch request
 
-    @config.save_file flight.conf, "#{flight.number}-checkin.html", response.body
-    Nokogiri::HTML response.body
+    body = response.body
+    body.gsub!( /href="\//, 'href="http://www.southwest.com/' )
+    body.gsub!( /src="\//,  'src="http://www.southwest.com/'  )
+    @config.save_file flight.conf, "#{flight.number}-checkin.html", body
+    Nokogiri::HTML body
   end
 
   def checkin(flights)
@@ -135,7 +138,7 @@ class Southy::Monkey
       end
     end
 
-    checked_in_flights
+    { :flights => checked_in_flights, :doc => doc.to_s }
   end
 
   private

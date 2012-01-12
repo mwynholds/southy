@@ -1,4 +1,5 @@
 require 'net/smtp'
+require 'pdfkit'
 
 class Southy::TravelAgent
 
@@ -26,12 +27,15 @@ class Southy::TravelAgent
 
   def checkin(flights)
     if flights[0].checkin_available?
-      checked_in_flights = @monkey.checkin(flights)
+      info = @monkey.checkin(flights)
+      checked_in_flights = info[:flights]
+      doc = info[:doc]
       if checked_in_flights.size > 0
         checked_in_flights.each do |checked_in_flight|
           @config.checkin(checked_in_flight)
         end
-        send_email(checked_in_flights)
+        pdf = generate_pdf(doc)
+        send_email(checked_in_flights, pdf)
       end
       @config.log "Checked in #{flights[0].conf} - #{checked_in_flights.length} boarding passes"
       checked_in_flights
@@ -42,7 +46,14 @@ class Southy::TravelAgent
 
   private
 
-  def send_email(flights)
+  def generate_pdf(doc)
+    PDFKit.new(doc)
+  rescue => e
+    @config.log "Error generating PDF", e
+    nil
+  end
+
+  def send_email(flights, pdf)
     flight = flights[0]
     return unless flight.email
 
@@ -52,11 +63,30 @@ class Southy::TravelAgent
     end
 
     local = Southy::Flight.local_date_time(flight.depart_date, flight.depart_code)
+    filename = "SW#{flight.number}-boarding-passes.pdf"
+    marker = 'MIMECONTENTMARKER'
+
+    disclaimer = ''
+    if pdf
+      footer = <<EOM
+Your boarding passes are attached as a PDF.  You can print them and bring them to the airport.
+EOM
+    else
+      footer = <<EOM
+Please note that you must print your boarding pass online or at the airport:
+http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes
+EOM
+    end
 
     message = <<EOM
 From: Southy <southy@carbonfive.com>
 To: #{flight.full_name} <#{flight.email}>
 Subject: You are checked in for Southwest flight #{flight.number} to #{flight.arrive_airport} (#{flight.arrive_code})
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=#{marker}
+--#{marker}
+Content-Type: text/plain
+Content-Transfer-Encoding:8bit
 
 You have been successfully checked in to your flight(s).  Details are as follows:
 
@@ -66,12 +96,22 @@ Departing : #{local.strftime('%F %l:%M%P')}
 Route : #{flight.depart_airport} (#{flight.depart_code}) --> #{flight.arrive_airport} (#{flight.arrive_code})
 
 #{seats}
-
-Please note that you must print your boarding pass online or at the airport:
-http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes
-
+#{footer}
 Love, southy
 EOM
+
+    if pdf
+      encoded_pdf = [pdf.to_pdf].pack('m')
+      message += <<EOM
+--#{marker}
+Content-Type: multipart/mixed; name=\"#{filename}\"
+Content-Transfer-Encoding:base64
+Content-Disposition: attachment; filename="#{filename}"
+
+#{encoded_pdf}
+--#{marker}--
+EOM
+    end
 
     sent = false
     %w(localhost mail smtp).each do |host|

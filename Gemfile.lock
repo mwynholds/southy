@@ -3,7 +3,9 @@ PATH
   specs:
     southy (1.0.1)
       nokogiri
+      pdfkit
       tzinfo
+      wkhtmltopdf-binary
 
 GEM
   remote: http://rubygems.org/
@@ -14,9 +16,11 @@ GEM
       addressable (~> 2.2.6)
     minitest (2.5.1)
     nokogiri (1.5.0)
+    pdfkit (0.5.2)
     rake (0.8.7)
     timecop (0.3.5)
-    tzinfo (0.3.30)
+    tzinfo (0.3.31)
+    wkhtmltopdf-binary (0.9.5.3)
 
 PLATFORMS
   ruby

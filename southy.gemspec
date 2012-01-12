@@ -19,6 +19,8 @@ Gem::Specification.new do |s|
   #s.add_runtime_dependency 'capybara-webkit'
   s.add_runtime_dependency 'nokogiri'
   s.add_runtime_dependency 'tzinfo'
+  s.add_runtime_dependency 'wkhtmltopdf-binary'
+  s.add_runtime_dependency 'pdfkit'
 
   s.add_development_dependency 'rake'
   s.add_development_dependency 'minitest'
