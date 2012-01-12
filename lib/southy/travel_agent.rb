@@ -117,11 +117,14 @@ EOM
     sent = false
     %w(localhost mail smtp).each do |host|
       begin
-        Net::SMTP.start(host) do |smtp|
-          smtp.send_message message, 'do-not-reply@internet.com', flight.email
+        unless sent
+          Net::SMTP.start(host) do |smtp|
+            smtp.send_message message, 'do-not-reply@internet.com', flight.email
+          end
+          sent = true
         end
-        sent = true
-      rescue
+      rescue => e
+        @config.log "Error sending email with: #{host}", e
       end
     end
 
