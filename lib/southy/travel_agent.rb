@@ -25,7 +25,9 @@ class Southy::TravelAgent
     legs
   end
 
-  def checkin(flights)
+  def checkin(flights, opts = {})
+    opts = { :pdf => true }.merge(opts)
+
     if flights[0].checkin_available?
       info = @monkey.checkin(flights)
       checked_in_flights = info[:flights]
@@ -34,7 +36,7 @@ class Southy::TravelAgent
         checked_in_flights.each do |checked_in_flight|
           @config.checkin(checked_in_flight)
         end
-        pdf = generate_pdf(doc)
+        pdf = (opts[:pdf] ? generate_pdf(doc) : nil)
         send_email(checked_in_flights, pdf)
       end
       @config.log "Checked in #{flights[0].conf} - #{checked_in_flights.length} boarding passes"

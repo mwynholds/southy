@@ -30,7 +30,7 @@ class Southy::IntegrationTest < MiniTest::Spec
           @checked_in = []
           @confirmed.each do |c|
             Timecop.travel(c.depart_date - 1.0/2)
-            @checked_in += @agent.checkin([c.dup])
+            @checked_in += @agent.checkin([c.dup], :pdf => false)
             Timecop.return
           end
         end
