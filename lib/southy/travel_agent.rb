@@ -47,7 +47,7 @@ class Southy::TravelAgent
   private
 
   def generate_pdf(doc)
-    PDFKit.new(doc)
+    PDFKit.new(doc).to_pdf
   rescue => e
     @config.log "Error generating PDF", e
     nil
@@ -66,7 +66,6 @@ class Southy::TravelAgent
     filename = "SW#{flight.number}-boarding-passes.pdf"
     marker = 'MIMECONTENTMARKER'
 
-    disclaimer = ''
     if pdf
       footer = <<EOM
 Your boarding passes are attached as a PDF.  You can print them and bring them to the airport.
@@ -101,7 +100,7 @@ Love, southy
 EOM
 
     if pdf
-      encoded_pdf = [pdf.to_pdf].pack('m')
+      encoded_pdf = [pdf].pack('m')
       message += <<EOM
 --#{marker}
 Content-Type: multipart/mixed; name=\"#{filename}\"
