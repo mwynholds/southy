@@ -55,9 +55,9 @@ class Southy::TravelAgent
     nil
   end
 
-  def send_email(flights, pdf)
+  def generate_email(flights, pdf)
     flight = flights[0]
-    return unless flight.email
+    return nil unless flight.email
 
     seats = ""
     flights.each do |f|
@@ -97,7 +97,7 @@ Departing : #{local.strftime('%F %l:%M%P')}
 Route : #{flight.depart_airport} (#{flight.depart_code}) --> #{flight.arrive_airport} (#{flight.arrive_code})
 
 #{seats}
-#{footer}
+    #{footer}
 Love, southy
 EOM
 
@@ -114,21 +114,36 @@ Content-Disposition: attachment; filename="#{filename}"
 EOM
     end
 
+    message
+  end
+
+  def send_email(flights, pdf)
+    message = generate_email(flights, pdf)
+    return if message.nil?
+
     sent = false
-    %w(localhost mail smtp).each do |host|
+    errors = {}
+    hosts = @config.smtp_host ? [ @config.smtp_host ] : %w(localhost mail smtp)
+    port = @config.smtp_port
+    hosts.each do |host|
       begin
         unless sent
-          Net::SMTP.start(host) do |smtp|
+          Net::SMTP.start(host, port) do |smtp|
             smtp.send_message message, 'do-not-reply@internet.com', flight.email
           end
           sent = true
         end
       rescue => e
-        @config.log "Error sending email with: #{host}", e
+        errors[host] = e
       end
     end
 
-    puts "Unable to send check-in email" unless sent
+    unless sent
+      puts "Unable to send check-in email"
+      errors.each do |host, e|
+        @config.log "Unable to send email with host: #{host}", e
+      end
+    end
   end
 
 end

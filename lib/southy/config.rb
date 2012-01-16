@@ -15,6 +15,14 @@ class Southy::Config
     load_flights :force => true
   end
 
+  def smtp_host
+    @config[:smtp_host]
+  end
+
+  def smtp_port
+    @config[:smtp_port]
+  end
+
   def init(first_name, last_name, email = nil)
     @config = {:first_name => first_name, :last_name => last_name, :email => email}
     File.open config_file, "w" do |f|
