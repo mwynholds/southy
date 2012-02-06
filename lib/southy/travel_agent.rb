@@ -121,6 +121,9 @@ EOM
     message = generate_email(flights, pdf)
     return if message.nil?
 
+    flight = flights[0]
+    return if flight.nil? || flight.email.nil?
+    
     sent = false
     errors = {}
     hosts = @config.smtp_host ? [ @config.smtp_host ] : %w(localhost mail smtp)
