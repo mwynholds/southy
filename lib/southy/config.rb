@@ -46,7 +46,12 @@ class Southy::Config
 
   def confirm(flight)
     @flights.delete_if { |f| f.confirmation_number == flight.confirmation_number and ! f.confirmed? }
-    @flights << flight
+    @flights << flight unless @flights.any? do |f|
+      f.confirmation_number == flight.confirmation_number &&
+      f.number == flight.number &&
+      f.depart_date == flight.depart_date &&
+      f.full_name == flight.full_name
+    end
     dump_flights
   end
 
@@ -61,8 +66,12 @@ class Southy::Config
     dump_flights
   end
 
-  def remove(conf)
-    @flights.delete_if { |flight| flight.confirmation_number == conf.upcase.gsub(/0/, 'O') }
+  def remove(conf, first_name = nil, last_name = nil)
+    @flights.delete_if do |flight|
+      flight.confirmation_number == conf.upcase.gsub(/0/, 'O') &&
+              ( first_name.nil? || flight.first_name.downcase == first_name.downcase ) &&
+              ( last_name.nil?  || flight.last_name.downcase == last_name.downcase )
+    end
     dump_flights
   end
 
