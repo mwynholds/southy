@@ -1,1 +1,6 @@
-rvm --create 1.9.2@southy
+if [ -d "$rvm_path/rubies/ruby-1.9.3-p0-perf" ]; then
+  echo 'Using ruby 1.9.3 with falcon patch'
+  rvm --create 1.9.3-p0-perf@southy
+else
+  rvm --create 1.9.2@southy
+fi
