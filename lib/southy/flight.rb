@@ -67,7 +67,7 @@ class Southy::Flight
     return false unless confirmed?
     return false if checked_in?
     return false if depart_date < DateTime.now  #oops, missed this flight :-)
-    depart_date <= ( DateTime.now + 1 + (2.0 / (24 * 60)) ) #start trying 2 minutes early!
+    depart_date <= ( DateTime.now + 1 + (0.5 / (24 * 60)) ) #start trying 30 seconds early!
   end
 
   def checked_in?
