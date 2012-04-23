@@ -12,7 +12,10 @@ class Southy::Daemon
     write_pid
 
     [ 'HUP', 'INT', 'QUIT', 'TERM' ].each do |sig|
-      Signal.trap(sig) { kill }
+      Signal.trap(sig) do
+        @config.log "Interrupted with signal: #{sig}"
+        kill
+      end
     end
 
     begin
