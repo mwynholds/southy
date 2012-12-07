@@ -88,14 +88,23 @@ class Southy::Config
   end
 
   def list(options = {})
+    flights = filter upcoming + unconfirmed, options[:filter]
     puts 'Upcoming Southwest flights:'
-    Southy::Flight.list upcoming, options
-    Southy::Flight.list unconfirmed, options
+    Southy::Flight.list flights, options
   end
 
   def history(options = {})
+    flights = filter past, options[:filter]
     puts 'Previous Southwest flights:'
-    Southy::Flight.list past, options
+    Southy::Flight.list flights, options
+  end
+
+  def filter(flights, filter = nil)
+    return flights unless filter
+    filter.downcase!
+    flights.select do |flight|
+      ( filter.include?('@') && flight.email.downcase == filter ) || flight.full_name_with_email.downcase.include?(filter)
+    end
   end
 
   def prune

@@ -147,6 +147,27 @@ class Southy::ConfigTest < MiniTest::Spec
       end
     end
 
+    describe '#filter' do
+      before do
+        @config.add 'A', 'Uno', 'Hombre', 'one@carbonfive.com'
+        @config.add 'B', 'Dos', 'Hombre', 'two@carbonfive.com'
+      end
+      it 'filters flights by email' do
+        filtered = @config.filter @config.unconfirmed, 'one@carbonfive.com'
+        filtered.map(&:confirmation_number).must_equal ['A']
+      end
+      it 'filters flights by name and email' do
+        filtered = @config.filter @config.unconfirmed, 'one'
+        filtered.map(&:confirmation_number).must_equal ['A']
+
+        filtered = @config.filter @config.unconfirmed, 'uno'
+        filtered.map(&:confirmation_number).must_equal ['A']
+
+        filtered = @config.filter @config.unconfirmed, 'hombre'
+        filtered.map(&:confirmation_number).must_equal ['A', 'B']
+      end
+    end
+
     after do
       FileUtils.remove_entry_secure @config_dir if Dir.exists? @config_dir
     end
