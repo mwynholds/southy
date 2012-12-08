@@ -33,6 +33,11 @@ module Southy
         list conf
       end
 
+      bot.add_command( :syntax => 'remove', :regex => /^remove (.*)$/ ) do |sender, message|
+        @config.remove message
+        list
+      end
+
       bot
     end
 
