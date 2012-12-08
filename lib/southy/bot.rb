@@ -48,7 +48,7 @@ module Southy
 
       groups = flights.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
       out = []
-      groups.values.each do |group|
+      groups.values.sort_by {|g| g[0].depart_date }.each do |group|
         f = group.first
         depart = ::Southy::Flight.local_date_time(f.depart_date, f.depart_code).strftime '%F %l:%M%P'
         info = "#{f.conf} - SW#{f.number} : #{depart} #{f.depart_code} -> #{f.arrive_code}"
