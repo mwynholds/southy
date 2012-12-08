@@ -9,27 +9,22 @@ module Southy
       @agent = TravelAgent.new(@config)
       daemon = Daemon.new(@agent)
       @service = Service.new(@agent, daemon)
-      @bot = Bot.new opts
     end
 
     def run(params)
       @service.run
-      @bot.start
     end
 
     def start(params)
       @service.start @options[:write]
-      @bot.start
     end
 
     def stop(params)
       @service.stop @options[:write]
-      @bot.stop
     end
 
     def restart(params)
       @service.restart
-      @bot.restart
     end
 
     def status(params)

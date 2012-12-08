@@ -3,6 +3,7 @@ class Southy::Daemon
   def initialize(travel_agent)
     @agent = travel_agent
     @config = travel_agent.config
+    @bot = ::Southy::Bot.new
     @active = true
     @running = false
   end
@@ -19,11 +20,12 @@ class Southy::Daemon
     end
 
     begin
+      @bot.start
       run
     rescue => e
       @config.log "Unexpected error", e
     ensure
-      delete_pid
+      cleanup
     end
   end
 

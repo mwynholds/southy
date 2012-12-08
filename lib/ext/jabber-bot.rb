@@ -424,7 +424,7 @@ module Jabber
         end
       end
 
-      listener_thread.join
+      #listener_thread.join
     end
 
   end

@@ -1,8 +1,7 @@
 module Southy
   class Bot
 
-    def initialize(opts)
-      @options = { :verbose => false }.merge opts
+    def initialize()
       @config = Config.new
       @bot = configure_bot
     end
@@ -15,44 +14,35 @@ module Southy
         :master => %w( mike@carbonfive.com )
       )
 
-      bot.add_command(
-        :syntax => 'list all',
-        :description => 'Display upcoming flight check-ins',
-        :regex => /^list all$/,
-      ) do
-        capture { @config.list }
+      bot.add_command( :syntax => 'list', :regex => /^list$/ ) do
+        list
       end
 
-      bot.add_command(
-        :syntax => 'list',
-        :description => 'Display my upcoming flight check-ins',
-        :regex => /^list$/,
-      ) do |sender|
-        capture { @config.list :filter => sender }
+      bot.add_command( :syntax => 'list mine', :regex => /^list mine$/ ) do |sender|
+        list sender
       end
 
-      bot.add_command(
-        :syntax => 'list filtered',
-        :description => 'Display filtered upcoming flight check-ins',
-        :regex => /^list (.*)$/,
-      ) do |sender, message|
-        capture { @config.list :filter => message }
+      bot.add_command( :syntax => 'search', :regex => /^list (.*)$/ ) do |sender, message|
+        list message
+      end
+
+      bot.add_command( :syntax => 'add', :regex => /^add (.*)$/ ) do |sender, message|
+        conf, first, last, email = message.split
+        @config.add conf, first, last, email
+        sleep 3
+        list conf
       end
 
       bot
     end
 
+    def list(filter = nil)
+      @config.reload
+      capture { @config.list :filter => filter }
+    end
+
     def start
       @bot.connect
-    end
-
-    def stop
-      @bot.disconnect
-    end
-
-    def restart
-      stop
-      start
     end
 
     def capture
