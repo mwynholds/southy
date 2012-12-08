@@ -43,7 +43,26 @@ module Southy
 
     def list(filter = nil)
       @config.reload
-      capture { @config.list :filter => filter }
+      flights = @config.filter @config.upcoming + @config.unconfirmed, filter
+      return 'no flights found' if flights.empty?
+
+      groups = flights.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
+      out = []
+      groups.values.each do |group|
+        f = group.first
+        depart = ::Southy::Flight.local_date_time(f.depart_date, f.depart_code).strftime '%F %l:%M%P'
+        info = "#{f.conf} - SW#{f.number} : #{depart} #{f.depart_code} -> #{f.arrive_code}"
+        #info << " #{f.full_name}" if group.length == 1
+        out << info
+        if group.length > 0
+          passengers = group.map(&:full_name).sort
+          passengers.each_slice(4) do |slice|
+            out << "     " + slice.join(', ')
+          end
+        end
+        out << ''
+      end
+      out.join "\n"
     end
 
     def start

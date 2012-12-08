@@ -104,7 +104,7 @@ class Southy::Config
     filter.downcase!
     flights.select do |flight|
       flight.email.downcase == filter || flight.confirmation_number.downcase == filter ||
-        flight.full_name_with_email.downcase.include?(filter)
+        flight.full_name.downcase.include?(filter)
     end
   end
 

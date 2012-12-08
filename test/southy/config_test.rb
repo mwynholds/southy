@@ -149,22 +149,23 @@ class Southy::ConfigTest < MiniTest::Spec
 
     describe '#filter' do
       before do
-        @config.add 'A', 'Uno', 'Hombre', 'one@carbonfive.com'
-        @config.add 'B', 'Dos', 'Hombre', 'two@carbonfive.com'
+        @config.add 'AA', 'Uno', 'Hombre', 'one@carbonfive.com'
+        @config.add 'BB', 'Dos', 'Hombre', 'two@carbonfive.com'
       end
       it 'filters flights by email' do
         filtered = @config.filter @config.unconfirmed, 'one@carbonfive.com'
-        filtered.map(&:confirmation_number).must_equal ['A']
+        filtered.map(&:confirmation_number).must_equal ['AA']
       end
-      it 'filters flights by name and email' do
-        filtered = @config.filter @config.unconfirmed, 'one'
-        filtered.map(&:confirmation_number).must_equal ['A']
-
+      it 'filters flights by name' do
         filtered = @config.filter @config.unconfirmed, 'uno'
-        filtered.map(&:confirmation_number).must_equal ['A']
+        filtered.map(&:confirmation_number).must_equal ['AA']
 
         filtered = @config.filter @config.unconfirmed, 'hombre'
-        filtered.map(&:confirmation_number).must_equal ['A', 'B']
+        filtered.map(&:confirmation_number).must_equal ['AA', 'BB']
+      end
+      it 'filters flights by confirmation number' do
+        filtered = @config.filter @config.unconfirmed, 'bb'
+        filtered.map(&:confirmation_number).must_equal ['BB']
       end
     end
 
