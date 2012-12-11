@@ -18,7 +18,7 @@ module Southy
         list
       end
 
-      bot.add_command( :syntax => 'list mine', :regex => /^list mine$/ ) do |sender|
+      bot.add_command( :syntax => 'list mine', :regex => /^list mine$/ ) do |sender, message|
         list sender
       end
 
