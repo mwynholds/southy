@@ -73,6 +73,7 @@ class Southy::Monkey
               time = leg_depart.css('.segmentTime').text.strip + leg_depart.css('.segmentTimeAMPM').text.strip
               local = DateTime.parse("#{date} #{time}")
               flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
+              return [] unless flight.depart_date
 
               legs << flight
             end
