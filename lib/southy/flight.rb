@@ -131,10 +131,7 @@ class Southy::Flight
 
   def self.utc_date_time(local, airport_code)
     airport = Southy::Airport.lookup airport_code
-    if ! airport
-      puts "Unknown airport code: #{airport_code}"
-      return nil
-    end
+    return nil unless airport
 
     tz = TZInfo::Timezone.get airport.timezone
     tz.local_to_utc(local)

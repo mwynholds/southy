@@ -68,14 +68,18 @@ class Southy::Monkey
               flight.arrive_airport = leg_arrive.css('.segmentCityName').text.strip
               flight.arrive_code = leg_arrive.css('.segmentStation').text.strip.scan(/([A-Z]{3})/)[0][0]
 
-              date = leg_node.css('.travelTimeCell .departureLongDate').text.strip
-              date = first_leg_node.css('.travelTimeCell .departureLongDate').text.strip if date.empty?
-              time = leg_depart.css('.segmentTime').text.strip + leg_depart.css('.segmentTimeAMPM').text.strip
-              local = DateTime.parse("#{date} #{time}")
-              flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
-              return [] unless flight.depart_date
+              depart_airport = Southy::Airport.lookup flight.depart_code
+              if depart_airport
+                date = leg_node.css('.travelTimeCell .departureLongDate').text.strip
+                date = first_leg_node.css('.travelTimeCell .departureLongDate').text.strip if date.empty?
+                time = leg_depart.css('.segmentTime').text.strip + leg_depart.css('.segmentTimeAMPM').text.strip
+                local = DateTime.parse("#{date} #{time}")
+                flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
 
-              legs << flight
+                legs << flight
+              else
+                @config.log "Unknown airport code: #{flight.depart_code}"
+              end
             end
           end
         end
