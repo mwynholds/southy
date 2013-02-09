@@ -45,8 +45,8 @@ class Southy::Monkey
     legs = []
     doc.css('.itinerary_container').each do |container_node|
       container_node.css('.passenger_row_name').each do |passenger_node|
-        container_node.css('.airProductItineraryTable').each do |table_node|
-          leg_nodes = table_node.css('tr.whiteRow') + table_node.css('tr.grayRow')
+        container_node.css('.airProductItineraryTable').each do |itinerary_node|
+          leg_nodes = [ itinerary_node ]
           if leg_nodes.length > 0
             first_leg_node = leg_nodes[0]
             leg_nodes.each do |leg_node|
@@ -58,21 +58,25 @@ class Southy::Monkey
 
               flight.confirmation_number = container_node.css('.confirmation_number').text.strip
 
-              leg_pieces = leg_node.css('.segmentsCell .segmentLegDetails')
+              leg_pieces = leg_node.css('.flightRouting tr')
               leg_depart = leg_pieces[0]
               leg_arrive = leg_pieces[1]
 
-              flight.number = leg_node.css('.flightNumberCell div')[1].text.sub(/^#/, '')
-              flight.depart_airport = leg_depart.css('.segmentCityName').text.strip
-              flight.depart_code = leg_depart.css('.segmentStation').text.strip.scan(/([A-Z]{3})/)[0][0]
-              flight.arrive_airport = leg_arrive.css('.segmentCityName').text.strip
-              flight.arrive_code = leg_arrive.css('.segmentStation').text.strip.scan(/([A-Z]{3})/)[0][0]
+              flight.number = itinerary_node.css('.flightNumber strong').text.sub(/^#/, '')
+
+              depart_airport_info = leg_depart.css('.routingDetailsStops strong').text.strip
+              flight.depart_code = depart_airport_info.scan(/([A-Z]{3})/)[0][0]
+              flight.depart_airport = depart_airport_info.sub("(#{flight.depart_code})", '').strip
+
+              arrive_airport_info = leg_arrive.css('.routingDetailsStops strong').text.strip
+              flight.arrive_code = arrive_airport_info.scan(/([A-Z]{3})/)[0][0]
+              flight.arrive_airport = arrive_airport_info.sub("(#{flight.arrive_code})", '').strip
 
               depart_airport = Southy::Airport.lookup flight.depart_code
               if depart_airport
-                date = leg_node.css('.travelTimeCell .departureLongDate').text.strip
-                date = first_leg_node.css('.travelTimeCell .departureLongDate').text.strip if date.empty?
-                time = leg_depart.css('.segmentTime').text.strip + leg_depart.css('.segmentTimeAMPM').text.strip
+                date = leg_node.css('.departureDate .travelDateTime').text.strip
+                date = first_leg_node.css('.departureDate .travelDateTime').text.strip if date.empty?
+                time = leg_depart.css('.routingDetailsTimes').text.strip
                 local = DateTime.parse("#{date} #{time}")
                 flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
 
