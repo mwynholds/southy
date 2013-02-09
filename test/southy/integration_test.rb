@@ -6,11 +6,11 @@ require 'timecop'
 class Southy::IntegrationTest < MiniTest::Spec
   EXPECTED =
           {
-                  'WBWHS8' => { 1814 => { 'Robin Pak' => 'A31' },
-                                2198 => { 'Robin Pak' => 'A49' },
-                                1278 => { 'Robin Pak' => 'B26' } },
-                  'IU6ITC' => { 2531 => { 'Candace Wynholds' => 'A25', 'Hans Wynholds' => 'A33' },
-                                3411 => { 'Candace Wynholds' => 'B25', 'Hans Wynholds' => 'B33' } }#,
+                  #'WBWHS8' => { 1814 => { 'Robin Pak' => 'A31' },
+                  #              2198 => { 'Robin Pak' => 'A49' },
+                  #              1278 => { 'Robin Pak' => 'B26' } },
+                  #'IU6ITC' => { 2531 => { 'Candace Wynholds' => 'A25', 'Hans Wynholds' => 'A33' },
+                  #              3411 => { 'Candace Wynholds' => 'B25', 'Hans Wynholds' => 'B33' } }#,
                   #'IBG773' => { 246  => { 'Lora Wynholds' => nil },
                   #              1827 => { 'Lora Wynholds' => nil } }
           }
