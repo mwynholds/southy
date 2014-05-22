@@ -1,1 +1,1 @@
-rvm use 1.9.3-p327@southy --create
+rvm use 1.8.7-p334@southy --create
