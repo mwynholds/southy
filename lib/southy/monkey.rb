@@ -113,6 +113,12 @@ class Southy::Monkey
     set_cookies response, request
     response = fetch request
 
+    request = Net::HTTP::Post.new '/flight/selectCheckinDocDelivery.html'
+    data = { :optionPrint => 'true' }
+    request.set_form_data data
+    set_cookies response, request
+    response = fetch request
+
     body = response.body
     body.gsub!( /href="\//, 'href="http://www.southwest.com/' )
     body.gsub!( /src="\//,  'src="http://www.southwest.com/'  )
@@ -130,7 +136,10 @@ class Southy::Monkey
       number = node.css('.flight_number').text.strip
       first_name = node.css('.passengerFirstName').text.strip.capitalize
       last_name = node.css('.passengerLastName').text.strip.capitalize
-      checked_in_flight = flights.find { |f| f.number == number && f.first_name == first_name && f.last_name == last_name }
+      checked_in_flight = flights.find { |f| f.number == number &&
+                                             f.first_name == first_name &&
+                                             ( f.last_name == last_name || f.last_name == last_name.split[0] ) }
+
       if checked_in_flight
         checked_in_flight.group = node.css('.group')[0][:alt]
         digits = node.css('.position').map { |p| p[:alt].to_i }
@@ -150,7 +159,7 @@ class Southy::Monkey
 
     while response.is_a? Net::HTTPRedirection
       location = response['Location']
-      path = location.sub /^https?:\/\/[^\/]+/, ''
+      path = location.sub(/^https?:\/\/[^\/]+/, '')
       request = Net::HTTP::Get.new path
       set_cookies response, request
       response = (location =~ /^https:/) ? @https.request(request) : @http.request(request)
