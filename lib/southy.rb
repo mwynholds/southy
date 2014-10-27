@@ -13,4 +13,6 @@ module Southy
 
   require 'ext/xmpp4r-simple'
   require 'ext/jabber-bot'
+
+  require 'pry' rescue {}
 end

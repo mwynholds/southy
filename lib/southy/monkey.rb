@@ -131,22 +131,28 @@ class Southy::Monkey
 
     checkin_docs = doc.css '.checkinDocument'
 
+    boarding_passes = []
     checked_in_flights = []
     checkin_docs.each do |node|
-      number = node.css('.flight_number').text.strip
-      first_name = node.css('.passengerFirstName').text.strip.capitalize
-      last_name = node.css('.passengerLastName').text.strip.capitalize
+      number = node.css('.flight_number')[0].text.strip
+      first_name = node.css('.passengerFirstName')[0].text.strip.capitalize
+      last_name = node.css('.passengerLastName')[0].text.strip.capitalize
       checked_in_flight = flights.find { |f| f.number == number &&
                                              f.first_name == first_name &&
                                              ( f.last_name == last_name || f.last_name == last_name.split[0] ) }
 
+      boarding_passes << "#{number} - #{first_name} #{last_name}"
       if checked_in_flight
-        checked_in_flight.group = node.css('.group')[0][:alt]
-        digits = node.css('.position').map { |p| p[:alt].to_i }
+        checked_in_flight.group = node.css('.group > *')[0][:alt]
+        digits = node.css('.position > *').map { |p| p[:alt].to_i }
         checked_in_flight.position = digits[0] * 10 + digits[1]
-
         checked_in_flights << checked_in_flight
       end
+    end
+
+    if checked_in_flights.empty?
+      puts "Cannot find flights for any boarding passes:"
+      boarding_passes.each { |bp| puts "  #{bp}" }
     end
 
     { :flights => checked_in_flights, :doc => doc.to_s }
