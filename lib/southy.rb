@@ -1,4 +1,9 @@
 module Southy
+  begin
+    require 'pry'
+  rescue LoadError
+  end
+
   require 'southy/version'
   require 'southy/helpers'
   require 'southy/monkey'
@@ -13,6 +18,4 @@ module Southy
 
   require 'ext/xmpp4r-simple'
   require 'ext/jabber-bot'
-
-  require 'pry' rescue {}
 end
