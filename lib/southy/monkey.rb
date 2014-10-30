@@ -143,8 +143,8 @@ class Southy::Monkey
 
       boarding_passes << "#{number} - #{first_name} #{last_name}"
       if checked_in_flight
-        checked_in_flight.group = node.css('.group > *')[0][:alt]
-        digits = node.css('.position > *').map { |p| p[:alt].to_i }
+        checked_in_flight.group = nodes_or_children(node, '.group')[0][:alt]
+        digits = nodes_or_children(node, '.position').map { |p| p[:alt].to_i }
         checked_in_flight.position = digits[0] * 10 + digits[1]
         checked_in_flights << checked_in_flight
       end
@@ -159,6 +159,12 @@ class Southy::Monkey
   end
 
   private
+
+  def nodes_or_children(node, selector)
+    n1 = node.css selector
+    n2 = node.css "#{selector} > *"
+    n1.empty? ? n2 : n1
+  end
 
   def fetch(request, https = false)
     response = https ? @https.request(request) : @http.request(request)
