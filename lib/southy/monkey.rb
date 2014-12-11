@@ -4,6 +4,8 @@ require 'fileutils'
 
 class Southy::Monkey
 
+  DEBUG = false
+
   def initialize(config = nil)
     @config = config
 
@@ -95,7 +97,7 @@ class Southy::Monkey
                           :firstName => flight.first_name,
                           :lastName => flight.last_name,
                           :submitButton => 'Check In'
-    response = fetch request
+    response = fetch request, true
 
     doc = Nokogiri::HTML response.body
     checkin_options = doc.css '#checkinOptions'
@@ -111,13 +113,13 @@ class Southy::Monkey
     end
     request.set_form_data data
     set_cookies response, request
-    response = fetch request
+    response = fetch request, true
 
     request = Net::HTTP::Post.new '/flight/selectCheckinDocDelivery.html'
     data = { :optionPrint => 'true' }
     request.set_form_data data
     set_cookies response, request
-    response = fetch request
+    response = fetch request, true
 
     body = response.body
     body.gsub!( /href="\//, 'href="http://www.southwest.com/' )
@@ -167,10 +169,12 @@ class Southy::Monkey
   end
 
   def fetch(request, https = false)
+    puts "Fetch #{request.path}" if DEBUG
     response = https ? @https.request(request) : @http.request(request)
 
     while response.is_a? Net::HTTPRedirection
       location = response['Location']
+      puts "Redirect to #{location}" if DEBUG
       path = location.sub(/^https?:\/\/[^\/]+/, '')
       request = Net::HTTP::Get.new path
       set_cookies response, request
@@ -188,6 +192,11 @@ class Southy::Monkey
         name = c.match(/^([^=]+)=/)[1]
         cookies[name] = c.split(';')[0]
       end
+    end
+
+    if DEBUG
+      puts "Cookies:"
+      p cookies
     end
 
     request['Cookie'] = cookies.values.join('; ') if cookies.length > 0
