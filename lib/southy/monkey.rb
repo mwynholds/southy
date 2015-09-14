@@ -1,4 +1,5 @@
 require 'nokogiri'
+require 'json'
 require 'net/https'
 require 'fileutils'
 
@@ -9,8 +10,8 @@ class Southy::Monkey
   def initialize(config = nil)
     @config = config
 
-    @http = Net::HTTP.new 'www.southwest.com'
-    @https = Net::HTTP.new 'www.southwest.com', 443
+    @http = Net::HTTP.new 'mobile.southwest.com'
+    @https = Net::HTTP.new 'mobile.southwest.com', 443
     @https.use_ssl = true
 
     verify_https = false
@@ -31,61 +32,78 @@ class Southy::Monkey
     end
   end
 
-  def fetch_confirmation_page(conf, first_name, last_name)
-    request = Net::HTTP::Post.new '/flight/view-air-reservation.html'
-    request.set_form_data :confirmationNumber => conf,
+  def fetch_trip_info(conf, first_name, last_name)
+    request = Net::HTTP::Post.new '/middleware/MWServlet'
+    request.set_form_data :serviceID => 'viewAirReservation',
+                          :confirmationNumber => conf,
                           :confirmationNumberFirstName => first_name,
-                          :confirmationNumberLastName => last_name
+                          :confirmationNumberLastName => last_name,
+                          :searchType => 'ConfirmationNumber',
+                          :appID => 'swa',
+                          :channel => 'wap',
+                          :platform => 'thinclient',
+                          :cacheid => '',
+                          :rcid => 'spaiphone'
     response = fetch request, true
-    @config.save_file conf, "confirm.html", response.body
-    Nokogiri::HTML response.body
+    json = JSON.parse response.body
+    @config.save_file conf, 'info.json', json.pretty_inspect
+    json
+  end
+
+  def extract_code(str)
+    str.scan(/([A-Z]{3})/)[0][0]
+  end
+
+  def extract_time(str)
+    str.scan(/^(.*[AP]M)/)[0][0]
+  end
+
+  def extract_airport(str)
+    code = extract_code str
+    time = extract_time str
+    str = str.sub "(#{code})", ''
+    str = str.sub time, ''
+    str.strip
+  end
+
+  def extract_flight(info, leg_name, leg_type)
+    leg_info = info[leg_name]
+    return nil unless leg_info
+
+    flight = Southy::Flight.new
+    flight.first_name = info['ebchkinfirstName'].capitalize
+    flight.last_name = info['ebchkinlastName'].capitalize
+    flight.confirmation_number = info['ebchkinConfNo']
+    flight.number = leg_info["#{leg_type}FlightNo"]
+    flight.depart_code = extract_code leg_info["departCity"]
+    flight.depart_airport = extract_airport leg_info["departCity"]
+    flight.arrive_code = extract_code leg_info["arrivalCity"]
+    flight.arrive_airport = extract_airport leg_info["arrivalCity"]
+
+    depart_airport = Southy::Airport.lookup flight.depart_code
+    if depart_airport
+      date = leg_info["#{leg_type}Date"]
+      time = extract_time leg_info["departCity"]
+      local = DateTime.parse "#{date} #{time}"
+      flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
+    else
+      @config.log "Unknown airport code: #{flight.depart_code}"
+      return nil
+    end
+
+    flight
   end
 
   def lookup(conf, first_name, last_name)
-    doc = fetch_confirmation_page conf, first_name, last_name
+    json = fetch_trip_info conf, first_name, last_name
 
-    legs = []
-    doc.css('.itinerary_container').each do |container_node|
-      container_node.css('.passenger_row_name').each do |passenger_node|
-        container_node.css('.airProductItineraryTable').each do |journey_node|
-          flight = Southy::Flight.new
+    infos = json['upComingInfo']
+    puts "WARNING: Expecting one 'upComingInfo' block but found #{infos.length}" if infos.length > 1
+    info = infos[0]
+    departing_flight = extract_flight info, 'Depart1', 'depart'
+    returning_flight = extract_flight info, 'Return1', 'return'
 
-          names = passenger_node.text.split.map(&:capitalize)
-          flight.first_name = names[0]
-          flight.last_name = names[1]
-
-          flight.confirmation_number = container_node.css('.confirmation_number').text.strip
-
-          leg_nodes = journey_node.css('.flightRouting .routingDetailsStops')
-          leg_depart = leg_nodes.first
-          leg_arrive = leg_nodes.last
-
-          flight.number = journey_node.css('.flightNumber strong')[0].text.sub(/^#/, '')
-
-          depart_airport_info = leg_depart.css('strong').text.strip
-          flight.depart_code = depart_airport_info.scan(/([A-Z]{3})/)[0][0]
-          flight.depart_airport = depart_airport_info.sub("(#{flight.depart_code})", '').strip
-
-          arrive_airport_info = leg_arrive.css('strong').text.strip
-          flight.arrive_code = arrive_airport_info.scan(/([A-Z]{3})/)[0][0]
-          flight.arrive_airport = arrive_airport_info.sub("(#{flight.arrive_code})", '').strip
-
-          depart_airport = Southy::Airport.lookup flight.depart_code
-          if depart_airport
-            date = journey_node.css('.departureDate .travelDateTime').text.strip
-            time = journey_node.css('.routingDetailsTimes.departure')[0].text.strip
-            local = DateTime.parse("#{date} #{time}")
-            flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
-
-            legs << flight
-          else
-            @config.log "Unknown airport code: #{flight.depart_code}"
-          end
-        end
-      end
-    end
-
-    legs
+    [ departing_flight, returning_flight ].compact
   end
 
   def fetch_flight_documents_page(flights)
@@ -170,6 +188,7 @@ class Southy::Monkey
 
   def fetch(request, https = false)
     puts "Fetch #{request.path}" if DEBUG
+    request['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4'
     response = https ? @https.request(request) : @http.request(request)
 
     while response.is_a? Net::HTTPRedirection
