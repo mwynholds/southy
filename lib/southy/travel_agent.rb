@@ -36,7 +36,7 @@ class Southy::TravelAgent
         checked_in_flights.each do |checked_in_flight|
           @config.checkin(checked_in_flight)
         end
-        pdf = (opts[:pdf] ? generate_pdf(doc) : nil)
+        pdf = (opts[:pdf] && doc ? generate_pdf(doc) : nil)
         send_email(checked_in_flights, pdf)
       end
       @config.log "Checked in #{flights[0].conf} - #{checked_in_flights.length} boarding passes"
@@ -123,7 +123,7 @@ EOM
 
     flight = flights[0]
     return if flight.nil? || flight.email.nil?
-    
+
     sent = false
     errors = {}
     hosts = @config.smtp_host ? [ @config.smtp_host ] : %w(localhost mail smtp)
