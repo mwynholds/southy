@@ -66,44 +66,50 @@ class Southy::Monkey
     str.strip
   end
 
-  def extract_flight(info, leg_name, leg_type)
+  def extract_flights(info, leg_name, leg_type)
     leg_info = info[leg_name]
-    return nil unless leg_info
+    return [] unless leg_info
 
-    flight = Southy::Flight.new
-    flight.first_name = info['ebchkinfirstName'].capitalize
-    flight.last_name = info['ebchkinlastName'].capitalize
-    flight.confirmation_number = info['ebchkinConfNo']
-    flight.number = leg_info["#{leg_type}FlightNo"]
-    flight.depart_code = extract_code leg_info["departCity"]
-    flight.depart_airport = extract_airport leg_info["departCity"]
-    flight.arrive_code = extract_code leg_info["arrivalCity"]
-    flight.arrive_airport = extract_airport leg_info["arrivalCity"]
+    depart_code = extract_code leg_info["departCity"]
+    depart_airport = Southy::Airport.lookup depart_code
+    unless depart_airport
+      @config.log "Unknown airport code: #{depart_code}"
+      return []
+    end
 
-    depart_airport = Southy::Airport.lookup flight.depart_code
-    if depart_airport
+    passengers = info.map { |key, value| key =~ /^passengerName/ ? info[key] : nil }.compact
+
+    passengers.map do |passenger|
+      names = passenger.split ' '
       date = leg_info["#{leg_type}Date"]
       time = extract_time leg_info["departCity"]
       local = DateTime.parse "#{date} #{time}"
-      flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
-    else
-      @config.log "Unknown airport code: #{flight.depart_code}"
-      return nil
-    end
 
-    flight
+      flight = Southy::Flight.new
+      flight.first_name = names[0...-1].join(' ').capitalize
+      flight.last_name = names.last.capitalize
+      flight.confirmation_number = info['ebchkinConfNo']
+      flight.number = leg_info["#{leg_type}FlightNo"]
+      flight.depart_code = extract_code leg_info["departCity"]
+      flight.depart_airport = extract_airport leg_info["departCity"]
+      flight.arrive_code = extract_code leg_info["arrivalCity"]
+      flight.arrive_airport = extract_airport leg_info["arrivalCity"]
+      flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
+      flight
+    end
   end
 
   def lookup(conf, first_name, last_name)
     json = fetch_trip_info conf, first_name, last_name
 
     infos = json['upComingInfo']
+    return [] unless infos
     puts "WARNING: Expecting one 'upComingInfo' block but found #{infos.length}" if infos.length > 1
     info = infos[0]
-    departing_flight = extract_flight info, 'Depart1', 'depart'
-    returning_flight = extract_flight info, 'Return1', 'return'
+    departing_flights = extract_flights info, 'Depart1', 'depart'
+    returning_flights = extract_flights info, 'Return1', 'return'
 
-    [ departing_flight, returning_flight ].compact
+    departing_flights + returning_flights
   end
 
   def fetch_flight_documents_page(flights)
