@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+version=`ruby -r ./lib/southy/version.rb -e 'puts Southy::VERSION'`
+dest=$1
+ssh="ssh root@$dest"
+
+rake build
+scp pkg/southy-$version.gem root@$dest:
+$ssh "which southy && southy stop"
+$ssh "gem list | grep southy && gem uninstall southy"
+$ssh "gem install --no-ri --no-rdoc ./southy-$version.gem"
+$ssh "southy start"
+$ssh "rm -f ./southy-$version.gem"
