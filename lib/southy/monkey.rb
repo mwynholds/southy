@@ -1,6 +1,7 @@
 require 'json'
 require 'net/https'
 require 'fileutils'
+require 'pp'
 
 class Southy::Monkey
 
@@ -46,7 +47,7 @@ class Southy::Monkey
     )
     response = fetch request
     json = JSON.parse response.body
-    @config.save_file conf, 'info.json', json.pretty_inspect
+    @config.save_file conf, 'viewAirReservation.json', json.pretty_inspect
     json
   end
 
@@ -117,7 +118,9 @@ class Southy::Monkey
     request.set_form_data core_form_data.merge(
       :serviceID => 'getTravelInfo'
     )
-    fetch request
+    response = fetch request
+    json = JSON.parse response.body
+    @config.save_file conf, 'getTravelInfo.json', json.pretty_inspect
 
     flight = flights[0]
     request = Net::HTTP::Post.new '/middleware/MWServlet'
@@ -129,6 +132,7 @@ class Southy::Monkey
     )
     response = fetch request
     json = JSON.parse response.body
+    @config.save_file conf, 'flightcheckin_new.json', json.pretty_inspect
     output = json['output']
     unless output && output.length > 0 && output[0]['flightNumber'] == flight.number
       puts "\nCannot locate checkin page for: #{flight}"
@@ -141,6 +145,7 @@ class Southy::Monkey
     )
     response = fetch request
     json = JSON.parse response.body
+    @config.save_file conf, 'getallboardingpass.json', json.pretty_inspect
     checked_in_flights = json['Document'].map do |doc|
       flight = flights.find { |f| f.number == doc['flight_num'] && f.full_name == doc['name'] }
       flight.group = doc['boardingroup_text']
