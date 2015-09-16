@@ -16,7 +16,6 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 
-  s.add_runtime_dependency 'nokogiri'
   s.add_runtime_dependency 'json'
   s.add_runtime_dependency 'tzinfo'
   s.add_runtime_dependency 'xmpp4r'
