@@ -4,7 +4,6 @@ PATH
     southy (1.1)
       json
       tzinfo
-      xmpp4r
 
 GEM
   remote: http://rubygems.org/
@@ -35,7 +34,6 @@ GEM
     slop (3.6.0)
     timecop (0.3.5)
     tzinfo (0.3.38)
-    xmpp4r (0.5)
 
 PLATFORMS
   ruby

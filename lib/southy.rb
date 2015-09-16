@@ -14,8 +14,4 @@ module Southy
   require 'southy/travel_agent'
   require 'southy/airport'
   require 'southy/cli'
-  require 'southy/bot'
-
-  require 'ext/xmpp4r-simple'
-  require 'ext/jabber-bot'
 end
