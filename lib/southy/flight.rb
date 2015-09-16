@@ -51,6 +51,12 @@ class Southy::Flight
     "#{first_name} #{last_name}"
   end
 
+  def full_name=(name)
+    names = name.split ' '
+    self.first_name = names[0...-1].join(' ').capitalize
+    self.last_name = names.last.capitalize
+  end
+
   def full_name_with_email
     "#{full_name} (#{email})"
   end

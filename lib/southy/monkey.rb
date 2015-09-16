@@ -1,4 +1,4 @@
-require 'nokogiri'
+require 'json'
 require 'net/https'
 require 'fileutils'
 
@@ -8,9 +8,9 @@ class Southy::Monkey
 
   def initialize(config = nil)
     @config = config
+    @cookies = []
 
-    @http = Net::HTTP.new 'www.southwest.com'
-    @https = Net::HTTP.new 'www.southwest.com', 443
+    @https = Net::HTTP.new 'mobile.southwest.com', 443
     @https.use_ssl = true
 
     verify_https = false
@@ -31,175 +31,149 @@ class Southy::Monkey
     end
   end
 
-  def fetch_confirmation_page(conf, first_name, last_name)
-    request = Net::HTTP::Post.new '/flight/view-air-reservation.html'
-    request.set_form_data :confirmationNumber => conf,
-                          :confirmationNumberFirstName => first_name,
-                          :confirmationNumberLastName => last_name
-    response = fetch request, true
-    @config.save_file conf, "confirm.html", response.body
-    Nokogiri::HTML response.body
+  def core_form_data
+    { :appID => 'swa', :appver => '2.17.0', :channel => 'wap', :platform => 'thinclient', :cacheid => '', :rcid => 'spaiphone' }
+  end
+
+  def fetch_trip_info(conf, first_name, last_name)
+    request = Net::HTTP::Post.new '/middleware/MWServlet'
+    request.set_form_data core_form_data.merge(
+      :serviceID => 'viewAirReservation',
+      :confirmationNumber => conf,
+      :confirmationNumberFirstName => first_name,
+      :confirmationNumberLastName => last_name,
+      :searchType => 'ConfirmationNumber'
+    )
+    response = fetch request
+    json = JSON.parse response.body
+    @config.save_file conf, 'info.json', json.pretty_inspect
+    json
+  end
+
+  def extract_code(str)
+    str.scan(/([A-Z]{3})/)[0][0]
+  end
+
+  def extract_time(str)
+    str.scan(/^(.*[AP]M)/)[0][0]
+  end
+
+  def extract_airport(str)
+    code = extract_code str
+    time = extract_time str
+    str = str.sub "(#{code})", ''
+    str = str.sub time, ''
+    str.strip
+  end
+
+  def extract_flights(info, leg_name, leg_type)
+    leg_info = info[leg_name]
+    return [] unless leg_info
+
+    depart_code = extract_code leg_info["departCity"]
+    depart_airport = Southy::Airport.lookup depart_code
+    unless depart_airport
+      @config.log "Unknown airport code: #{depart_code}"
+      return []
+    end
+
+    passengers = info.map { |key, value| key =~ /^passengerName/ ? info[key] : nil }.compact
+
+    passengers.map do |passenger|
+      date = leg_info["#{leg_type}Date"]
+      time = extract_time leg_info["departCity"]
+      local = DateTime.parse "#{date} #{time}"
+
+      flight = Southy::Flight.new
+      flight.full_name = passenger
+      flight.confirmation_number = info['ebchkinConfNo']
+      flight.number = leg_info["#{leg_type}FlightNo"]
+      flight.depart_code = extract_code leg_info["departCity"]
+      flight.depart_airport = extract_airport leg_info["departCity"]
+      flight.arrive_code = extract_code leg_info["arrivalCity"]
+      flight.arrive_airport = extract_airport leg_info["arrivalCity"]
+      flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
+      flight
+    end
   end
 
   def lookup(conf, first_name, last_name)
-    doc = fetch_confirmation_page conf, first_name, last_name
+    json = fetch_trip_info conf, first_name, last_name
 
-    legs = []
-    doc.css('.itinerary_container').each do |container_node|
-      container_node.css('.passenger_row_name').each do |passenger_node|
-        container_node.css('.airProductItineraryTable').each do |journey_node|
-          flight = Southy::Flight.new
+    infos = json['upComingInfo']
+    return [] unless infos
+    puts "WARNING: Expecting one 'upComingInfo' block but found #{infos.length}" if infos.length > 1
+    info = infos[0]
+    departing_flights = extract_flights info, 'Depart1', 'depart'
+    returning_flights = extract_flights info, 'Return1', 'return'
 
-          names = passenger_node.text.split.map(&:capitalize)
-          flight.first_name = names[0]
-          flight.last_name = names[1]
-
-          flight.confirmation_number = container_node.css('.confirmation_number').text.strip
-
-          leg_nodes = journey_node.css('.flightRouting .routingDetailsStops')
-          leg_depart = leg_nodes.first
-          leg_arrive = leg_nodes.last
-
-          flight.number = journey_node.css('.flightNumber strong')[0].text.sub(/^#/, '')
-
-          depart_airport_info = leg_depart.css('strong').text.strip
-          flight.depart_code = depart_airport_info.scan(/([A-Z]{3})/)[0][0]
-          flight.depart_airport = depart_airport_info.sub("(#{flight.depart_code})", '').strip
-
-          arrive_airport_info = leg_arrive.css('strong').text.strip
-          flight.arrive_code = arrive_airport_info.scan(/([A-Z]{3})/)[0][0]
-          flight.arrive_airport = arrive_airport_info.sub("(#{flight.arrive_code})", '').strip
-
-          depart_airport = Southy::Airport.lookup flight.depart_code
-          if depart_airport
-            date = journey_node.css('.departureDate .travelDateTime').text.strip
-            time = journey_node.css('.routingDetailsTimes.departure')[0].text.strip
-            local = DateTime.parse("#{date} #{time}")
-            flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
-
-            legs << flight
-          else
-            @config.log "Unknown airport code: #{flight.depart_code}"
-          end
-        end
-      end
-    end
-
-    legs
-  end
-
-  def fetch_flight_documents_page(flights)
-    flight = flights[0]
-
-    request = Net::HTTP::Post.new '/flight/retrieveCheckinDoc.html'
-    request['Referer'] = 'http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes'
-    request.set_form_data :confirmationNumber => flight.confirmation_number,
-                          :firstName => flight.first_name,
-                          :lastName => flight.last_name,
-                          :submitButton => 'Check In'
-    response = fetch request, true
-
-    doc = Nokogiri::HTML response.body
-    checkin_options = doc.css '#checkinOptions'
-    return nil unless checkin_options
-
-    request = Net::HTTP::Post.new '/flight/selectPrintDocument.html'
-    data = { :printDocuments => 'Check In' }
-    checkin_options.css('input').each_with_index do |input_node, i|
-      input_id = input_node['id']
-      if input_id =~ /^checkinPassengers/
-        data[input_id] = 'true'
-      end
-    end
-    request.set_form_data data
-    set_cookies response, request
-    response = fetch request, true
-
-    request = Net::HTTP::Post.new '/flight/selectCheckinDocDelivery.html'
-    data = { :optionPrint => 'true' }
-    request.set_form_data data
-    set_cookies response, request
-    response = fetch request, true
-
-    body = response.body
-    body.gsub!( /href="\//, 'href="http://www.southwest.com/' )
-    body.gsub!( /src="\//,  'src="http://www.southwest.com/'  )
-    @config.save_file flight.conf, "#{flight.number}-checkin.html", body
-    Nokogiri::HTML body
+    departing_flights + returning_flights
   end
 
   def checkin(flights)
-    doc = fetch_flight_documents_page flights
+    @cookies = []
 
-    checkin_docs = doc.css '.checkinDocument'
+    request = Net::HTTP::Post.new '/middleware/MWServlet'
+    request.set_form_data core_form_data.merge(
+      :serviceID => 'getTravelInfo'
+    )
+    fetch request
 
-    boarding_passes = []
-    checked_in_flights = []
-    checkin_docs.each do |node|
-      number = node.css('.flight_number')[0].text.strip
-      first_name = node.css('.passengerFirstName')[0].text.strip.capitalize
-      last_name = node.css('.passengerLastName')[0].text.strip.capitalize
-      checked_in_flight = flights.find { |f| f.number == number &&
-                                             f.first_name == first_name &&
-                                             ( f.last_name == last_name || f.last_name == last_name.split[0] ) }
-
-      boarding_passes << "#{number} - #{first_name} #{last_name}"
-      if checked_in_flight
-        checked_in_flight.group = nodes_or_children(node, '.group')[0][:alt]
-        digits = nodes_or_children(node, '.position').map { |p| p[:alt].to_i }
-        checked_in_flight.position = digits[0] * 10 + digits[1]
-        checked_in_flights << checked_in_flight
-      end
+    flight = flights[0]
+    request = Net::HTTP::Post.new '/middleware/MWServlet'
+    request.set_form_data core_form_data.merge(
+      :serviceID => 'flightcheckin_new',
+      :recordLocator => flight.confirmation_number,
+      :firstName => flight.first_name,
+      :lastName => flight.last_name
+    )
+    response = fetch request
+    json = JSON.parse response.body
+    output = json['output']
+    unless output && output.length > 0 && output[0]['flightNumber'] == flight.number
+      puts "\nCannot locate checkin page for: #{flight}"
+      return { :flights => [] }
     end
 
-    if checked_in_flights.empty?
-      puts "Cannot find flights for any boarding passes:"
-      boarding_passes.each { |bp| puts "  #{bp}" }
+    request = Net::HTTP::Post.new '/middleware/MWServlet'
+    request.set_form_data core_form_data.merge(
+      :serviceID => 'getallboardingpass'
+    )
+    response = fetch request
+    json = JSON.parse response.body
+    checked_in_flights = json['Document'].map do |doc|
+      flight = flights.find { |f| f.number == doc['flight_num'] && f.full_name == doc['name'] }
+      flight.group = doc['boardingroup_text']
+      flight.position = "#{doc['position1_text']}#{doc['position2_text']}".to_i
+      flight
     end
 
-    { :flights => checked_in_flights, :doc => doc.to_s }
+    @cookies = []
+    { :flights => checked_in_flights }
   end
 
   private
 
-  def nodes_or_children(node, selector)
-    n1 = node.css selector
-    n2 = node.css "#{selector} > *"
-    n1.empty? ? n2 : n1
-  end
-
-  def fetch(request, https = false)
+  def fetch(request)
     puts "Fetch #{request.path}" if DEBUG
-    response = https ? @https.request(request) : @http.request(request)
+    request['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4'
 
-    while response.is_a? Net::HTTPRedirection
-      location = response['Location']
-      puts "Redirect to #{location}" if DEBUG
-      path = location.sub(/^https?:\/\/[^\/]+/, '')
-      request = Net::HTTP::Get.new path
-      set_cookies response, request
-      response = (location =~ /^https:/) ? @https.request(request) : @http.request(request)
-    end
+    restore_cookies request
+    response = @https.request(request)
+    save_cookies response
 
     response
   end
 
-  def set_cookies(response, request)
-    cookie_header = response.get_fields 'Set-Cookie'
-    cookies = {}
-    if cookie_header
-      cookie_header.each do |c|
-        name = c.match(/^([^=]+)=/)[1]
-        cookies[name] = c.split(';')[0]
-      end
-    end
+  def restore_cookies(request)
+    request['Cookie'] = @cookies.join('; ')
+  end
 
-    if DEBUG
-      puts "Cookies:"
-      p cookies
+  def save_cookies(response)
+    cookie_headers = response.get_fields 'Set-Cookie' || []
+    cookie_headers.each do |c|
+      @cookies << c.split(';')[0]
     end
-
-    request['Cookie'] = cookies.values.join('; ') if cookies.length > 0
   end
 end
 

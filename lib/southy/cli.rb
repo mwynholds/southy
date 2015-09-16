@@ -79,6 +79,20 @@ module Southy
       end
     end
 
+    def resend(params)
+      groups = @config.checked_in.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
+      groups.values.each do |flights|
+        flight = flights[0]
+        name = flight.full_name
+        len = flights.length
+        name += " (and #{len - 1} other passenger#{len > 2 ? 's' : ''})" if len > 1
+        print "Re-sending #{flight.confirmation_number} (SW#{flight.number}) to #{name}... "
+        sent = @agent.resend flights
+        puts( sent ? 'sent' : 'not sent' )
+      end
+
+    end
+
     def list(params)
       @config.list :verbose => @options[:verbose]
     end

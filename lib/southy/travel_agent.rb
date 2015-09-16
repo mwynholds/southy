@@ -1,5 +1,4 @@
 require 'net/smtp'
-require 'pdfkit'
 
 class Southy::TravelAgent
 
@@ -25,19 +24,15 @@ class Southy::TravelAgent
     legs
   end
 
-  def checkin(flights, opts = {})
-    opts = { :pdf => true }.merge(opts)
-
+  def checkin(flights)
     if flights[0].checkin_available?
       info = @monkey.checkin(flights)
       checked_in_flights = info[:flights]
-      doc = info[:doc]
       if checked_in_flights.size > 0
         checked_in_flights.each do |checked_in_flight|
-          @config.checkin(checked_in_flight)
+          @config.checkin checked_in_flight
         end
-        pdf = (opts[:pdf] ? generate_pdf(doc) : nil)
-        send_email(checked_in_flights, pdf)
+        send_email checked_in_flights
       end
       @config.log "Checked in #{flights[0].conf} - #{checked_in_flights.length} boarding passes"
       checked_in_flights
@@ -46,16 +41,15 @@ class Southy::TravelAgent
     end
   end
 
-  private
+  def resend(flights)
+    return false unless flights[0].checked_in?
 
-  def generate_pdf(doc)
-    PDFKit.new(doc).to_pdf
-  rescue => e
-    @config.log "Error generating PDF", e
-    nil
+    send_email flights
   end
 
-  def generate_email(flights, pdf)
+  private
+
+  def generate_email(flights)
     flight = flights[0]
     return nil unless flight.email
 
@@ -65,19 +59,12 @@ class Southy::TravelAgent
     end
 
     local = Southy::Flight.local_date_time(flight.depart_date, flight.depart_code)
-    filename = "SW#{flight.number}-boarding-passes.pdf"
     marker = 'MIMECONTENTMARKER'
 
-    if pdf
-      footer = <<EOM
-Your boarding passes are attached as a PDF.  You can print them and bring them to the airport.
-EOM
-    else
-      footer = <<EOM
+    footer = <<EOM
 Please note that you must print your boarding pass online or at the airport:
 http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes
 EOM
-    end
 
     message = <<EOM
 From: Southy <southy@carbonfive.com>
@@ -100,30 +87,16 @@ Route : #{flight.depart_airport} (#{flight.depart_code}) --> #{flight.arrive_air
     #{footer}
 Love, southy
 EOM
-
-    if pdf
-      encoded_pdf = [pdf].pack('m')
-      message += <<EOM
---#{marker}
-Content-Type: multipart/mixed; name=\"#{filename}\"
-Content-Transfer-Encoding:base64
-Content-Disposition: attachment; filename="#{filename}"
-
-#{encoded_pdf}
---#{marker}--
-EOM
-    end
-
     message
   end
 
-  def send_email(flights, pdf)
-    message = generate_email(flights, pdf)
-    return if message.nil?
+  def send_email(flights)
+    message = generate_email flights
+    return false if message.nil?
 
     flight = flights[0]
-    return if flight.nil? || flight.email.nil?
-    
+    return false if flight.nil? || flight.email.nil?
+
     sent = false
     errors = {}
     hosts = @config.smtp_host ? [ @config.smtp_host ] : %w(localhost mail smtp)
@@ -142,11 +115,11 @@ EOM
     end
 
     unless sent
-      puts "Unable to send check-in email"
       errors.each do |host, e|
         @config.log "Unable to send email with host: #{host}", e
       end
     end
+    sent
   end
 
 end
