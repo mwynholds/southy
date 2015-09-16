@@ -19,7 +19,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'nokogiri'
   s.add_runtime_dependency 'json'
   s.add_runtime_dependency 'tzinfo'
-  s.add_runtime_dependency 'pdfkit'
   s.add_runtime_dependency 'xmpp4r'
 
   s.add_development_dependency 'rake'
