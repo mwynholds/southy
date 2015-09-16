@@ -41,14 +41,13 @@ class Southy::TravelAgent
     end
   end
 
-  private
+  def resend(flights)
+    return false unless flights[0].checked_in?
 
-  def generate_pdf(doc)
-    PDFKit.new(doc).to_pdf
-  rescue => e
-    @config.log "Error generating PDF", e
-    nil
+    send_email flights
   end
+
+  private
 
   def generate_email(flights)
     flight = flights[0]
@@ -93,10 +92,10 @@ EOM
 
   def send_email(flights)
     message = generate_email flights
-    return if message.nil?
+    return false if message.nil?
 
     flight = flights[0]
-    return if flight.nil? || flight.email.nil?
+    return false if flight.nil? || flight.email.nil?
 
     sent = false
     errors = {}
@@ -116,11 +115,11 @@ EOM
     end
 
     unless sent
-      puts "Unable to send check-in email"
       errors.each do |host, e|
         @config.log "Unable to send email with host: #{host}", e
       end
     end
+    sent
   end
 
 end

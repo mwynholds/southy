@@ -87,6 +87,10 @@ class Southy::Config
     @flights.select { |f| f.confirmed? && f.depart_date <= DateTime.now }
   end
 
+  def checked_in
+    @flights.select { |f| f.checked_in? && f.depart_date > DateTime.now }
+  end
+
   def list(options = {})
     flights = filter upcoming + unconfirmed, options[:filter]
     puts 'Upcoming Southwest flights:'
