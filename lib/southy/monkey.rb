@@ -146,7 +146,8 @@ class Southy::Monkey
     response = fetch request
     json = JSON.parse response.body
     @config.save_file flight.conf, 'getallboardingpass.json', json.pretty_inspect
-    checked_in_flights = json['Document'].map do |doc|
+    docs = json['Document'].concat json['mbpPassenger']
+    checked_in_flights = docs.map do |doc|
       flight = flights.find { |f| f.number == doc['flight_num'] && f.full_name == doc['name'] }
       flight.group = doc['boardingroup_text']
       flight.position = "#{doc['position1_text']}#{doc['position2_text']}".to_i
@@ -171,7 +172,7 @@ class Southy::Monkey
   end
 
   def restore_cookies(request)
-    request['Cookie'] = @cookies.join('; ')
+    request['Cookie'] = @cookies.join('; ') if @cookies.length
   end
 
   def save_cookies(response)
