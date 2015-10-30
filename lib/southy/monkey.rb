@@ -51,6 +51,10 @@ class Southy::Monkey
     json
   end
 
+  def extract_conf(regex, *str)
+    str.find { |s| s =~ regex }
+  end
+
   def extract_code(str)
     str.scan(/([A-Z]{3})/)[0][0]
   end
@@ -87,7 +91,7 @@ class Southy::Monkey
 
       flight = Southy::Flight.new
       flight.full_name = passenger
-      flight.confirmation_number = info['ebchkinConfNo']
+      flight.confirmation_number = extract_conf(/^\w{6}$/, info['ebchkinConfNo'], info['cnclConfirmNo'], info['chgConfirmNo'])
       flight.number = leg_info["#{leg_type}FlightNo"]
       flight.depart_code = extract_code leg_info["departCity"]
       flight.depart_airport = extract_airport leg_info["departCity"]
