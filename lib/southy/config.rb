@@ -137,6 +137,7 @@ class Southy::Config
       log.puts ex.message
       log.puts ex.backtrace.join("\n")
     end
+    log.flush
   end
 
   def save_file(conf, name, contents)
