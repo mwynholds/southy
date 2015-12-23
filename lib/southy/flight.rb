@@ -91,8 +91,8 @@ class Southy::Flight
   def late_checkin_time?
     return false unless checkin_available?
     now = DateTime.now
-    # then keep trying every hour
-    now.min == 0 && now.sec >= 0 && now.sec <= 5 
+    # then keep trying every hour for one minute
+    now.min == 0
   end
 
   def checked_in?
