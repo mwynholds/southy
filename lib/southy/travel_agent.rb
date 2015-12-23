@@ -27,7 +27,6 @@ class Southy::TravelAgent
   def checkin(flights)
     flight = flights[0]
     return nil unless flight.checkin_available?
-    return nil unless flight.checkin_time? || flight.late_checkin_time?
 
     info = @monkey.checkin(flights)
     checked_in_flights = info[:flights]

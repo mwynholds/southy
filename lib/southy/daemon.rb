@@ -46,7 +46,8 @@ class Southy::Daemon
 
       groups = @config.upcoming.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
       groups.values.each do |flights|
-        @agent.checkin(flights)
+        flight = flights[0]
+        @agent.checkin(flights) if flight.checkin_time? || flight.late_checkin_time?
       end
 
       sleep 0.5
