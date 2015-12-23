@@ -51,14 +51,19 @@ op = ARGV.shift
 if operations.include?(op)
   begin
     cli = Southy::CLI.new config
-    cli.send(op.to_sym, ARGV)
-  rescue ArgumentError => ex
-    puts ex.message
+    exit ( cli.send(op.to_sym, ARGV) ? 0 : 1 )
+  rescue SystemExit => e
+    exit e.status
+  rescue ArgumentError => e
+    puts e.message
+    exit 2
   rescue Exception => e
     puts "Uh oh, I didn't expect this:"
     puts e.message
     puts e.backtrace.join("\n")
+    exit 3
   end
 else
   puts option_parser.help
+  exit 4
 end

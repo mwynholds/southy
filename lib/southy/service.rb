@@ -61,8 +61,10 @@ class Southy::Service
     pid = get_pid
     if pid
       puts "Southy is running with PID #{pid}"
+      true
     else
       puts "Southy is not running"
+      false
     end
   end
 
