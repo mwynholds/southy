@@ -23,6 +23,18 @@ class Southy::Config
     @config[:smtp_port]
   end
 
+  def smtp_domain
+    @config[:smtp_domain]
+  end
+
+  def smtp_account
+    @config[:smtp_account]
+  end
+
+  def smtp_password
+    @config[:smtp_password]
+  end
+
   def init(first_name, last_name, email = nil)
     @config = {:first_name => first_name, :last_name => last_name, :email => email}
     File.open config_file, "w" do |f|

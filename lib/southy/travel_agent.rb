@@ -60,11 +60,6 @@ class Southy::TravelAgent
     local = Southy::Flight.local_date_time(flight.depart_date, flight.depart_code)
     marker = 'MIMECONTENTMARKER'
 
-    footer = <<EOM
-Please note that you must print your boarding pass online or at the airport:
-http://www.southwest.com/flight/retrieveCheckinDoc.html?forceNewSession=yes
-EOM
-
     message = <<EOM
 From: Southy <southy@carbonfive.com>
 To: #{flight.full_name} <#{flight.email}>
@@ -83,7 +78,6 @@ Departing : #{local.strftime('%F %l:%M%P')}
 Route : #{flight.depart_airport} (#{flight.depart_code}) --> #{flight.arrive_airport} (#{flight.arrive_code})
 
 #{seats}
-    #{footer}
 Love, southy
 EOM
     message
@@ -96,29 +90,9 @@ EOM
     flight = flights[0]
     return false if flight.nil? || flight.email.nil?
 
-    sent = false
-    errors = {}
-    hosts = @config.smtp_host ? [ @config.smtp_host ] : %w(localhost mail smtp)
-    port = @config.smtp_port
-    hosts.each do |host|
-      begin
-        unless sent
-          Net::SMTP.start(host, port) do |smtp|
-            smtp.send_message message, 'do-not-reply@internet.com', flight.email
-          end
-          sent = true
-        end
-      rescue => e
-        errors[host] = e
-      end
+    Net::SMTP.start(@config.smtp_host, @config.smtp_port, @config.smtp_domain, @config.smtp_account, @config.smtp_password, :plain) do |smtp|
+      smtp.send_message message, 'southy@carbonfive.com', flight.email
     end
-
-    unless sent
-      errors.each do |host, e|
-        @config.log "Unable to send email with host: #{host}", e
-      end
-    end
-    sent
   end
 
 end
