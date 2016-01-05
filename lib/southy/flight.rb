@@ -112,7 +112,7 @@ class Southy::Flight
       out += (' ' * 17)
     else
       out += conf
-      out += ' - ' + confirmed? ? ( 'SW' + lj(number, 4) ) : '------' unless opts[:short]
+      out += ' - ' + ( confirmed? ? ( 'SW' + lj(number, 4) ) : '------' ) unless opts[:short]
       out += ': '
     end
 
