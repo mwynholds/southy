@@ -26,9 +26,15 @@ module Southy
 
       client.on :message do |data|
         next if data['user'] == 'U0HM6QX8Q' # this is Mr. Southy!
+        next unless data['text'].split(' ')[0] == 'southy'
+        pp data
         send_msg = Proc.new { |msg| client.message channel: data['channel'], text: msg }
-        method = data['text'].split(' ').first
-        args = data['text'].split(' ')[1..-1]
+        method = data['text'].split(' ')[1]
+        unless method
+          send_msg.call "How can I help you?"
+          next
+        end
+        args = data['text'].split(' ')[2..-1]
         send method, data, args, &send_msg
       end
 
