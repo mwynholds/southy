@@ -56,24 +56,41 @@ module Southy
       send.call "hello #{profile[:first_name]}"
     end
 
-    def list(data, args, &send)
-      flights = nil
-      if args == ['all']
-        flights = @config.upcoming
-        send.call "Upcoming flights:"
-      else
-        profile = user_profile data
-        flights = @config.upcoming.select { |f| f.email == profile[:email] }
-        send.call "Upcoming flights for #{profile[:email]}:"
-      end
+    def print_flights(flights, &send)
       out = '```'
       if flights.length > 0
-        flights.each { |f| out += f.to_s(short: true) + "\n" }
+        out += Southy::Flight.sprint flights, short: true
       else
         out += 'No upcoming flights.'
       end
       out += '```'
       send.call out
+    end
+
+    def list(data, args, &send)
+      flights = nil
+      if args == ['all']
+        flights = @config.upcoming
+        send.call "Upcoming Southwest flights:"
+      else
+        profile = user_profile data
+        flights = @config.upcoming.select { |f| f.email == profile[:email] }
+        send.call "Upcoming Southwest flights for #{profile[:email]}:"
+      end
+      print_flights flights, &send
+    end
+
+    def history(data, args, &send)
+      flights = nil
+      if args == ['all']
+        flights = @config.past
+        send.call "Previous Southwest flights:"
+      else
+        profile = user_profile data
+        flights = @config.past.select { |f| f.email == profile[:email] }
+        send.call "Previous Southwest flights for #{profile[:email]}:"
+      end
+      print_flights flights, &send
     end
 
     def add(data, args, &send)

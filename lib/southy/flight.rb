@@ -25,16 +25,23 @@ class Southy::Flight
     flight
   end
 
-  def self.list(flights, options = {})
+  def self.sprint(flights, options = {})
     max_name = flights.map { |f| f.full_name.length }.max
     max_email = flights.map { |f| f.email ? f.email.length : 0 }.max
 
+    out = ""
     last = nil
     flights.each do |f|
       subordinate = last && last.conf == f.conf && last.number == f.number
-      puts f.to_s(:max_name => max_name, :max_email => max_email, :subordinate => subordinate, :verbose => options[:verbose])
+      out +=  f.to_s(:max_name => max_name, :max_email => max_email, :subordinate => subordinate, :verbose => options[:verbose], :short => options[:short])
+      out += "\n"
       last = f
     end
+    out
+  end
+
+  def self.list(flights, options = {})
+    puts sprint(flights, options)
   end
 
   def initialize(attrs = {})
@@ -109,7 +116,7 @@ class Southy::Flight
 
     out = ''
     if opts[:subordinate]
-      out += (' ' * 17)
+      out += (' ' * ( opts[:short] ? 8 : 17 ))
     else
       out += conf
       out += ' - ' + ( confirmed? ? ( 'SW' + lj(number, 4) ) : '------' ) unless opts[:short]
