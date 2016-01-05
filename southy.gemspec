@@ -18,6 +18,9 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency 'json'
   s.add_runtime_dependency 'tzinfo'
+  s.add_runtime_dependency 'slack-ruby-client'
+  s.add_runtime_dependency 'eventmachine'
+  s.add_runtime_dependency 'faye-websocket'
 
   s.add_development_dependency 'rake'
   s.add_development_dependency 'minitest'

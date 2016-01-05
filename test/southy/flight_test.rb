@@ -37,8 +37,8 @@ class Southy::FlightTest < MiniTest::Spec
         @past = Factory.build :confirmed_flight, :depart_date => DateTime.now - 1.0/24
         @distant = Factory.build :confirmed_flight, :depart_date => DateTime.now + 25.0/24
         @soon = Factory.build :confirmed_flight, :depart_date => DateTime.now + 12.0/24
-        @justbarely = Factory.build :confirmed_flight, :depart_date => DateTime.now + 1 + 0.5/(24*60)
-        @justbarelynot = Factory.build :confirmed_flight, :depart_date => DateTime.now + 1 + 0.6/(24*60)
+        @justbarely = Factory.build :confirmed_flight, :depart_date => DateTime.now + 1 + 0.15/(24*60)
+        @justbarelynot = Factory.build :confirmed_flight, :depart_date => DateTime.now + 1 + 0.2/(24*60)
       end
 
       it 'rejects unconfirmed flights' do
@@ -57,7 +57,7 @@ class Southy::FlightTest < MiniTest::Spec
         @soon.checkin_available?.must_equal true
       end
 
-      it 'accepts flights 30 seconds early' do
+      it 'accepts flights 10 seconds early' do
         @justbarely.checkin_available?.must_equal true
         @justbarelynot.checkin_available?.must_equal false
       end

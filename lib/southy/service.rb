@@ -21,6 +21,7 @@ class Southy::Service
     new_pid = Process.fork { @daemon.start }
     Process.detach new_pid
     persist_start if persist
+
     puts "started"
   end
 

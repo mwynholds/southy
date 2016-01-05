@@ -1,7 +1,8 @@
 class Southy::Daemon
 
-  def initialize(travel_agent)
+  def initialize(travel_agent, slackbot)
     @agent = travel_agent
+    @slackbot = slackbot
     @config = travel_agent.config
     @active = true
     @running = false
@@ -19,6 +20,7 @@ class Southy::Daemon
     end
 
     begin
+      Thread.new { @slackbot.run }
       run
     rescue => e
       @config.log "Unexpected error", e

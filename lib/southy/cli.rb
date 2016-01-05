@@ -7,7 +7,8 @@ module Southy
 
       @config = Config.new
       @agent = TravelAgent.new(@config)
-      daemon = Daemon.new(@agent)
+      slackbot = Slackbot.new(@config, @agent)
+      daemon = Daemon.new(@agent, slackbot)
       @service = Service.new(@agent, daemon)
     end
 

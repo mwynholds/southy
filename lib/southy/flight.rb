@@ -105,14 +105,14 @@ class Southy::Flight
   end
 
   def to_s(opts = {})
-    opts = { :max_name => 0, :max_email => 0, :subordinate => false, :verbose => false }.merge opts
+    opts = { :max_name => 0, :max_email => 0, :subordinate => false, :verbose => false, :short => false }.merge opts
 
     out = ''
     if opts[:subordinate]
       out += (' ' * 17)
     else
-      out += conf + " - "
-      out += confirmed? ? ( 'SW' + lj(number, 4) ) : '------'
+      out += conf
+      out += ' - ' + confirmed? ? ( 'SW' + lj(number, 4) ) : '------' unless opts[:short]
       out += ': '
     end
 
@@ -125,11 +125,21 @@ class Southy::Flight
       out += '  '
       out += local.strftime( opts[:verbose] ? '%F %l:%M%P %Z' : '%F %l:%M%P' )
       out += '  '
-      out += "#{depart_airport} (#{depart_code}) -> #{arrive_airport} (#{arrive_code})"
+      if opts[:short]
+        out += "#{depart_code} -> #{arrive_code}"
+      else
+        out += "#{depart_airport} (#{depart_code}) -> #{arrive_airport} (#{arrive_code})"
+      end
       out += " *** #{seat}" if checked_in?
     end
 
     out
+  end
+
+  def to_slack_s()
+    local = Southy::Flight::local_date_time depart_date, depart_code
+    time = local.strftime '%D %R'
+    "[ #{conf} ] - #{full_name} - #{time} #{depart_code} -> #{arrive_code}"
   end
 
   def <=>(fles)
