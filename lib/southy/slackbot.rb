@@ -67,7 +67,11 @@ module Southy
         send.call "Upcoming flights for #{profile[:email]}:"
       end
       out = '```'
-      flights.each { |f| out += f.to_s(short: true) + "\n" }
+      if flights.length
+        flights.each { |f| out += f.to_s(short: true) + "\n" }
+      else
+        out += 'No upcoming flights.'
+      end
       out += '```'
       send.call out
     end
