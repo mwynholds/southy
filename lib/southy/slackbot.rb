@@ -17,6 +17,8 @@ module Southy
       auth = @webclient.auth_test
       if auth['ok']
         puts "Slackbot is active!"
+        puts "Accepting channels: #{@config.slack_accept_channels}" if @config.slack_accept_channels.length > 0
+        puts "Ignoring channels: #{@config.slack_reject_channels}" if @config.slack_reject_channels.length > 0
       else
         puts "Slackbot is doomed :-("
         return
@@ -26,15 +28,18 @@ module Southy
 
       client.on :message do |data|
         next if data['user'] == 'U0HM6QX8Q' # this is Mr. Southy!
-        next unless data['text'].split(' ')[0] == 'southy'
-        pp data
-        send_msg = Proc.new { |msg| client.message channel: data['channel'], text: msg }
-        method = data['text'].split(' ')[1]
+        tokens = data['text'].split ' '
+        channel = data['channel']
+        next unless tokens[0] == 'southy'
+        next unless @config.slack_accept_channels.index channel
+        next if @config.slack_reject_channels.index channel
+        send_msg = Proc.new { |msg| client.message channel: channel, text: msg }
+        method = tokens[1]
         unless method
           send_msg.call "How can I help you?"
           next
         end
-        args = data['text'].split(' ')[2..-1]
+        args = tokens[2..-1]
         send method, data, args, &send_msg
       end
 

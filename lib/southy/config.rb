@@ -39,6 +39,14 @@ class Southy::Config
     @config[:slack_api_token]
   end
 
+  def slack_reject_channels
+    @config.fetch(:slack_reject_channels, '').split ','
+  end
+
+  def slack_accept_channels
+    @config.fetch(:slack_accept_channels, '').split ','
+  end
+
   def init(first_name, last_name, email = nil)
     @config = {:first_name => first_name, :last_name => last_name, :email => email}
     File.open config_file, "w" do |f|
