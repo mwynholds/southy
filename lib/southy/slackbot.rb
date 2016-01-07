@@ -31,7 +31,7 @@ module Southy
         tokens = data['text'].split ' '
         channel = data['channel']
         next unless tokens[0] == 'southy'
-        next unless @config.slack_accept_channels.length > 0 && @config.slack_accept_channels.index(channel)
+        next if @config.slack_accept_channels.length > 0 and ! @config.slack_accept_channels.index(channel)
         next if @config.slack_reject_channels.index channel
         send_msg = Proc.new { |msg| client.message channel: channel, text: msg }
         method = tokens[1]
