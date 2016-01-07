@@ -36,7 +36,6 @@ class Southy::Daemon
   private
 
   def run
-    puts "Southy is running."
     @config.log "Southy is running."
     while active? do
       @running = true

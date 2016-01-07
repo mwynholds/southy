@@ -157,9 +157,12 @@ class Southy::Config
     timestamp = Time.now.strftime('%Y-%m-%d %H:%M:%S')
     type = ex ? 'ERROR' : ' INFO'
     log.puts "#{type}  #{timestamp}  #{msg}"
+    puts "#{type}  #{timestamp}  #{msg}"
     if ex
       log.puts ex.message
+      puts ex.message
       log.puts ex.backtrace.join("\n")
+      puts ex.backtrace.join("\n")
     end
     log.flush
   end

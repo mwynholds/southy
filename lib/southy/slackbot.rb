@@ -16,11 +16,11 @@ module Southy
       @webclient = Slack::Web::Client.new
       auth = @webclient.auth_test
       if auth['ok']
-        puts "Slackbot is active!"
-        puts "Accepting channels: #{@config.slack_accept_channels}" if @config.slack_accept_channels.length > 0
-        puts "Ignoring channels: #{@config.slack_reject_channels}" if @config.slack_reject_channels.length > 0
+        @config.log "Slackbot is active!"
+        @config.log "Accepting channels: #{@config.slack_accept_channels}" if @config.slack_accept_channels.length > 0
+        @config.log "Ignoring channels: #{@config.slack_reject_channels}" if @config.slack_reject_channels.length > 0
       else
-        puts "Slackbot is doomed :-("
+        @config.log "Slackbot is doomed :-("
         return
       end
 
@@ -28,6 +28,7 @@ module Southy
 
       client.on :message do |data|
         next if data['user'] == 'U0HM6QX8Q' # this is Mr. Southy!
+        next unless data['text']
         tokens = data['text'].split ' '
         channel = data['channel']
         next unless tokens.length > 0
@@ -44,13 +45,13 @@ module Southy
 
       client.start!
     rescue => e
-      puts e.message
-      puts e.backtrace
+      @config.log e.message
+      @config.log e.backtrace
     end
 
     def method_missing(name, *args)
-      puts "No method found for: #{name}"
-      pp args[0]
+      @config.log "No method found for: #{name}"
+      @config.log args[0]
     end
 
     def user_profile(data)
