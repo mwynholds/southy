@@ -35,11 +35,9 @@ module Southy
         next if @config.slack_reject_channels.index channel
         send_msg = Proc.new { |msg| client.message channel: channel, text: msg }
         method = tokens[1]
-        unless method
-          send_msg.call "How can I help you?"
-          next
-        end
         args = tokens[2..-1]
+        method = "#{method}_all" if args == [ 'all' ]
+        ( help(data, [], &send_msg) and next ) unless method
         send method, data, args, &send_msg
       end
 
@@ -62,9 +60,36 @@ module Southy
       { id: id, first_name: profile['first_name'], last_name: profile['last_name'], email: profile['email'] }
     end
 
+    def help(data, args, &send)
+      send.call "Hello, I am Southy.  I can do the following things:"
+      send.call <<EOM
+```
+southy help              Show this message
+southy hello             Say hello to me!
+southy list              Show me what flights I have upcoming
+southy history           Show me what flights I had in the past
+southy add <conf>        Add this flight to Southy
+southy remove <conf>     Remove this flight from Southy
+
+<conf> = Your flight confirmation number, eg: RB7L6K
+```
+EOM
+    end
+
     def hello(data, args, &send)
       profile = user_profile data
-      send.call "hello #{profile[:first_name]}"
+      if profile[:first_name] and profile[:last_name] and profile[:email]
+        send.call "Hello #{profile[:first_name]}!  You are all set to use Southy."
+        send.call "I will use this information when looking up your flights:"
+        send.call <<EOM
+```
+name:  #{profile[:first_name]} #{profile[:last_name]}
+email: #{profile[:email]}
+```
+EOM
+      else
+        send.call "Hello.  You are not set up yet to use Southy.  You need to fill in your first name, last name and email in your Slack profile."
+      end
     end
 
     def print_flights(flights, &send)
@@ -79,28 +104,28 @@ module Southy
     end
 
     def list(data, args, &send)
-      flights = nil
-      if args == ['all']
-        flights = @config.upcoming
-        send.call "Upcoming Southwest flights:"
-      else
-        profile = user_profile data
-        flights = @config.upcoming.select { |f| f.email == profile[:email] }
-        send.call "Upcoming Southwest flights for #{profile[:email]}:"
-      end
+      profile = user_profile data
+      send.call "Upcoming Southwest flights for #{profile[:email]}:"
+      flights = @config.upcoming.select { |f| f.email == profile[:email] }
+      print_flights flights, &send
+    end
+
+    def list_all(data, args, &send)
+      send.call "Upcoming Southwest flights:"
+      flights = @config.upcoming
       print_flights flights, &send
     end
 
     def history(data, args, &send)
-      flights = nil
-      if args == ['all']
-        flights = @config.past
-        send.call "Previous Southwest flights:"
-      else
-        profile = user_profile data
-        flights = @config.past.select { |f| f.email == profile[:email] }
-        send.call "Previous Southwest flights for #{profile[:email]}:"
-      end
+      profile = user_profile data
+      send.call "Previous Southwest flights for #{profile[:email]}:"
+      flights = @config.past.select { |f| f.email == profile[:email] }
+      print_flights flights, &send
+    end
+
+    def history_all(data, args, &send)
+      send.call "Previous Southwest flights:"
+      flights = @config.past
       print_flights flights, &send
     end
 
