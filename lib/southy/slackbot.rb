@@ -30,7 +30,8 @@ module Southy
         next if data['user'] == 'U0HM6QX8Q' # this is Mr. Southy!
         tokens = data['text'].split ' '
         channel = data['channel']
-        next unless tokens[0] == 'southy'
+        next unless tokens.length > 0
+        next unless tokens[0].downcase == 'southy'
         next if @config.slack_accept_channels.length > 0 and ! @config.slack_accept_channels.index(channel)
         next if @config.slack_reject_channels.index channel
         send_msg = Proc.new { |msg| client.message channel: channel, text: msg }
