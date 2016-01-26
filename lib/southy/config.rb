@@ -161,7 +161,7 @@ class Southy::Config
     if ex
       log.puts ex.message
       puts ex.message
-      log.puts ex.backtrace.join("\n")
+      log.puts("Stacktrace:\n" + ex.backtrace.join("\n"))
       puts ex.backtrace.join("\n")
     end
     log.flush
