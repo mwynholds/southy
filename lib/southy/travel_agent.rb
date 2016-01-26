@@ -28,6 +28,10 @@ class Southy::TravelAgent
     flight = flights[0]
     return nil unless flight.checkin_available?
 
+    name = flight.full_name
+    len = flights.length
+    name += " (and #{len - 1} other passenger#{len > 2 ? 's' : ''})" if len > 1
+
     info = @monkey.checkin(flights)
     checked_in_flights = info[:flights]
     if checked_in_flights.size > 0
@@ -35,8 +39,11 @@ class Southy::TravelAgent
         @config.checkin checked_in_flight
       end
       send_email checked_in_flights
+      seats = checked_in_flights.map(&:seat).join(', ')
+      @config.log "Checked in #{flight.conf} for #{name} - #{seats}"
+    else
+      @config.log "Unable to check in #{flight.conf} for #{name}"
     end
-    @config.log "Checked in #{flights[0].conf} - #{checked_in_flights.length} boarding passes"
     checked_in_flights
   end
 

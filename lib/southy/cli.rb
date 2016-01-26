@@ -95,15 +95,18 @@ module Southy
     end
 
     def list(params)
-      @config.list :verbose => @options[:verbose]
+      puts 'Upcoming Southwest flights:'
+      puts @config.list :verbose => @options[:verbose]
     end
 
     def history(params)
-      @config.history :verbose => @options[:verbose]
+      puts 'Previous Southwest flights:'
+      puts @config.history :verbose => @options[:verbose]
     end
 
     def prune(params)
-      @config.prune
+      n = @config.prune
+      puts "Removed #{n} flight#{n == 1 ? '' : 's'}."
     end
 
     def test(params)

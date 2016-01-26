@@ -117,14 +117,12 @@ class Southy::Config
 
   def list(options = {})
     flights = filter upcoming + unconfirmed, options[:filter]
-    puts 'Upcoming Southwest flights:'
-    Southy::Flight.list flights, options
+    Southy::Flight.sprint flights, options
   end
 
   def history(options = {})
     flights = filter past, options[:filter]
-    puts 'Previous Southwest flights:'
-    Southy::Flight.list flights, options
+    Southy::Flight.sprint flights, options
   end
 
   def filter(flights, filter = nil)
@@ -142,8 +140,7 @@ class Southy::Config
       remove flight.conf
     end
 
-    n = past_flights.length
-    puts "Removed #{n} flight#{n == 1 ? '' : 's'}."
+    past_flights.length
   end
 
   def reload(options = {})
@@ -157,12 +154,9 @@ class Southy::Config
     timestamp = Time.now.strftime('%Y-%m-%d %H:%M:%S')
     type = ex ? 'ERROR' : ' INFO'
     log.puts "#{type}  #{timestamp}  #{msg}"
-    puts "#{type}  #{timestamp}  #{msg}"
     if ex
       log.puts ex.message
-      puts ex.message
       log.puts("Stacktrace:\n" + ex.backtrace.join("\n"))
-      puts ex.backtrace.join("\n")
     end
     log.flush
   end

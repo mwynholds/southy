@@ -45,8 +45,7 @@ module Southy
 
       client.start!
     rescue => e
-      @config.log e.message
-      @config.log e.backtrace
+      @config.log "An error ocurring inside the Slackbot", e
     end
 
     def method_missing(name, *args)

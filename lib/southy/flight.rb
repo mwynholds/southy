@@ -40,10 +40,6 @@ class Southy::Flight
     out
   end
 
-  def self.list(flights, options = {})
-    puts sprint(flights, options)
-  end
-
   def initialize(attrs = {})
     attrs.each do |n,v|
       self.send "#{n}=".to_sym, v
