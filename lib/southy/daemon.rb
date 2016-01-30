@@ -20,7 +20,7 @@ class Southy::Daemon
     end
 
     begin
-      Thread.new { @slackbot.run }
+      @slackthread = Thread.new { @slackbot.run }
       run
     rescue => e
       @config.log "Unexpected error", e
@@ -53,6 +53,8 @@ class Southy::Daemon
 
       sleep 0.5
     end
+    @config.log "Southy got killed"
+    @slackthread.kill
   end
 
   def active?
