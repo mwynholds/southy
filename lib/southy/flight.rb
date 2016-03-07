@@ -152,6 +152,14 @@ class Southy::Flight
     Southy::Flight.compare(self, fles, :depart_date, :conf, :number, :full_name)
   end
 
+  def matches_completely?(other)
+    self.conf == other.conf &&
+      self.full_name == other.full_name &&
+      self.number == other.number &&
+      self.depart_code == other.depart_code &&
+      self.depart_date == other.depart_date
+  end
+
   private
 
   def self.compare(obj1, obj2, *attrs)

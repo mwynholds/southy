@@ -70,22 +70,12 @@ class Southy::Config
 
   def confirm(flight)
     @flights.delete_if { |f| f.confirmation_number == flight.confirmation_number and ! f.confirmed? }
-    @flights << flight unless @flights.any? do |f|
-      f.confirmation_number == flight.confirmation_number &&
-      f.number == flight.number &&
-      f.depart_date == flight.depart_date &&
-      f.full_name == flight.full_name
-    end
+    @flights << flight unless @flights.any? { |f| f.matches_completely? flight }
     dump_flights
   end
 
   def checkin(flight)
-    @flights.delete_if do |f|
-      f.confirmation_number == flight.confirmation_number &&
-      f.number == flight.number &&
-      f.depart_date == flight.depart_date &&
-      f.full_name == flight.full_name
-    end
+    @flights.delete_if { |f| f.matches_completely? flight }
     @flights << flight
     dump_flights
   end
@@ -94,7 +84,7 @@ class Southy::Config
     @flights.delete_if do |flight|
       flight.confirmation_number == conf.upcase.gsub(/0/, 'O') &&
               ( first_name.nil? || flight.first_name.downcase == first_name.downcase ) &&
-              ( last_name.nil?  || flight.last_name.downcase == last_name.downcase )
+              ( last_name.nil?  || flight.last_name.downcase  == last_name.downcase  )
     end
     dump_flights
   end
@@ -131,6 +121,12 @@ class Southy::Config
     flights.select do |flight|
       flight.email.downcase == filter || flight.confirmation_number.downcase == filter ||
         flight.full_name.downcase.include?(filter)
+    end
+  end
+
+  def matches(flights)
+    flights.all? do |flight|
+      upcoming.any? { |f| f.matches_completely? flight }
     end
   end
 
