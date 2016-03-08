@@ -91,6 +91,7 @@ southy list              Show me what flights I have upcoming
 southy history           Show me what flights I had in the past
 southy add <conf>        Add this flight to Southy
 southy remove <conf>     Remove this flight from Southy
+southy reconfirm         Reconfirm your flights, if you have changed flight info
 
 <conf> = Your flight confirmation number, eg: RB7L6K
 ```
@@ -181,6 +182,17 @@ EOM
         @config.remove conf
         list data, '', &respond
       end
+    end
+
+    def reconfirm(data, args, &respond)
+      profile = user_profile data
+      respond.call "Reconfirming Southwest flights for #{profile[:email]}:"
+      flights = @config.upcoming.select { |f| f.email == profile[:email] }
+      flights.uniq { |f| f.conf }.each do |f|
+        @agent.confirm f
+      end
+      flights = @config.upcoming.select { |f| f.email == profile[:email] }
+      print_flights flights, &respond
     end
   end
 end
