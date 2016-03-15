@@ -180,7 +180,7 @@ class Southy::Monkey
   end
 
   def save_cookies(response)
-    cookie_headers = response.get_fields 'Set-Cookie' || []
+    cookie_headers = response.get_fields('Set-Cookie') || []
     cookie_headers.each do |c|
       @cookies << c.split(';')[0]
     end
