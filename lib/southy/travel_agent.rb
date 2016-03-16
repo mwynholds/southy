@@ -19,17 +19,22 @@ class Southy::TravelAgent
       return response
     end
 
-    legs = response[:flights]
-    if @config.matches legs
-      @config.log "No changes to #{flight_info.conf} - #{legs.length} legs"
-    else
-      @config.remove flight_info.conf
-      legs.each do |leg|
-        leg.email ||= flight_info.email
-        @config.confirm leg
+    flights = response[:flights]
+    flights.each do |conf, legs|
+      ident = "#{conf} (#{legs[0].first_name} #{legs[0].last_name}) - #{legs.length} legs"
+      ident += " -- NEW!" unless flight_info.conf == conf
+      if @config.matches legs
+        @config.log "No changes to #{ident}"
+      else
+        @config.remove conf
+        legs.each do |leg|
+          leg.email ||= flight_info.email
+          @config.confirm leg
+        end
+        @config.log "Confirmed #{ident}"
       end
-      @config.log "Confirmed #{flight_info.conf} - #{legs.length} legs"
     end
+
     response
   end
 

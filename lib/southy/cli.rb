@@ -125,13 +125,17 @@ module Southy
     end
 
     def confirm_flights(to_confirm)
-      to_confirm.uniq {|f| f.confirmation_number}.each do |flight|
-        print "Confirming #{flight.confirmation_number} for #{flight.full_name}... "
+      to_confirm.uniq {|f| f.conf}.each do |flight|
+        print "Confirming #{flight.conf} for #{flight.full_name}... "
         response = @agent.confirm(flight)
         if response[:error]
           puts response[:error]
         else
           puts "success"
+          flights = response[:flights].reject { |conf, _| conf == flight.conf }
+          flights.each do |conf, legs|
+            puts "   Related #{conf} for #{legs[0].full_name}... success"
+          end
         end
       end
     end

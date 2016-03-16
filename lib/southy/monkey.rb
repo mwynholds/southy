@@ -111,12 +111,15 @@ class Southy::Monkey
 
     infos = json['upComingInfo']
     return { error: 'failure', flights: [] } unless infos
-    puts "WARNING: Expecting one 'upComingInfo' block but found #{infos.length}" if infos.length > 1
-    info = infos[0]
-    departing_flights = extract_flights info, 'Depart1', 'depart'
-    returning_flights = extract_flights info, 'Return1', 'return'
+    response = { error: nil, flights: {} }
+    infos.each do |info|
+      infoConf = info['ebchkinConfNo']
+      departing_flights = extract_flights info, 'Depart1', 'depart'
+      returning_flights = extract_flights info, 'Return1', 'return'
+      response[:flights][infoConf] = departing_flights + returning_flights
+    end
 
-    { error: nil, flights: departing_flights + returning_flights }
+    response
   end
 
   def checkin(flights)
