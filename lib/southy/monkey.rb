@@ -105,14 +105,18 @@ class Southy::Monkey
   def lookup(conf, first_name, last_name)
     json = fetch_trip_info conf, first_name, last_name
 
+    if json['errmsg'] && json['errmsg'] =~ /SW107028/
+      return { error: 'cancelled', flights: [] }
+    end
+
     infos = json['upComingInfo']
-    return [] unless infos
+    return { error: 'failure', flights: [] } unless infos
     puts "WARNING: Expecting one 'upComingInfo' block but found #{infos.length}" if infos.length > 1
     info = infos[0]
     departing_flights = extract_flights info, 'Depart1', 'depart'
     returning_flights = extract_flights info, 'Return1', 'return'
 
-    departing_flights + returning_flights
+    { error: nil, flights: departing_flights + returning_flights }
   end
 
   def checkin(flights)

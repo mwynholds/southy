@@ -127,11 +127,11 @@ module Southy
     def confirm_flights(to_confirm)
       to_confirm.uniq {|f| f.confirmation_number}.each do |flight|
         print "Confirming #{flight.confirmation_number} for #{flight.full_name}... "
-        flights = @agent.confirm(flight)
-        if flights && ! flights.empty?
-          puts "success"
+        response = @agent.confirm(flight)
+        if response[:error]
+          puts response[:error]
         else
-          puts "failure"
+          puts "success"
         end
       end
     end

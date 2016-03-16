@@ -12,8 +12,14 @@ class Southy::TravelAgent
   end
 
   def confirm(flight_info)
-    legs = @monkey.lookup(flight_info.confirmation_number, flight_info.first_name, flight_info.last_name)
-    return legs unless legs.length > 0
+    response = @monkey.lookup(flight_info.conf, flight_info.first_name, flight_info.last_name)
+    if response[:error]
+      @config.remove flight_info.conf
+      @config.log "Flight removed due to '#{response[:error]}' : #{flight_info.conf}"
+      return response
+    end
+
+    legs = response[:flights]
     if @config.matches legs
       @config.log "No changes to #{flight_info.conf} - #{legs.length} legs"
     else
@@ -24,7 +30,7 @@ class Southy::TravelAgent
       end
       @config.log "Confirmed #{flight_info.conf} - #{legs.length} legs"
     end
-    legs
+    response
   end
 
   def checkin(flights)
