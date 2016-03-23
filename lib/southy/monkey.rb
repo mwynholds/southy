@@ -113,7 +113,7 @@ class Southy::Monkey
     return { error: 'failure', flights: [] } unless infos
     response = { error: nil, flights: {} }
     infos.each do |info|
-      infoConf = info['ebchkinConfNo']
+      infoConf = info['ebchkinConfNo'] || info['cnclConfirmNo']
       departing_flights = extract_flights info, 'Depart1', 'depart'
       returning_flights = extract_flights info, 'Return1', 'return'
       response[:flights][infoConf] = departing_flights + returning_flights

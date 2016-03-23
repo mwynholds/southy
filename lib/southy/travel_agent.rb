@@ -21,6 +21,11 @@ class Southy::TravelAgent
 
     flights = response[:flights]
     flights.each do |conf, legs|
+      unless conf
+        @config.log "No confirmation number in response for: #{flight_info.conf} (#{flight_info.full_name})"
+        next
+      end
+
       ident = "#{conf} (#{legs[0].first_name} #{legs[0].last_name}) - #{legs.length} legs"
       ident += " -- NEW!" unless flight_info.conf == conf
       if @config.matches legs
