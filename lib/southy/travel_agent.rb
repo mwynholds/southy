@@ -15,7 +15,7 @@ class Southy::TravelAgent
     response = @monkey.lookup(flight_info.conf, flight_info.first_name, flight_info.last_name)
     if response[:error]
       @config.remove flight_info.conf
-      @config.log "Flight removed due to '#{response[:error]}' : #{flight_info.conf}"
+      @config.log "Flight removed due to '#{response[:error]}' : #{flight_info.conf} (#{flight_info.full_name})"
       return response
     end
 
