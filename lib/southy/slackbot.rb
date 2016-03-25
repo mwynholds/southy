@@ -145,6 +145,8 @@ EOM
       print_flights flights, &respond
     end
 
+    alias_method :whatsup, :list_all
+
     def history(data, args, &respond)
       profile = user_profile data
       respond.call "Previous Southwest flights for #{profile[:email]}:"
