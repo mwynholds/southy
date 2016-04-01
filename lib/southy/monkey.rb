@@ -120,13 +120,13 @@ class Southy::Monkey
       flights += depart1
       (2..5).each do |i|
         flights += extract_flights info, "Depart#{i}", 'depart', depart1[0].depart_date
-      end if depart1.length
+      end if depart1.length > 0
 
       return1 = extract_flights info, 'Return1', 'return'
       flights += return1
       (2..5).each do |i|
         flights += extract_flights info, "Return#{i}", 'return', return1[0].depart_date
-      end if return1.length
+      end if return1.length > 0
 
       response[:flights][infoConf] = flights
     end
