@@ -157,8 +157,8 @@ class Southy::Monkey
     json = JSON.parse response.body
     @config.save_file flight.conf, 'flightcheckin_new.json', json.pretty_inspect
     output = json['output']
-    unless output && output.length > 0 && output[0]['flightNumber'] == flight.number
-      puts "\nCannot locate checkin page for: #{flight}"
+    unless output && output.length > 0 && output.any? { |o| o['flightNumber'] == flight.number }
+      @config.log "Cannot locate checkin page for: #{flight}"
       return { :flights => [] }
     end
 
@@ -171,7 +171,7 @@ class Southy::Monkey
     @config.save_file flight.conf, 'getallboardingpass.json', json.pretty_inspect
     docs = json['Document'].concat json['mbpPassenger']
     checked_in_flights = docs.map do |doc|
-      flight = flights.find { |f| f.number == doc['flight_num'] && ( f.full_name == doc['name'] || ! doc['name'] ) }
+      flight = flights.find { |f| f.number == doc['flight_num'] && ( f.full_name == doc['name'] || '' == doc['name'] ) }
       if flight
         flight.group = doc['boardingroup_text']
         flight.position = "#{doc['position1_text']}#{doc['position2_text']}".to_i
