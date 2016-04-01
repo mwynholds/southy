@@ -71,7 +71,7 @@ class Southy::Monkey
     str.strip
   end
 
-  def extract_flights(info, leg_name, leg_type)
+  def extract_flights(info, leg_name, leg_type, previous_date = nil)
     leg_info = info[leg_name]
     return [] unless leg_info
 
@@ -85,7 +85,7 @@ class Southy::Monkey
     passengers = info.map { |key, value| key =~ /^passengerName/ ? info[key] : nil }.compact
 
     passengers.map do |passenger|
-      date = leg_info["#{leg_type}Date"]
+      date = previous_date || leg_info["#{leg_type}Date"]
       time = extract_time leg_info["departCity"]
       local = DateTime.parse "#{date} #{time}"
 
@@ -114,9 +114,21 @@ class Southy::Monkey
     response = { error: nil, flights: {} }
     infos.each do |info|
       infoConf = info['ebchkinConfNo'] || info['cnclConfirmNo']
-      departing_flights = extract_flights info, 'Depart1', 'depart'
-      returning_flights = extract_flights info, 'Return1', 'return'
-      response[:flights][infoConf] = departing_flights + returning_flights
+      flights = []
+
+      depart1 = extract_flights info, 'Depart1', 'depart'
+      flights += depart1
+      (2..5).each do |i|
+        flights += extract_flights info, "Depart#{i}", 'depart', depart1[0].depart_date
+      end
+
+      return1 = extract_flights info, 'Return1', 'return'
+      flights += return1
+      (2..5).each do |i|
+        flights += extract_flights info, "Return#{i}", 'return', return1[0].depart_date
+      end
+
+      response[:flights][infoConf] = flights
     end
 
     response
@@ -159,14 +171,16 @@ class Southy::Monkey
     @config.save_file flight.conf, 'getallboardingpass.json', json.pretty_inspect
     docs = json['Document'].concat json['mbpPassenger']
     checked_in_flights = docs.map do |doc|
-      flight = flights.find { |f| f.number == doc['flight_num'] && f.full_name == doc['name'] }
-      flight.group = doc['boardingroup_text']
-      flight.position = "#{doc['position1_text']}#{doc['position2_text']}".to_i
+      flight = flights.find { |f| f.number == doc['flight_num'] && ( f.full_name == doc['name'] || ! doc['name'] ) }
+      if flight
+        flight.group = doc['boardingroup_text']
+        flight.position = "#{doc['position1_text']}#{doc['position2_text']}".to_i
+      end
       flight
     end
 
     @cookies = []
-    { :flights => checked_in_flights }
+    { :flights => checked_in_flights.compact }
   end
 
   private
