@@ -173,7 +173,7 @@ EOM
           email = match.captures[0]
         end
         @config.add conf, fname, lname, email
-        sleep 5
+        sleep 7
         list data, '', &respond
       end
     end

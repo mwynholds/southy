@@ -57,8 +57,8 @@ class Southy::Config
   def add(conf, first_name = nil, last_name = nil, email = nil)
     flight = Southy::Flight.new
     flight.confirmation_number = conf.upcase.gsub(/0/, 'O')
-    flight.first_name = first_name || @config[:first_name]
-    flight.last_name = last_name || @config[:last_name]
+    flight.first_name = (first_name || @config[:first_name]).gsub '-', ' '
+    flight.last_name = (last_name || @config[:last_name]).gsub '-', ' '
     flight.email = email || @config[:email]
 
     @flights << flight
