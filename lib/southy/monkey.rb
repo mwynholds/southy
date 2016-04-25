@@ -171,7 +171,15 @@ class Southy::Monkey
     @config.save_file flight.conf, 'getallboardingpass.json', json.pretty_inspect
     docs = json['Document'].concat json['mbpPassenger']
     checked_in_flights = docs.map do |doc|
-      flight = flights.find { |f| f.number == doc['flight_num'] && ( f.full_name == doc['name'] || '' == doc['name'] ) }
+      d_flight_num = doc['flight_num'] || ''
+      d_full_name  = ( doc['name']       || '' ).downcase
+      d_first_name = ( doc['firstName']  || '' ).downcase
+      d_last_name  = ( doc['lastName']   || '' ).downcase
+      flight = flights.find do |f|
+        d_flight_num == f.number &&
+          ( d_full_name == '' || d_full_name == f.full_name.downcase ||
+            ( d_first_name == f.first_name.downcase && d_last_name == f.last_name.downcase ) )
+      end
       if flight
         flight.group = doc['boardingroup_text']
         flight.position = "#{doc['position1_text']}#{doc['position2_text']}".to_i
