@@ -172,6 +172,7 @@ EOM
         if match = email.match(/^<mailto:(.*)\|/)
           email = match.captures[0]
         end
+        #respond.call "Thank you #{fname}, now please enjoy this music while I process this... :musical_note: :guitar: :saxophone: :musical_note:"
         @config.add conf, fname, lname, email
         sleep 7
         list data, '', &respond
