@@ -88,9 +88,16 @@ class Southy::Monkey
       date = previous_date || leg_info["#{leg_type}Date"]
       time = extract_time leg_info["departCity"]
       local = DateTime.parse "#{date} #{time}"
+      fname = info['chkinfirstName'] || info['ebchkinfirstName']
+      lname = info['chkinlastName'] || info['ebchkinlastName']
 
       flight = Southy::Flight.new
-      flight.full_name = passenger
+      if passenger.downcase == "#{fname} #{lname}".downcase
+        flight.first_name = fname.split(' ').map {|n| n.capitalize}.join(' ')
+        flight.last_name = lname.split(' ').map {|n| n.capitalize}.join(' ')
+      else
+        flight.full_name = passenger
+      end
       flight.confirmation_number = extract_conf(/^\w{6}$/, info['ebchkinConfNo'], info['cnclConfirmNo'], info['chgConfirmNo'])
       flight.number = leg_info["#{leg_type}FlightNo"]
       flight.depart_code = extract_code leg_info["departCity"]
