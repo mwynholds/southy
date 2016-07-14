@@ -112,8 +112,19 @@ class Southy::Monkey
   def lookup(conf, first_name, last_name)
     json = fetch_trip_info conf, first_name, last_name
 
-    if json['errmsg'] && json['errmsg'] =~ /SW107028/
-      return { error: 'cancelled', flights: [] }
+    if errmsg = json['errmsg']
+      ident = "#{conf} #{first_name} #{last_name}"
+      return { error: 'cancelled', flights: [] } if errmsg =~ /SW107028/
+
+      if json['opstatus'] != 0
+        @config.log "Technical error looking up flights for #{ident}"
+        @config.log "  #{errmsg}"
+        return { error: nil, flights: [] }
+      end
+
+      @config.log "Unknown error looking up flights for #{ident}"
+      @config.log "  #{errmsg}"
+      return { error: nil, flights: [] }
     end
 
     infos = json['upComingInfo']
