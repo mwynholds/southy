@@ -112,7 +112,8 @@ class Southy::Monkey
   def lookup(conf, first_name, last_name)
     json = fetch_trip_info conf, first_name, last_name
 
-    if errmsg = json['errmsg']
+    errmsg = json['errmsg']
+    if errmsg && errmsg != ''
       ident = "#{conf} #{first_name} #{last_name}"
       return { error: 'cancelled', flights: [] } if errmsg =~ /SW107028/
 
