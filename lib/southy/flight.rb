@@ -79,8 +79,8 @@ class Southy::Flight
   def checkin_available?
     return false unless confirmed?
     return false if checked_in?
-    return false if depart_date < DateTime.now      # oops, missed this flight :-)
-    DateTime.now >= depart_date - 1 - _seconds(10)  # start trying 10 seconds early!
+    return false if depart_date < DateTime.now     # oops, missed this flight :-)
+    DateTime.now >= depart_date - 1 - _seconds(3)  # start trying 3 seconds early!
   end
 
   def checkin_time?
@@ -88,7 +88,7 @@ class Southy::Flight
     now = DateTime.now
     checkin_time = depart_date - 1
     # try hard for one minute
-    now >= checkin_time - _seconds(10) && now <= checkin_time + _seconds(60)
+    now >= checkin_time - _seconds(3) && now <= checkin_time + _seconds(60)
   end
 
   def late_checkin_time?

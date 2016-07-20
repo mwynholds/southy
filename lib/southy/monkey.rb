@@ -177,7 +177,6 @@ class Southy::Monkey
     @config.save_file flight.conf, 'flightcheckin_new.json', json.pretty_inspect
     output = json['output']
     unless output && output.length > 0 && output.any? { |o| o['flightNumber'] == flight.number }
-      @config.log "Cannot locate checkin page for: #{flight}"
       return { :flights => [] }
     end
 
