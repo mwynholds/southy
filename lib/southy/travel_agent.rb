@@ -20,11 +20,6 @@ class Southy::TravelAgent
     end
 
     flights = response[:flights]
-    if flights.length == 0
-      @config.log "Unable to confirm #{flight_info.conf} for #{flight_info.full_name}"
-      return response
-    end
-
     flights.each do |conf, legs|
       unless conf
         @config.log "No confirmation number in response for: #{flight_info.conf} (#{flight_info.full_name})"
