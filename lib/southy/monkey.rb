@@ -32,9 +32,18 @@ class Southy::Monkey
       :searchType => 'ConfirmationNumber'
     )
     response = fetch request
-    json = JSON.parse response.body
+    json = parse_json response
     @config.save_file conf, 'viewAirReservation.json', json.pretty_inspect
     json
+  end
+
+  def parse_json(response)
+    if response.body == nil || response.body == ''
+      @config.log "Empty response body returned"
+      @config.log response
+      return {}
+    end
+    JSON.parse response.body
   end
 
   def extract_conf(regex, *str)
@@ -149,7 +158,7 @@ class Southy::Monkey
       :serviceID => 'getTravelInfo'
     )
     response = fetch request
-    json = JSON.parse response.body
+    json = parse_json response
     @config.save_file flight.conf, 'getTravelInfo.json', json.pretty_inspect
 
     request = Net::HTTP::Post.new '/middleware/MWServlet'
@@ -160,7 +169,7 @@ class Southy::Monkey
       :lastName => flight.last_name
     )
     response = fetch request
-    json = JSON.parse response.body
+    json = parse_json response
     @config.save_file flight.conf, 'flightcheckin_new.json', json.pretty_inspect
     output = json['output']
     unless output && output.length > 0 && output.any? { |o| o['flightNumber'] == flight.number }
@@ -172,7 +181,7 @@ class Southy::Monkey
       :serviceID => 'getallboardingpass'
     )
     response = fetch request
-    json = JSON.parse response.body
+    json = parse_json response
     @config.save_file flight.conf, 'getallboardingpass.json', json.pretty_inspect
     docs = json['Document'].concat json['mbpPassenger']
     checked_in_flights = docs.map do |doc|
