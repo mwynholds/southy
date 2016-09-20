@@ -13,23 +13,9 @@ class Southy::Monkey
 
     @https = Net::HTTP.new 'mobile.southwest.com', 443
     @https.use_ssl = true
-
-    verify_https = false
-    certs = File.join File.dirname(__FILE__), "../../etc/certs"
-    if File.exists? '/etc/ssl/certs'  # Ubuntu
-      @https.ca_path = '/etc/ssl/certs'
-      verify_https = true
-    elsif File.directory? certs
-      @https.ca_path = certs
-      verify_https = true
-    else
-      @https.verify_mode = OpenSSL::SSL::VERIFY_NONE
-    end
-
-    if verify_https
-      @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      @https.verify_depth = 5
-    end
+    @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
+    @https.verify_depth = 5
+    @https.ca_path = '/etc/ssl/certs' if File.exists? '/etc/ssl/certs'  # Ubuntu
   end
 
   def core_form_data
@@ -116,6 +102,7 @@ class Southy::Monkey
     if errmsg && errmsg != ''
       ident = "#{conf} #{first_name} #{last_name}"
       return { error: 'cancelled', flights: [] } if errmsg =~ /SW107028/
+      return { error: 'invalid', flights: [] } if errmsg =~ /SW107023/
 
       if json['opstatus'] != 0
         @config.log "Technical error looking up flights for #{ident}"
