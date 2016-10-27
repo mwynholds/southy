@@ -104,10 +104,29 @@ class Southy::Monkey
     end
   end
 
+  def alternate_names(first, last)
+    f, l = first.split(' '), last.split(' ')
+    if f.length == 1 && l.length == 2
+      return [ "#{f[0]} #{l[0]}", l[1] ]
+    elsif f.length == 2 && l.length == 1
+      return [ f[0], "#{f[1]} #{l[0]}" ]
+    end
+    [ first, last ]
+  end
+
   def lookup(conf, first_name, last_name)
     json = fetch_trip_info conf, first_name, last_name
-
     errmsg = json['errmsg']
+
+    if errmsg && errmsg != ''
+      alternate_names(first_name, last_name).tap do |alt_first, alt_last|
+        if alt_first != first_name || alt_last != last_name
+          json = fetch_trip_info conf, alt_first, alt_last
+          errmsg = json['errmsg']
+        end
+      end
+    end
+
     if errmsg && errmsg != ''
       ident = "#{conf} #{first_name} #{last_name}"
       return { error: 'cancelled', flights: [] } if errmsg =~ /SW107028/
@@ -149,6 +168,20 @@ class Southy::Monkey
     response
   end
 
+  def fetch_checkin_info(conf, first_name, last_name)
+    request = Net::HTTP::Post.new '/middleware/MWServlet'
+    request.set_form_data core_form_data.merge(
+      :serviceID => 'flightcheckin_new',
+      :recordLocator => conf,
+      :firstName => first_name,
+      :lastName => last_name
+    )
+    response = fetch request
+    json = parse_json response
+    @config.save_file conf, 'flightcheckin_new.json', json.pretty_inspect
+    json
+  end
+
   def checkin(flights)
     @cookies = []
     flight = flights[0]
@@ -161,17 +194,18 @@ class Southy::Monkey
     json = parse_json response
     @config.save_file flight.conf, 'getTravelInfo.json', json.pretty_inspect
 
-    request = Net::HTTP::Post.new '/middleware/MWServlet'
-    request.set_form_data core_form_data.merge(
-      :serviceID => 'flightcheckin_new',
-      :recordLocator => flight.confirmation_number,
-      :firstName => flight.first_name,
-      :lastName => flight.last_name
-    )
-    response = fetch request
-    json = parse_json response
-    @config.save_file flight.conf, 'flightcheckin_new.json', json.pretty_inspect
+    json = fetch_checkin_info flight.confirmation_number, flight.first_name, flight.last_name
     output = json['output']
+
+    unless output && output.length > 0 && output.any? { |o| o['flightNumber'] == flight.number }
+      alternate_names(flight.first_name, flight.last_name).tap do |alt_first, alt_last|
+        if alt_first != flight.first_name || flight.alt_last != last_name
+          json = fetch_checkin_info flight.confirmation_number, alt_first, alt_last
+          output = json['output']
+        end
+      end
+    end
+
     unless output && output.length > 0 && output.any? { |o| o['flightNumber'] == flight.number }
       return { :flights => [] }
     end
