@@ -14,8 +14,12 @@ class Southy::TravelAgent
   def confirm(flight_info)
     response = @monkey.lookup(flight_info.conf, flight_info.first_name, flight_info.last_name)
     if response[:error]
-      @config.remove flight_info.conf
-      @config.log "Flight removed due to '#{response[:error]}' : #{flight_info.conf} (#{flight_info.full_name})"
+      if response[:error] == 'unknown'
+        @config.log "Flight not removed due to '#{response[:error]}' : #{flight_info.conf} (#{flight_info.full_name})"
+      else
+        @config.remove flight_info.conf
+        @config.log "Flight removed due to '#{response[:error]}' : #{flight_info.conf} (#{flight_info.full_name})"
+      end
       return response
     end
 

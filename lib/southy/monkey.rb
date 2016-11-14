@@ -135,12 +135,12 @@ class Southy::Monkey
       if json['opstatus'] != 0
         @config.log "Technical error looking up flights for #{ident}"
         @config.log "  #{errmsg}"
-        return { error: nil, flights: [] }
+        return { error: 'unknown', flights: [] }
       end
 
       @config.log "Unknown error looking up flights for #{ident}"
       @config.log "  #{errmsg}"
-      return { error: nil, flights: [] }
+      return { error: 'unknown', flights: [] }
     end
 
     infos = json['upComingInfo']
