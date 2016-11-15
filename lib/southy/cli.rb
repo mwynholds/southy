@@ -10,6 +10,7 @@ module Southy
       slackbot = Slackbot.new(@config, @agent)
       daemon = Daemon.new(@agent, slackbot)
       @service = Service.new(@agent, daemon)
+      @mailer = Mailer.new(@config)
     end
 
     def run(params)
@@ -111,6 +112,12 @@ module Southy
 
     def test(params)
       p Southy::Airport.all.map(&:timezone).uniq
+    end
+
+    def email(params)
+      ( return puts "No email provided" ) unless params.length > 0
+      @mailer.send_test_email params[0]
+      puts "Sent email to #{params[0]}"
     end
 
     private
