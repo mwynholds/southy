@@ -9,6 +9,10 @@ module Southy
       @restarts = []
       @channels = Set.new
 
+      @conversions = {
+        'Yasmine Molavi' => [ 'Yasaman', 'Molavi Vassei' ]
+      }
+
       Slack.configure do |slack_cfg|
         slack_cfg.token = @config.slack_api_token
       end
@@ -78,7 +82,14 @@ module Southy
       res = @webclient.users_info user: id
       return {} unless res['ok']
       profile = res['user']['profile']
-      { id: id, first_name: profile['first_name'], last_name: profile['last_name'], email: profile['email'] }
+      first = profile['first_name']
+      last = profile['last_name']
+      converted = @conversions["#{first} #{last}"]
+      if converted
+        first = converted[0]
+        last = converted[1]
+      end
+      { id: id, first_name: first, last_name: last, email: profile['email'] }
     end
 
     def help(data, args, &respond)
