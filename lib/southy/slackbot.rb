@@ -157,7 +157,10 @@ EOM
       print_flights flights, &respond
     end
 
-    alias_method :whatsup, :list_all
+    def whatsup(data, args, &respond)
+      list_all data, args, &respond
+      respond.call "```You can type 'southy help' to see more commands```"
+    end
 
     def history(data, args, &respond)
       profile = user_profile data
