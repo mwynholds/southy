@@ -192,7 +192,9 @@ EOM
         #respond.call "Thank you #{fname}, now please enjoy this music while I process this... :musical_note: :guitar: :saxophone: :musical_note:"
         result = @config.add conf, fname, lname, email
         if result && result[:error]
-          respond.call "*_Not added_* - #{result[:error]}"
+          respond.call result[:error]
+          flights = @config.upcoming.select { |f| f.conf == conf }
+          print_flights flights, &respond
         else
           sleep 7
           list data, '', &respond
