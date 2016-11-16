@@ -55,6 +55,11 @@ class Southy::Config
   end
 
   def add(conf, first_name = nil, last_name = nil, email = nil)
+    flight = @flights.find { |f| f.conf == conf }
+    if flight
+      return { error: "Confirmation #{conf} already exists" }
+    end
+
     flight = Southy::Flight.new
     flight.confirmation_number = conf.upcase.gsub(/0/, 'O')
     flight.first_name = (first_name || @config[:first_name]).gsub '-', ' '

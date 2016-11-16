@@ -186,13 +186,17 @@ EOM
           email = profile[:email]
         end
         return ( respond.call "You didn't enter a confirmation number!" ) unless conf
-        if match = email.match(/^<mailto:(.*)\|/)
+        if email && match = email.match(/^<mailto:(.*)\|/)
           email = match.captures[0]
         end
         #respond.call "Thank you #{fname}, now please enjoy this music while I process this... :musical_note: :guitar: :saxophone: :musical_note:"
-        @config.add conf, fname, lname, email
-        sleep 7
-        list data, '', &respond
+        result = @config.add conf, fname, lname, email
+        if result && result[:error]
+          respond.call "*_Not added_* - #{result[:error]}"
+        else
+          sleep 7
+          list data, '', &respond
+        end
       end
     end
 

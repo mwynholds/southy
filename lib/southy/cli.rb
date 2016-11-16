@@ -34,15 +34,16 @@ module Southy
     end
 
     def init(params)
-      @config.init *params
+      @config.init(*params)
     end
 
     def add(params)
-      @config.add *params
+      result = @config.add(*params)
+      puts "Not added - #{result[:error]}" if result && result[:error]
     end
 
     def remove(params)
-      @config.remove *params
+      @config.remove(*params)
     end
 
     def delete(params)
