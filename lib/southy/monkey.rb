@@ -40,7 +40,7 @@ class Southy::Monkey
   def parse_json(response)
     if response.body == nil || response.body == ''
       @config.log "Empty response body returned"
-      @config.log response
+      @config.log response.inspect
       return {}
     end
     JSON.parse response.body

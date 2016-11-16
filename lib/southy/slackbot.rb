@@ -89,7 +89,7 @@ module Southy
         first = converted[0]
         last = converted[1]
       end
-      { id: id, first_name: first, last_name: last, email: profile['email'] }
+      { id: id, first_name: first, last_name: last, full_name: "#{first} #{last}", email: profile['email'] }
     end
 
     def help(data, args, &respond)
@@ -98,6 +98,7 @@ module Southy
 ```
 southy help              Show this message
 southy hello             Say hello to me!
+southy whatsup           Show me ALL the flights upcoming
 southy list              Show me what flights I have upcoming
 southy history           Show me what flights I had in the past
 southy add <conf>        Add this flight to Southy
@@ -146,7 +147,7 @@ EOM
     def list(data, args, &respond)
       profile = user_profile data
       respond.call "Upcoming Southwest flights for #{profile[:email]}:"
-      flights = @config.upcoming.select { |f| f.email == profile[:email] }
+      flights = @config.upcoming.select { |f| f.email == profile[:email] || f.full_name == profile[:full_name] }
       print_flights flights, &respond
     end
 
