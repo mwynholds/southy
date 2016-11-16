@@ -105,7 +105,9 @@ southy add <conf>        Add this flight to Southy
 southy remove <conf>     Remove this flight from Southy
 southy reconfirm         Reconfirm your flights, if you have changed flight info
 
-<conf> = Your flight confirmation number, eg: RB7L6K
+<conf> = Your flight confirmation number and optionally contact info, for example:
+         southy add RB7L6K     <-- uses your name and email from Slack
+         southy add RB7L6K Joey Shabadoo joey@snpp.com
 ```
 EOM
     end
