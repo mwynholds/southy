@@ -159,6 +159,10 @@ EOM
       print_flights flights, &respond
     end
 
+    def whatup(data, args, &respond)
+      whatsup data, args, &respond
+    end
+
     def whatsup(data, args, &respond)
       list_all data, args, &respond
       respond.call "```You can type 'southy help' to see more commands```"
