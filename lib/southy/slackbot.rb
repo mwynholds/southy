@@ -46,10 +46,10 @@ module Southy
         client.typing channel: channel
         @channels << channel
         respond = Proc.new { |msg| client.message channel: channel, text: msg }
-        method = tokens[1]
+        ( help(data, [], &respond) and next ) unless tokens[1]
+        method = tokens[1].downcase
         args = tokens[2..-1]
         method = "#{method}_all" if args == [ 'all' ]
-        ( help(data, [], &respond) and next ) unless method
         send method, data, args, &respond
       end
 
