@@ -216,7 +216,7 @@ class Southy::Monkey
     response = fetch request
     json = parse_json response
     @config.save_file flight.conf, 'getallboardingpass.json', json.pretty_inspect
-    docs = json['Document'].concat json['mbpPassenger']
+    docs = json.fetch('Document', []).concat json.fetch('mbpPassenger', [])
     checked_in_flights = docs.map do |doc|
       d_flight_num = doc['flight_num'] || ''
       d_full_name  = ( doc['name']       || '' ).downcase

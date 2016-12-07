@@ -51,15 +51,18 @@ module Southy
     end
 
     def confirm(params)
-      confirm_flights(@config.unconfirmed)
+      flights = params.length > 0 ? @config.find(params[0]) : @config.unconfirmed
+      confirm_flights flights
     end
 
     def reconfirm(params)
-      confirm_flights(@config.unconfirmed + @config.upcoming)
+      flights = params.length > 0 ? @config.find(params[0]) : ( @config.unconfirmed + @config.upcoming )
+      confirm_flights flights
     end
 
     def checkin(params)
-      groups = @config.upcoming.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
+      input = params.length > 0 ? @config.find(params[0]) : @config.upcoming
+      groups = input.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
 
       groups.values.each do |flights|
         flight = flights[0]

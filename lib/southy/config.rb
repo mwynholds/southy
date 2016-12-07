@@ -94,6 +94,10 @@ class Southy::Config
     dump_flights
   end
 
+  def find(conf)
+    @flights.select { |f| f.conf == conf.strip }
+  end
+
   def unconfirmed
     @flights.select { |f| ! f.confirmed? }
   end
