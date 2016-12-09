@@ -1,5 +1,6 @@
 require 'yaml'
 require 'time'
+require 'thread'
 
 class Southy::Config
   attr_reader :config, :flights, :pid_file
@@ -13,6 +14,10 @@ class Southy::Config
     @timestamps = {}
     load_config :force => true
     load_flights :force => true
+  end
+
+  def flights_lock
+    @lock ||= Mutex.new
   end
 
   def smtp_host
@@ -67,10 +72,7 @@ class Southy::Config
     flight.email = email || @config[:email]
 
     @flights << flight
-
-    File.open flights_file, 'a' do |f|
-      f.write flight.to_csv
-    end
+    dump_flights
   end
 
   def confirm(flight)
@@ -187,8 +189,10 @@ class Southy::Config
   end
 
   def load_flights(options)
-    @flights = if_updated? flights_file, options do
-      IO.read(flights_file).split("\n").map {|line| Southy::Flight.from_csv(line)}
+    flights_lock.synchronize do
+      @flights = if_updated? flights_file, options do
+        IO.read(flights_file).split("\n").map {|line| Southy::Flight.from_csv(line)}
+      end
     end
     @flights ||= []
     @flights.sort!
@@ -196,9 +200,11 @@ class Southy::Config
 
   def dump_flights
     @flights.sort!
-    File.open flights_file, 'w' do |f|
-      @flights.each do |flight|
-        f.write flight.to_csv
+    flights_lock.synchronize do
+      File.open flights_file, 'w' do |f|
+        @flights.each do |flight|
+          f.write flight.to_csv
+        end
       end
     end
   end

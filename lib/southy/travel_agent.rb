@@ -3,15 +3,17 @@ class Southy::TravelAgent
   attr_reader :config, :monkey
 
   def initialize(config, opts = {})
-    is_test = opts[:test] == true
-
+    @is_test = opts[:test] == true
     @config = config
-    @monkey = is_test ? Southy::TestMonkey.new : Southy::Monkey.new(config)
     @mailer = Southy::Mailer.new config
   end
 
+  def monkey
+    @is_test ? Southy::TestMonkey.new : Southy::Monkey.new(config)
+  end
+
   def confirm(flight_info)
-    response = @monkey.lookup(flight_info.conf, flight_info.first_name, flight_info.last_name)
+    response = monkey.lookup(flight_info.conf, flight_info.first_name, flight_info.last_name)
     if response[:error]
       if response[:error] == 'unknown'
         @config.log "Flight not removed due to '#{response[:error]}' : #{flight_info.conf} (#{flight_info.full_name})"
@@ -54,7 +56,7 @@ class Southy::TravelAgent
     len = flights.length
     name += " (and #{len - 1} other passenger#{len > 2 ? 's' : ''})" if len > 1
 
-    info = @monkey.checkin(flights)
+    info = monkey.checkin(flights)
     checked_in_flights = info[:flights]
     if checked_in_flights.size > 0
       checked_in_flights.each do |checked_in_flight|

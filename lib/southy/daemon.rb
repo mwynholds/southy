@@ -38,6 +38,7 @@ class Southy::Daemon
   def run
     @config.log "Southy is running."
     attempts = {}
+    running = {}
     while active? do
       @running = true
       @config.reload
@@ -49,13 +50,20 @@ class Southy::Daemon
       groups = @config.upcoming.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
       groups.values.each do |flights|
         flight = flights[0]
+        attempts[flight.conf] ||= 0
         if flight.checkin_available?
-          if ! attempts[flight.conf] || flight.checkin_time? || flight.late_checkin_time?
-            checked_in = @agent.checkin(flights)
-            if checked_in.empty?
-              attempts[flight.conf] = true
-            else
-              attempts.delete flight.conf
+          if attempts[flight.conf] <= 5 || flight.checkin_time? || flight.late_checkin_time?
+            unless running[flight.conf]
+              running[flight.conf] = true
+              Thread.new do
+                checked_in = @agent.checkin(flights)
+                if checked_in.empty?
+                  attempts[flight.conf] += 1
+                else
+                  attempts.delete flight.conf
+                end
+                running.delete flight.conf
+              end
             end
           end
         end
