@@ -132,18 +132,16 @@ class Southy::Monkey
       return { error: 'invalid', flights: [] } if errmsg =~ /SW107023/
 
       if json['opstatus'] != 0
-        @config.log "Technical error looking up flights for #{ident}"
-        @config.log "  #{errmsg}"
-        return { error: 'unknown', flights: [] }
+        @config.log "Technical error looking up flights for #{ident} - #{errmsg}"
+        return { error: 'unknown', reason: errmsg, flights: [] }
       end
 
-      @config.log "Unknown error looking up flights for #{ident}"
-      @config.log "  #{errmsg}"
-      return { error: 'unknown', flights: [] }
+      @config.log "Unknown error looking up flights for #{ident} - #{errmsg}"
+      return { error: 'unknown', reason: errmsg, flights: [] }
     end
 
     infos = json['upComingInfo']
-    return { error: 'failure', flights: [] } unless infos
+    return { error: 'failure', reason: 'no flight info', flights: [] } unless infos
     response = { error: nil, flights: {} }
     infos.each do |info|
       infoConf = info['ebchkinConfNo'] || info['cnclConfirmNo']

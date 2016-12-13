@@ -140,7 +140,7 @@ module Southy
         print "Confirming #{flight.conf} for #{flight.full_name}... "
         response = @agent.confirm(flight)
         if response[:error]
-          puts response[:error]
+          puts "#{response[:error]} (#{response[:reason]})"
         else
           puts "success"
           flights = response[:flights].reject { |conf, _| conf == flight.conf }

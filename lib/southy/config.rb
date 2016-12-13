@@ -73,6 +73,7 @@ class Southy::Config
 
     @flights << flight
     dump_flights
+    {}
   end
 
   def confirm(flight)
@@ -174,7 +175,14 @@ class Southy::Config
     itinerary_dir = "#{saved_files}/#{conf}"
     FileUtils.mkdir itinerary_dir unless File.directory? itinerary_dir
 
-    File.open("#{itinerary_dir}/#{name}", 'w') do |f|
+    iname = name
+    i = 0
+    while File.exist? "#{itinerary_dir}/#{iname}" do
+      i += 1
+      iname = "#{File.basename name, '.*'}_#{i}#{File.extname name}"
+    end
+
+    File.open("#{itinerary_dir}/#{iname}", 'w') do |f|
       f.print contents
     end
   end
