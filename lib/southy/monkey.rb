@@ -45,6 +45,11 @@ class Southy::Monkey
     JSON.parse response.body
   end
 
+  def fallback(doc, *names)
+    name = names.find { |n| doc[n] }
+    doc[name]
+  end
+
   def extract_conf(regex, *str)
     str.find { |s| s =~ regex }
   end
@@ -226,8 +231,10 @@ class Southy::Monkey
             ( d_first_name == f.first_name.downcase && d_last_name == f.last_name.downcase ) )
       end
       if flight
-        flight.group = doc['boardingroup_text']
-        flight.position = "#{doc['position1_text']}#{doc['position2_text']}".to_i
+        flight.group = fallback doc, 'boardinggroupsec_text', 'boardingroup_text'
+        pos1 = fallback doc, 'position1sec_text', 'position1_text'
+        pos2 = fallback doc, 'position2sec_text', 'position2_text'
+        flight.position = "#{pos1}#{pos2}".to_i
       end
       flight
     end
