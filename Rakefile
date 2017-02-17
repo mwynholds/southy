@@ -8,10 +8,11 @@ Rake::TestTask.new(:test) do |test|
 end
 
 require 'southy'
-task :test_lookup do
+task 'test:lookup' do
   config = Southy::Config.new
-  monkey = Southy::Monkey.new config
-  monkey.lookup '8T4YEJ', 'Matthew', 'Sullivan'
+  monkey = Southy::TestMonkey.new config
+  flights = monkey.lookup '5JFALO', 'Hans', 'Wynholds'
+  pp flights
 end
 
 task :default => :test

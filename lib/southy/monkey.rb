@@ -33,7 +33,7 @@ class Southy::Monkey
     )
     response = fetch request
     json = parse_json response
-    @config.save_file conf, 'viewAirReservation.json', json.pretty_inspect
+    @config.save_file conf, 'viewAirReservation.json', json
     json
   end
 
@@ -84,7 +84,7 @@ class Southy::Monkey
     passengers = info.map { |key, value| key =~ /^passengerName/ ? info[key] : nil }.compact
 
     passengers.map do |passenger|
-      date = previous_date || leg_info["#{leg_type}Date"]
+      date = previous_date ? previous_date.strftime("%F") : leg_info["#{leg_type}Date"]
       time = extract_time leg_info["departCity"]
       local = DateTime.parse "#{date} #{time}"
       fname = info['chkinfirstName'] || info['ebchkinfirstName']
@@ -180,7 +180,7 @@ class Southy::Monkey
     )
     response = fetch request
     json = parse_json response
-    @config.save_file conf, 'flightcheckin_new.json', json.pretty_inspect
+    @config.save_file conf, 'flightcheckin_new.json', json
     json
   end
 
@@ -194,7 +194,7 @@ class Southy::Monkey
     )
     response = fetch request
     json = parse_json response
-    @config.save_file flight.conf, 'getTravelInfo.json', json.pretty_inspect
+    @config.save_file flight.conf, 'getTravelInfo.json', json
 
     json = fetch_checkin_info flight.confirmation_number, flight.first_name, flight.last_name
     output = json['output']
@@ -218,7 +218,7 @@ class Southy::Monkey
     )
     response = fetch request
     json = parse_json response
-    @config.save_file flight.conf, 'getallboardingpass.json', json.pretty_inspect
+    @config.save_file flight.conf, 'getallboardingpass.json', json
     docs = json.fetch('Document', []).concat json.fetch('mbpPassenger', [])
     checked_in_flights = docs.map do |doc|
       d_flight_num = doc['flight_num'] || ''
@@ -269,20 +269,18 @@ class Southy::Monkey
 end
 
 class Southy::TestMonkey < Southy::Monkey
-  attr_writer :itinerary
-
-  def initialize(itinerary = nil)
-    @itinerary = itinerary
+  def get_json(conf, name)
+    base = File.dirname(__FILE__) + "/../../test/fixtures/#{conf}/#{name}"
+    last = "#{base}.json"
+    n = 1
+    while File.exist? "#{base}_#{n}.json"
+      last = "#{base}_#{n}.json"
+      n += 1
+    end
+    JSON.parse IO.read(last).strip
   end
 
-  def fetch_confirmation_page(conf, first_name, last_name)
-    lookup_file = File.dirname(__FILE__) + "/../../test/fixtures/#{@itinerary}/confirm.html"
-    Nokogiri::HTML IO.read(lookup_file)
-  end
-
-  def fetch_flight_documents_page(flights)
-    flight = flights[0]
-    checkin_file = File.dirname(__FILE__) + "/../../test/fixtures/#{@itinerary}/#{flight.number}-checkin.html"
-    Nokogiri::HTML IO.read(checkin_file)
+  def fetch_trip_info(conf, first_name, last_name)
+    get_json conf, "viewAirReservation"
   end
 end

@@ -18,8 +18,8 @@ class Southy::FlightTest < MiniTest::Spec
   describe 'Flight' do
     describe '#confirmed?' do
       before do
-        @unconfirmed = Factory.build :unconfirmed_flight
-        @confirmed = Factory.build :confirmed_flight
+        @unconfirmed = FactoryGirl.build :unconfirmed_flight
+        @confirmed = FactoryGirl.build :confirmed_flight
       end
 
       it 'detects unconfirmed flights' do
@@ -33,12 +33,12 @@ class Southy::FlightTest < MiniTest::Spec
 
     describe '#checkin_available?' do
       before do
-        @unconfirmed = Factory.build :unconfirmed_flight
-        @past = Factory.build :confirmed_flight, :depart_date => DateTime.now - 1.0/24
-        @distant = Factory.build :confirmed_flight, :depart_date => DateTime.now + 25.0/24
-        @soon = Factory.build :confirmed_flight, :depart_date => DateTime.now + 12.0/24
-        @justbarely = Factory.build :confirmed_flight, :depart_date => DateTime.now + 1 + 0.15/(24*60)
-        @justbarelynot = Factory.build :confirmed_flight, :depart_date => DateTime.now + 1 + 0.2/(24*60)
+        @unconfirmed = FactoryGirl.build :unconfirmed_flight
+        @past = FactoryGirl.build :confirmed_flight, :depart_date => DateTime.now - 1.0/24
+        @distant = FactoryGirl.build :confirmed_flight, :depart_date => DateTime.now + 25.0/24
+        @soon = FactoryGirl.build :confirmed_flight, :depart_date => DateTime.now + 12.0/24
+        @justbarely = FactoryGirl.build :confirmed_flight, :depart_date => DateTime.now + 1 + 0.15/(24*60)
+        @justbarelynot = FactoryGirl.build :confirmed_flight, :depart_date => DateTime.now + 1 + 0.2/(24*60)
       end
 
       it 'rejects unconfirmed flights' do

@@ -7,7 +7,7 @@ FactoryGirl.define do
   end
 
   factory :unconfirmed_flight, :class => Southy::Flight do |flight|
-    flight.confirmation_number Factory.next(:conf)
+    flight.confirmation_number FactoryGirl.generate(:conf)
     flight.first_name          'First'
     flight.last_name           'Last'
   end

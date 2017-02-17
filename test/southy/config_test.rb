@@ -30,7 +30,7 @@ class Southy::ConfigTest < MiniTest::Spec
 
     before do
       @config_dir = "#{File.dirname(__FILE__)}/../../.config_test_#{rand 1000}"
-      FileUtils.remove_entry_secure @config_dir if Dir.exists? @config_dir
+      FileUtils.remove_entry_secure @config_dir if Dir.exist? @config_dir
       @config = Southy::Config.new @config_dir
       extend Helpers
     end
@@ -170,7 +170,7 @@ class Southy::ConfigTest < MiniTest::Spec
     end
 
     after do
-      FileUtils.remove_entry_secure @config_dir if Dir.exists? @config_dir
+      FileUtils.remove_entry_secure @config_dir if Dir.exist? @config_dir
     end
 
   end
