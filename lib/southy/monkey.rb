@@ -31,8 +31,7 @@ class Southy::Monkey
       :confirmationNumberLastName => last_name,
       :searchType => 'ConfirmationNumber'
     )
-    response = fetch request
-    json = parse_json response
+    json = fetch_json request
     @config.save_file conf, 'viewAirReservation.json', json
     json
   end
@@ -178,8 +177,7 @@ class Southy::Monkey
       :firstName => first_name,
       :lastName => last_name
     )
-    response = fetch request
-    json = parse_json response
+    json = fetch_json request
     @config.save_file conf, 'flightcheckin_new.json', json
     json
   end
@@ -192,8 +190,7 @@ class Southy::Monkey
     request.set_form_data core_form_data.merge(
       :serviceID => 'getTravelInfo'
     )
-    response = fetch request
-    json = parse_json response
+    json = fetch_json request
     @config.save_file flight.conf, 'getTravelInfo.json', json
 
     json = fetch_checkin_info flight.confirmation_number, flight.first_name, flight.last_name
@@ -216,8 +213,7 @@ class Southy::Monkey
     request.set_form_data core_form_data.merge(
       :serviceID => 'getallboardingpass'
     )
-    response = fetch request
-    json = parse_json response
+    json = fetch_json request
     @config.save_file flight.conf, 'getallboardingpass.json', json
     docs = json.fetch('Document', []).concat json.fetch('mbpPassenger', [])
     checked_in_flights = docs.map do |doc|
@@ -245,15 +241,21 @@ class Southy::Monkey
 
   private
 
-  def fetch(request)
+  def fetch_json(request, n = 0)
     puts "Fetch #{request.path}" if DEBUG
     request['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4'
 
     restore_cookies request
     response = @https.request(request)
-    save_cookies response
 
-    response
+    json = parse_json response
+
+    if json['errmsg'] && json['opstatus'] != 0 && n <= 10  # technical error, try again (for a while)
+      fetch_json request, n + 1
+    else
+      save_cookies response
+      json
+    end
   end
 
   def restore_cookies(request)
