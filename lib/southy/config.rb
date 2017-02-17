@@ -169,7 +169,7 @@ class Southy::Config
     log.flush
   end
 
-  def save_file(conf, name, contents)
+  def save_file(conf, name, json)
     saved_files = saved_files_dir
     FileUtils.mkdir saved_files unless File.directory? saved_files
     itinerary_dir = "#{saved_files}/#{conf}"
@@ -183,7 +183,7 @@ class Southy::Config
     end
 
     File.open("#{itinerary_dir}/#{iname}", 'w') do |f|
-      f.print contents
+      f.print JSON.pretty_generate(json)
     end
   end
 
@@ -234,7 +234,7 @@ class Southy::Config
   end
 
   def if_updated?(file_name, options)
-    return nil if ! File.exists? file_name
+    return nil if ! File.exist? file_name
 
     file = File.new file_name
     last_read = @timestamps[file_name]

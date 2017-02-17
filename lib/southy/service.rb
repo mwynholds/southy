@@ -39,7 +39,7 @@ class Southy::Service
     else
       begin
         Process.kill 'HUP', pid
-      rescue => e
+      rescue
         @daemon.cleanup
       end
     end

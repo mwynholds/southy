@@ -1,6 +1,6 @@
 class Southy::TravelAgent
 
-  attr_reader :config, :monkey
+  attr_reader :config
 
   def initialize(config, opts = {})
     @is_test = opts[:test] == true
