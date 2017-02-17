@@ -12,7 +12,7 @@ task 'test:lookup' do
   config = Southy::Config.new
   monkey = Southy::TestMonkey.new config
   flights = monkey.lookup '5JFALO', 'Hans', 'Wynholds'
-  p flights
+  pp flights
 end
 
 task :default => :test

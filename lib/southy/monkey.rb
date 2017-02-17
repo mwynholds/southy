@@ -84,7 +84,7 @@ class Southy::Monkey
     passengers = info.map { |key, value| key =~ /^passengerName/ ? info[key] : nil }.compact
 
     passengers.map do |passenger|
-      date = previous_date || leg_info["#{leg_type}Date"]
+      date = previous_date ? previous_date.strftime("%F") : leg_info["#{leg_type}Date"]
       time = extract_time leg_info["departCity"]
       local = DateTime.parse "#{date} #{time}"
       fname = info['chkinfirstName'] || info['ebchkinfirstName']
