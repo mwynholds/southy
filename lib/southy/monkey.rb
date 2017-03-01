@@ -11,7 +11,10 @@ class Southy::Monkey
     @config = config
     @cookies = []
 
-    @https = Net::HTTP.new 'mobile.southwest.com', 443
+    @hostname = 'mobile.southwest.com'
+    @api_key = 'l7xx12ebcbc825eb480faa276e7f192d98d1'
+
+    @https = Net::HTTP.new @hostname, 443
     @https.use_ssl = true
     @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
     @https.verify_depth = 5
@@ -23,14 +26,13 @@ class Southy::Monkey
   end
 
   def fetch_trip_info(conf, first_name, last_name)
-    request = Net::HTTP::Post.new '/middleware/MWServlet'
-    request.set_form_data core_form_data.merge(
-      :serviceID => 'viewAirReservation',
-      :confirmationNumber => conf,
-      :confirmationNumberFirstName => first_name,
-      :confirmationNumberLastName => last_name,
-      :searchType => 'ConfirmationNumber'
+    uri = URI("https://#{@hostname}/api/extensions/v1/mobile/reservations/record-locator/#{conf}")
+    uri.query = URI.encode_www_form(
+      'first-name' => first_name,
+      'last-name'  => last_name,
+      'action'     => 'VIEW'
     )
+    request = Net::HTTP::Get.new uri
     json = fetch_json request
     @config.save_file conf, 'viewAirReservation.json', json
     json
@@ -49,60 +51,31 @@ class Southy::Monkey
     doc[name]
   end
 
-  def extract_conf(regex, *str)
-    str.find { |s| s =~ regex }
-  end
-
-  def extract_code(str)
-    str.scan(/([A-Z]{3})/)[0][0]
-  end
-
-  def extract_time(str)
-    str.scan(/^(.*[AP]M)/)[0][0]
-  end
-
-  def extract_airport(str)
-    code = extract_code str
-    time = extract_time str
-    str = str.sub "(#{code})", ''
-    str = str.sub time, ''
-    str.strip
-  end
-
-  def extract_flights(info, leg_name, leg_type, previous_date = nil)
-    leg_info = info[leg_name]
-    return [] unless leg_info
-
-    depart_code = extract_code leg_info["departCity"]
-    depart_airport = Southy::Airport.lookup depart_code
-    unless depart_airport
-      @config.log "Unknown airport code: #{depart_code}"
-      return []
+  def validate_airport_code(code)
+    if Southy::Airport.lookup code
+      true
+    else
+      @config.log "Unknown airport code: #{code}"
+      false
     end
+  end
 
-    passengers = info.map { |key, value| key =~ /^passengerName/ ? info[key] : nil }.compact
+  def extract_flights(record_locator, passengers, segment)
+    depart_code = segment['originationAirportCode']
+    arrive_code = segment['destinationAirportCode']
+    return nil unless validate_airport_code(depart_code) && validate_airport_code(arrive_code)
 
     passengers.map do |passenger|
-      date = previous_date ? previous_date.strftime("%F") : leg_info["#{leg_type}Date"]
-      time = extract_time leg_info["departCity"]
-      local = DateTime.parse "#{date} #{time}"
-      fname = info['chkinfirstName'] || info['ebchkinfirstName']
-      lname = info['chkinlastName'] || info['ebchkinlastName']
-
       flight = Southy::Flight.new
-      if passenger.downcase == "#{fname} #{lname}".downcase
-        flight.first_name = fname.split(' ').map {|n| n.capitalize}.join(' ')
-        flight.last_name = lname.split(' ').map {|n| n.capitalize}.join(' ')
-      else
-        flight.full_name = passenger
-      end
-      flight.confirmation_number = extract_conf(/^\w{6}$/, info['ebchkinConfNo'], info['cnclConfirmNo'], info['chgConfirmNo'])
-      flight.number = leg_info["#{leg_type}FlightNo"]
-      flight.depart_code = extract_code leg_info["departCity"]
-      flight.depart_airport = extract_airport leg_info["departCity"]
-      flight.arrive_code = extract_code leg_info["arrivalCity"]
-      flight.arrive_airport = extract_airport leg_info["arrivalCity"]
-      flight.depart_date = Southy::Flight.utc_date_time(local, flight.depart_code)
+      flight.first_name = passenger['secureFlightName']['firstName'].capitalize
+      flight.last_name = passenger['secureFlightName']['lastName'].capitalize
+      flight.confirmation_number = record_locator
+      flight.number = segment['operatingCarrierInfo']['flightNumber']
+      flight.depart_date = DateTime.parse segment['departureDateTime']
+      flight.depart_code = depart_code
+      flight.depart_airport = Southy::Airport.lookup(depart_code).name
+      flight.arrive_code = arrive_code
+      flight.arrive_airport = Southy::Airport.lookup(arrive_code).name
       flight
     end
   end
@@ -144,26 +117,25 @@ class Southy::Monkey
       return { error: 'unknown', reason: errmsg, flights: [] }
     end
 
-    infos = json['upComingInfo']
-    return { error: 'failure', reason: 'no flight info', flights: [] } unless infos
+    itinerary = json['itinerary']
+    return { error: 'failure', reason: 'no itinerary', flights: [] } unless itinerary
+
+    originations = itinerary['originationDestinations']
+    return { error: 'failure', reason: 'no origination destinations', flights: [] } unless originations
+
+    record_locator = json['recordLocator']
+    passengers = json['passengers']
     response = { error: nil, flights: {} }
-    infos.each do |info|
-      infoConf = info['ebchkinConfNo'] || info['cnclConfirmNo']
-      flights = []
+    originations.each do |origination|
+      segments = origination['segments']
+      return { error: 'failure', reason: 'no segments', flights: [] } unless segments
 
-      depart1 = extract_flights info, 'Depart1', 'depart'
-      flights += depart1
-      (2..5).each do |i|
-        flights += extract_flights info, "Depart#{i}", 'depart', depart1[0].depart_date
-      end if depart1.length > 0
-
-      return1 = extract_flights info, 'Return1', 'return'
-      flights += return1
-      (2..5).each do |i|
-        flights += extract_flights info, "Return#{i}", 'return', return1[0].depart_date
-      end if return1.length > 0
-
-      response[:flights][infoConf] = flights
+      segments.each do |segment|
+        segment_conf = record_locator
+        flights = extract_flights record_locator, passengers, segment
+        response[:flights][segment_conf] ||= []
+        response[:flights][segment_conf] += flights
+      end
     end
 
     response
@@ -244,6 +216,7 @@ class Southy::Monkey
   def fetch_json(request, n = 0)
     puts "Fetch #{request.path}" if DEBUG
     request['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4'
+    request['X-API-Key'] = @api_key
 
     restore_cookies request
     response = @https.request(request)
