@@ -28,12 +28,15 @@ class Southy::Flight
   def self.sprint(flights, options = {})
     max_name = flights.map { |f| f.full_name.length }.max
     max_email = flights.map { |f| f.email ? f.email.length : 0 }.max
+    max_depart = flights.map { |f| f.depart_airport.length }.max
+    max_arrive = flights.map { |f| f.arrive_airport.length }.max
 
     out = ""
     last = nil
     flights.each do |f|
       subordinate = last && last.conf == f.conf && last.number == f.number
-      out +=  f.to_s(:max_name => max_name, :max_email => max_email, :subordinate => subordinate, :verbose => options[:verbose], :short => options[:short])
+      out +=  f.to_s(:max_name => max_name, :max_email => max_email, :max_depart => max_depart, :max_arrive => max_arrive,
+                     :subordinate => subordinate, :verbose => options[:verbose], :short => options[:short])
       out += "\n"
       last = f
     end
@@ -108,7 +111,8 @@ class Southy::Flight
   end
 
   def to_s(opts = {})
-    opts = { :max_name => 0, :max_email => 0, :subordinate => false, :verbose => false, :short => false }.merge opts
+    opts = { :max_name => 0, :max_email => 0, :max_depart => 0, :max_arrive => 0,
+             :subordinate => false, :verbose => false, :short => false }.merge opts
 
     out = ''
     if opts[:subordinate]
@@ -131,7 +135,9 @@ class Southy::Flight
       if opts[:short]
         out += "#{depart_code} -> #{arrive_code}"
       else
-        out += "#{depart_airport} (#{depart_code}) -> #{arrive_airport} (#{arrive_code})"
+        depart = lj("#{depart_airport} (#{depart_code})", opts[:max_depart] + 6)
+        arrive = lj("#{arrive_airport} (#{arrive_code})", opts[:max_arrive] + 6)
+        out += "#{depart} -> #{arrive}"
       end
       out += " *** #{seat}" if checked_in?
     end
