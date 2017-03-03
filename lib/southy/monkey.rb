@@ -25,30 +25,12 @@ class Southy::Monkey
     { :appID => 'swa', :appver => '2.17.0', :channel => 'wap', :platform => 'thinclient', :cacheid => '', :rcid => 'spaiphone' }
   end
 
-  def fetch_trip_info(conf, first_name, last_name)
-    uri = URI("https://#{@hostname}/api/extensions/v1/mobile/reservations/record-locator/#{conf}")
-    uri.query = URI.encode_www_form(
-      'first-name' => first_name,
-      'last-name'  => last_name,
-      'action'     => 'VIEW'
-    )
-    request = Net::HTTP::Get.new uri
-    json = fetch_json request
-    @config.save_file conf, 'viewAirReservation.json', json
-    json
-  end
-
   def parse_json(response)
     if response.body == nil || response.body == ''
       @config.log "Empty response body returned"
       return { 'errmsg' => "empty response body - #{response.code} (#{response.msg})"}
     end
     JSON.parse response.body
-  end
-
-  def fallback(doc, *names)
-    name = names.find { |n| doc[n] }
-    doc[name]
   end
 
   def validate_airport_code(code)
@@ -88,6 +70,19 @@ class Southy::Monkey
       return [ f[0], "#{f[1]} #{l[0]}" ]
     end
     [ first, last ]
+  end
+
+  def fetch_trip_info(conf, first_name, last_name)
+    uri = URI("https://#{@hostname}/api/extensions/v1/mobile/reservations/record-locator/#{conf}")
+    uri.query = URI.encode_www_form(
+      'first-name' => first_name,
+      'last-name'  => last_name,
+      'action'     => 'VIEW'
+    )
+    request = Net::HTTP::Get.new uri
+    json = fetch_json request
+    @config.save_file conf, 'record-locator.json', json
+    json
   end
 
   def lookup(conf, first_name, last_name)
@@ -142,15 +137,16 @@ class Southy::Monkey
   end
 
   def fetch_checkin_info(conf, first_name, last_name)
-    request = Net::HTTP::Post.new '/middleware/MWServlet'
-    request.set_form_data core_form_data.merge(
-      :serviceID => 'flightcheckin_new',
-      :recordLocator => conf,
-      :firstName => first_name,
-      :lastName => last_name
-    )
+    uri = URI("https://#{@hostname}/api/extensions/v1/mobile/reservations/record-locator/#{conf}/boarding-passes")
+    request = Net::HTTP::Post.new uri
+    request.body = {
+      :names => [ {
+        :firstName => first_name.upcase,
+        :lastName =>  last_name.upcase
+      } ]
+    }.to_json
     json = fetch_json request
-    @config.save_file conf, 'flightcheckin_new.json', json
+    @config.save_file conf, 'boarding-passes.json', json
     json
   end
 
@@ -158,53 +154,37 @@ class Southy::Monkey
     @cookies = []
     flight = flights[0]
 
-    request = Net::HTTP::Post.new '/middleware/MWServlet'
-    request.set_form_data core_form_data.merge(
-      :serviceID => 'getTravelInfo'
-    )
-    json = fetch_json request
-    @config.save_file flight.conf, 'getTravelInfo.json', json
-
     json = fetch_checkin_info flight.confirmation_number, flight.first_name, flight.last_name
-    output = json['output']
 
-    unless output && output.length > 0 && output.any? { |o| o['flightNumber'] == flight.number }
+    passengerCheckins = json['passengerCheckInDocuments']
+    if passengerCheckins.length == 0
       alternate_names(flight.first_name, flight.last_name).tap do |alt_first, alt_last|
         if alt_first != flight.first_name || alt_last != flight.last_name
           json = fetch_checkin_info flight.confirmation_number, alt_first, alt_last
-          output = json['output']
+          passengerCheckins = json['passengerCheckInDocuments']
         end
       end
     end
 
-    unless output && output.length > 0 && output.any? { |o| o['flightNumber'] == flight.number }
-      return { :flights => [] }
-    end
+    return { :flights => [] } if passengerCheckins.length == 0
 
-    request = Net::HTTP::Post.new '/middleware/MWServlet'
-    request.set_form_data core_form_data.merge(
-      :serviceID => 'getallboardingpass'
-    )
-    json = fetch_json request
-    @config.save_file flight.conf, 'getallboardingpass.json', json
-    docs = json.fetch('Document', []).concat json.fetch('mbpPassenger', [])
-    checked_in_flights = docs.map do |doc|
-      d_flight_num = doc['flight_num'] || ''
-      d_full_name  = ( doc['name']       || '' ).downcase
-      d_first_name = ( doc['firstName']  || '' ).downcase
-      d_last_name  = ( doc['lastName']   || '' ).downcase
-      flight = flights.find do |f|
-        d_flight_num == f.number &&
-          ( d_full_name == '' || d_full_name == f.full_name.downcase ||
-            ( d_first_name == f.first_name.downcase && d_last_name == f.last_name.downcase ) )
+    checked_in_flights = []
+    passengerCheckins.each do |pc|
+      passenger = pc['passenger']
+      fname = passenger['secureFlightFirstName'].downcase
+      lname = passenger['secureFlightLastName'].downcase
+
+      pc['checkinDocuments'].each do |cd|
+        num = cd['flightNumber']
+        flight = flights.find do |f|
+          f.number == num && f.first_name.downcase == fname && f.last_name.downcase == lname
+        end
+        if flight
+          flight.group = cd['boardingGroup']
+          flight.position = cd['boardingGroupNumber']
+          checked_in_flights << flight
+        end
       end
-      if flight
-        flight.group = fallback doc, 'boardinggroupsec_text', 'boardingroup_text'
-        pos1 = fallback doc, 'position1sec_text', 'position1_text'
-        pos2 = fallback doc, 'position2sec_text', 'position2_text'
-        flight.position = "#{pos1}#{pos2}".to_i
-      end
-      flight
     end
 
     @cookies = []
@@ -216,6 +196,7 @@ class Southy::Monkey
   def fetch_json(request, n = 0)
     puts "Fetch #{request.path}" if DEBUG
     request['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4'
+    request['Content-Type'] = 'application/vnd.swacorp.com.mobile.boarding-passes-v1.0+json'
     request['X-API-Key'] = @api_key
 
     restore_cookies request
@@ -256,6 +237,6 @@ class Southy::TestMonkey < Southy::Monkey
   end
 
   def fetch_trip_info(conf, first_name, last_name)
-    get_json conf, "viewAirReservation"
+    get_json conf, "record-locator"
   end
 end
