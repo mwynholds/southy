@@ -152,37 +152,35 @@ class Southy::Monkey
 
   def checkin(flights)
     @cookies = []
-    flight = flights[0]
+    checked_in_flights = []
+    flights.each do |flight|
+      json = fetch_checkin_info flight.confirmation_number, flight.first_name, flight.last_name
 
-    json = fetch_checkin_info flight.confirmation_number, flight.first_name, flight.last_name
-
-    passengerCheckins = json['passengerCheckInDocuments']
-    if passengerCheckins.length == 0
-      alternate_names(flight.first_name, flight.last_name).tap do |alt_first, alt_last|
-        if alt_first != flight.first_name || alt_last != flight.last_name
-          json = fetch_checkin_info flight.confirmation_number, alt_first, alt_last
-          passengerCheckins = json['passengerCheckInDocuments']
+      passengerCheckins = json['passengerCheckInDocuments']
+      if passengerCheckins.length == 0
+        alternate_names(flight.first_name, flight.last_name).tap do |alt_first, alt_last|
+          if alt_first != flight.first_name || alt_last != flight.last_name
+            json = fetch_checkin_info flight.confirmation_number, alt_first, alt_last
+            passengerCheckins = json['passengerCheckInDocuments']
+          end
         end
       end
-    end
 
-    return { :flights => [] } if passengerCheckins.length == 0
+      passengerCheckins.each do |pc|
+        passenger = pc['passenger']
+        fname = passenger['secureFlightFirstName'].downcase
+        lname = passenger['secureFlightLastName'].downcase
 
-    checked_in_flights = []
-    passengerCheckins.each do |pc|
-      passenger = pc['passenger']
-      fname = passenger['secureFlightFirstName'].downcase
-      lname = passenger['secureFlightLastName'].downcase
-
-      pc['checkinDocuments'].each do |cd|
-        num = cd['flightNumber']
-        flight = flights.find do |f|
-          f.number == num && f.first_name.downcase == fname && f.last_name.downcase == lname
-        end
-        if flight
-          flight.group = cd['boardingGroup']
-          flight.position = cd['boardingGroupNumber']
-          checked_in_flights << flight
+        pc['checkinDocuments'].each do |cd|
+          num = cd['flightNumber']
+          flight = flights.find do |f|
+            f.number == num && f.first_name.downcase == fname && f.last_name.downcase == lname
+          end
+          if flight
+            flight.group = cd['boardingGroup']
+            flight.position = cd['boardingGroupNumber']
+            checked_in_flights << flight
+          end
         end
       end
     end
