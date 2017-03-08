@@ -1,5 +1,7 @@
+require 'date'
+
 class Debug
-  @@last = ::DateTime.new(2000, 1, 1)
+  @@last = DateTime.new(2000, 1, 1)
 
   def self.debug=(debug)
     ENV['DEBUG'] = debug.to_s
