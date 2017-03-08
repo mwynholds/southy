@@ -81,7 +81,7 @@ class Southy::Flight
 
   def checkin_debug
     ci = checked_in? ? 'true ' : 'false'
-    avail = DateTime.now >= depart_date - 1 - _seconds(3) ? 'true ' : 'false'
+    avail = DateTime.now >= depart_date - 1 - _seconds(1) ? 'true ' : 'false'
     "#{conf}: checked in: #{ci} - #{DateTime.now} >= #{depart_date - 1 - _seconds(3)} - #{avail}  - #{full_name}"
   end
 
@@ -89,7 +89,7 @@ class Southy::Flight
     return false unless confirmed?
     return false if checked_in?
     return false if depart_date < DateTime.now     # oops, missed this flight :-)
-    DateTime.now >= depart_date - 1 - _seconds(3)  # start trying 3 seconds early!
+    DateTime.now >= depart_date - 1 - _seconds(1)  # start trying 1 second early!
   end
 
   def checkin_time?

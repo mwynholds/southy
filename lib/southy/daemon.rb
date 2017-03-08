@@ -59,7 +59,8 @@ class Southy::Daemon
           if attempts[flight.conf] <= 5 || flight.checkin_time? || flight.late_checkin_time?
             unless running[flight.conf]
               running[flight.conf] = true
-              @config.log "Ready to check in flight #{flight.conf} (#{flight.full_name})"
+              @config.log "Ready to check in flight #{flight.conf} (#{flight.full_name})" if Debug.is_debug?
+              Thread.abort_on_exception = true
               Thread.new do
                 checked_in = @agent.checkin(flights)
                 if checked_in.empty?

@@ -156,14 +156,18 @@ class Southy::Monkey
     flights.each do |flight|
       json = fetch_checkin_info flight.confirmation_number, flight.first_name, flight.last_name
 
-      passengerCheckins = json['passengerCheckInDocuments']
+      passengerCheckins = json['passengerCheckInDocuments'] || []
       if passengerCheckins.length == 0
         alternate_names(flight.first_name, flight.last_name).tap do |alt_first, alt_last|
           if alt_first != flight.first_name || alt_last != flight.last_name
             json = fetch_checkin_info flight.confirmation_number, alt_first, alt_last
-            passengerCheckins = json['passengerCheckInDocuments']
+            passengerCheckins = json['passengerCheckInDocuments'] || []
           end
         end
+      end
+
+      if passengerCheckins.length == 0 && json['code']
+        @config.log " --> #{flight.conf} (#{flight.full_name}) - #{json['code']} #{json['httpStatusCode']} - #{json['message']}"
       end
 
       passengerCheckins.each do |pc|
