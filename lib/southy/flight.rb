@@ -79,11 +79,13 @@ class Southy::Flight
     (n / 60.0) / (24 * 60)
   end
 
+  def checkin_debug
+    ci = checked_in? ? 'true ' : 'false'
+    avail = DateTime.now >= depart_date - 1 - _seconds(3) ? 'true ' : 'false'
+    "#{conf}: checked in: #{ci} - #{DateTime.now} >= #{depart_date - 1 - _seconds(3)} - #{avail}  - #{full_name}"
+  end
+
   def checkin_available?
-    Debug.periodically(10) do
-      puts "#{conf} (#{full_name}) - confirmed: #{confirmed?}, checked in: #{checked_in?}, past: #{depart_date < DateTime.now}, " +
-        "avail: #{DateTime.now} >= #{depart_date - 1 - _seconds(3)} #{DateTime.now >= depart_date - 1 - _seconds(3)}"
-    end if Debug.is_debug?
     return false unless confirmed?
     return false if checked_in?
     return false if depart_date < DateTime.now     # oops, missed this flight :-)

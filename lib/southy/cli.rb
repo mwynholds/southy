@@ -17,13 +17,18 @@ module Southy
       @service.run
     end
 
-    def debug(params)
+    def rundebug(params)
       Debug.debug = true
       run params
     end
 
     def start(params)
       @service.start @options[:write]
+    end
+
+    def startdebug(params)
+      Debug.debug = true
+      start params
     end
 
     def stop(params)

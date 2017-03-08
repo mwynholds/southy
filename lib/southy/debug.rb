@@ -10,6 +10,7 @@ class Debug
   end
 
   def self.periodically(seconds)
+    return unless self.is_debug?
     now = DateTime.now
     if now.second % seconds == 0
       yield
