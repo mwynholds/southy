@@ -146,7 +146,7 @@ class Southy::Monkey
       } ]
     }.to_json
     json = fetch_json request
-    @config.save_file conf, 'boarding-passes.json', json
+    @config.save_file conf, "boarding-passes-#{first_name.downcase}-#{last_name.downcase}.json", json
     json
   end
 
