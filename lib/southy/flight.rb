@@ -28,8 +28,8 @@ class Southy::Flight
   def self.sprint(flights, options = {})
     max_name = flights.map { |f| f.full_name.length }.max
     max_email = flights.map { |f| f.email ? f.email.length : 0 }.max
-    max_depart = flights.map { |f| f.depart_airport.length }.max
-    max_arrive = flights.map { |f| f.arrive_airport.length }.max
+    max_depart = flights.map { |f| f.depart_airport.try(:length) || 0 }.max
+    max_arrive = flights.map { |f| f.arrive_airport.try(:length) || 0 }.max
 
     out = ""
     last = nil
@@ -80,6 +80,10 @@ class Southy::Flight
   end
 
   def checkin_available?
+    Debug.periodically(10) do
+      puts "#{conf} (#{full_name}) - confirmed: #{confirmed?}, checked in: #{checked_in?}, past: #{depart_date < DateTime.now}, " +
+        "avail: #{DateTime.now} >= #{depart_date - 1 - _seconds(3)} #{DateTime.now >= depart_date - 1 - _seconds(3)}"
+    end if Debug.is_debug?
     return false unless confirmed?
     return false if checked_in?
     return false if depart_date < DateTime.now     # oops, missed this flight :-)

@@ -53,9 +53,9 @@ class Southy::Monkey
       flight.last_name = passenger['secureFlightName']['lastName'].capitalize
       flight.confirmation_number = record_locator
       flight.number = segment['operatingCarrierInfo']['flightNumber']
-      flight.depart_date = DateTime.parse segment['departureDateTime']
       flight.depart_code = depart_code
       flight.depart_airport = Southy::Airport.lookup(depart_code).name
+      flight.depart_date = DateTime.parse(segment['departureDateTime'])
       flight.arrive_code = arrive_code
       flight.arrive_airport = Southy::Airport.lookup(arrive_code).name
       flight

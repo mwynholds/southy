@@ -6,6 +6,7 @@ module Southy
 
   require 'southy/version'
   require 'southy/helpers'
+  require 'southy/debug'
   require 'southy/mailer'
   require 'southy/monkey'
   require 'southy/service'
