@@ -1,8 +1,6 @@
 require 'date'
 
 class Debug
-  @@last = DateTime.new(2000, 1, 1)
-
   def self.debug=(debug)
     ENV['DEBUG'] = debug.to_s
   end
@@ -13,9 +11,8 @@ class Debug
 
   def self.periodically(seconds)
     now = DateTime.now
-    if now.second % seconds == 0 && ( now.to_i - @@last.to_i > seconds/2 )
+    if now.second % seconds == 0
       yield
-      @@last = now
     end
   end
 end

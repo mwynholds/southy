@@ -69,7 +69,7 @@ class Southy::Daemon
         end
       end
 
-      sleep 0.5
+      sleep 0.9
     end
     @config.log "Southy got killed"
     @slackthread.kill
