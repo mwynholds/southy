@@ -97,6 +97,12 @@ class Southy::Config
     dump_flights
   end
 
+  def remove_pending(conf)
+    @flights.delete_if do |flight|
+      flight.confirmation_number == conf.upcase.gsub(/0/, 'O') && !flight.checked_in?
+    end
+  end
+
   def find(conf)
     @flights.select { |f| f.conf == conf.strip }
   end

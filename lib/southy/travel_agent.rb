@@ -36,7 +36,7 @@ class Southy::TravelAgent
       if @config.matches legs
         @config.log "No changes to #{ident}"
       else
-        @config.remove conf
+        @config.remove_pending conf
         legs.each do |leg|
           leg.email ||= flight_info.email
           @config.confirm leg
