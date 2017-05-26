@@ -128,6 +128,7 @@ class Southy::Monkey
       segments.each do |segment|
         segment_conf = record_locator
         flights = extract_flights record_locator, passengers, segment
+        return { error: 'failure', reason: "invalid airport", flights: {} } unless flights
         response[:flights][segment_conf] ||= []
         response[:flights][segment_conf] += flights
       end
