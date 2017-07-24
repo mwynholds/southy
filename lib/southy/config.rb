@@ -246,6 +246,7 @@ class Southy::Config
     last_read = @timestamps[file_name]
     stamp = file.mtime
     if options[:force] || last_read.nil? || stamp > last_read
+      @timestamps[file_name] = stamp
       yield
     else
       nil

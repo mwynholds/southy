@@ -51,10 +51,6 @@ class Southy::Daemon
       groups.values.each do |flights|
         flight = flights[0]
         attempts[flight.conf] ||= 0
-        Debug.periodically(10) do
-          puts flight.checkin_debug
-          @config.log flight.checkin_debug
-        end
         if flight.checkin_available?
           if attempts[flight.conf] <= 5 || flight.checkin_time? || flight.late_checkin_time?
             unless running[flight.conf]
@@ -73,10 +69,6 @@ class Southy::Daemon
             end
           end
         end
-      end
-      Debug.periodically(10) do
-        puts '---------------------------'
-        @config.log '---------------------------'
       end
 
       sleep 0.5
