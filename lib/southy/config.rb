@@ -203,13 +203,16 @@ class Southy::Config
   end
 
   def load_flights(options)
+    flights = nil
     flights_lock.synchronize do
-      @flights = if_updated? flights_file, options do
+      flights = if_updated? flights_file, options do
         IO.read(flights_file).split("\n").map {|line| Southy::Flight.from_csv(line)}
       end
     end
-    @flights ||= []
-    @flights.sort!
+    if flights
+      @flights = flights || []
+      @flights.sort!
+    end
   end
 
   def dump_flights
