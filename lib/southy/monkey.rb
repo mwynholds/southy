@@ -18,7 +18,7 @@ class Southy::Monkey
     @https.use_ssl = true
     @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
     @https.verify_depth = 5
-    @https.ca_path = '/etc/ssl/certs' if File.exists? '/etc/ssl/certs'  # Ubuntu
+    #@https.ca_path = '/etc/ssl/certs' if File.exists? '/etc/ssl/certs'  # Ubuntu
   end
 
   def core_form_data

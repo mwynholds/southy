@@ -183,13 +183,15 @@ EOM
 
     def add(data, args, &respond)
       args.tap do |(conf, fname, lname, email)|
+        return ( respond.call "You didn't enter a confirmation number!" ) unless conf
+        profile = user_profile data
         unless fname and lname
-          profile = user_profile data
           fname = profile[:first_name]
           lname = profile[:last_name]
+        end
+        unless email
           email = profile[:email]
         end
-        return ( respond.call "You didn't enter a confirmation number!" ) unless conf
         if email && match = email.match(/^<mailto:(.*)\|/)
           email = match.captures[0]
         end
