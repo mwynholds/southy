@@ -84,13 +84,11 @@ class Southy::Monkey
     end
 
     if statusCode == 'BAD_REQUEST'
-      return { error: 'invalid', reason: message, flights: [] } if code == 400520416
-      return { error: 'unknown', reason: message, flights: [] }
+      return { error: 'invalid', reason: message, flights: [] }
     end
 
     if statusCode == 'NOT_FOUND'
-      return { error: 'invalid', reason: message, flights: [] } if code == 404511166
-      return { error: 'unknown', reason: message, flights: [] }
+      return { error: 'notfound', reason: message, flights: [] }
     end
 
     page = json.viewReservationViewPage
