@@ -3,6 +3,7 @@ require 'net/https'
 require 'fileutils'
 require 'pp'
 require 'tzinfo'
+require 'ostruct'
 
 class Southy::Monkey
 
@@ -18,11 +19,6 @@ class Southy::Monkey
     @https.use_ssl = true
     @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
     @https.verify_depth = 5
-    #@https.ca_path = '/etc/ssl/certs' if File.exists? '/etc/ssl/certs'  # Ubuntu
-  end
-
-  def core_form_data
-    { :appID => 'swa', :appver => '2.17.0', :channel => 'wap', :platform => 'thinclient', :cacheid => '', :rcid => 'spaiphone' }
   end
 
   def parse_json(response)
@@ -30,7 +26,7 @@ class Southy::Monkey
       @config.log "Empty response body returned"
       return { 'errmsg' => "empty response body - #{response.code} (#{response.msg})"}
     end
-    JSON.parse response.body
+    JSON.parse response.body, object_class: OpenStruct
   end
 
   def validate_airport_code(code)
@@ -53,21 +49,21 @@ class Southy::Monkey
   end
 
   def fetch_trip_info(conf, first_name, last_name)
-    uri = URI("https://#{@hostname}/api/mobile-air-operations/v1/mobile-air-operations/page/check-in/#{conf}")
+    uri = URI("https://#{@hostname}/api/mobile-air-booking/v1/mobile-air-booking/page/view-reservation/#{conf}")
     uri.query = URI.encode_www_form(
       'first-name' => first_name,
       'last-name'  => last_name
     )
     request = Net::HTTP::Get.new uri
     json = fetch_json request
-    @config.save_file conf, 'record-locator.json', json
+    @config.save_file conf, 'trip-info.json', json.to_h
     json
   end
 
   def lookup(conf, first_name, last_name)
     json = fetch_trip_info conf, first_name, last_name
 
-    statusCode = json['httpStatusCode']
+    statusCode = json.httpStatusCode
 
     if statusCode == 'NOT_FOUND'
       alternate_names(first_name, last_name).tap do |alt_first, alt_last|
@@ -77,9 +73,9 @@ class Southy::Monkey
       end
     end
 
-    statusCode = json['httpStatusCode']
-    code = json['code']
-    message = json['message']
+    statusCode = json.httpStatusCode
+    code = json.code
+    message = json.message
 
     if statusCode
       puts json
@@ -88,7 +84,8 @@ class Southy::Monkey
     end
 
     if statusCode == 'BAD_REQUEST'
-      return { error: 'unknown', reason: statusCode, flights: [] }
+      return { error: 'invalid', reason: message, flights: [] } if code == 400520416
+      return { error: 'unknown', reason: message, flights: [] }
     end
 
     if statusCode == 'NOT_FOUND'
@@ -96,38 +93,52 @@ class Southy::Monkey
       return { error: 'unknown', reason: message, flights: [] }
     end
 
-    page = json['checkInViewReservationPage']
+    page = json.viewReservationViewPage
     return { error: 'failure', reason: 'no reservation', flights: [] } unless page
 
-    cards = page['cards']
-    return { error: 'failure', reason: 'no segments', flights: [] } unless cards
+    bounds = page.bounds
+    return { error: 'failure', reason: 'no flights', flights: [] } unless bounds
 
-    checkinInfo = page['_v1_infoNeededToCheckin'] && page['_v1_infoNeededToCheckin']['body']
-    return { error: 'failure', reason: 'no checkin info', flights: [] } unless checkinInfo
+    passengers = page.passengers
+    return { error: 'failure', reason: 'no passengers', flights: [] } unless passengers
 
     response = { error: nil, flights: {} }
-    cards.each do |card|
-      flights = card['flights']
-      flights.each do |flight|
+    bounds.each do |bound|
+      flights = bound.flights
+      stops   = bound.stops
+      flights.each_with_index do |flight, i|
 
-        depart_code = flight['originAirportCode']
-        arrive_code = flight['destinationAirportCode']
+        if i == 0
+          depart_code = bound.departureAirport.code
+          depart_time = bound.departureTime
+        else
+          depart_code = stops[i-1].airport.code
+          depart_time = stops[i-1].departureTime
+        end
+
+        if i == flights.length - 1
+          arrive_code = bound.arrivalAirport.code
+        else
+          arrive_code = stops[i-1].airport.code
+        end
+
         next unless validate_airport_code(depart_code) && validate_airport_code(arrive_code)
 
         depart_airport = Southy::Airport.lookup depart_code
         arrive_airport = Southy::Airport.lookup arrive_code
 
         tz          = TZInfo::Timezone.get depart_airport.timezone
-        utc         = tz.local_to_utc DateTime.parse("#{flight['departureDate']} #{flight['departureTime']}")
+        utc         = tz.local_to_utc DateTime.parse("#{bound.departureDate} #{depart_time}")
         depart_date = Southy::Flight.local_date_time utc, depart_code
 
-        names = checkinInfo['names']
-        names.each do |name|
+        passengers.each do |passenger|
+          names = passenger.name.split ' '
+
           f = Southy::Flight.new
           f.confirmation_number = conf
-          f.first_name          = name['firstName'].capitalize
-          f.last_name           = name['lastName'].capitalize
-          f.number              = flight['flightNumber']
+          f.first_name          = names.first.capitalize
+          f.last_name           = names.last.capitalize
+          f.number              = flight.number
           f.depart_date         = depart_date
           f.depart_code         = depart_code
           f.depart_airport      = depart_airport.name
@@ -143,7 +154,19 @@ class Southy::Monkey
     response
   end
 
-  def fetch_checkin_info(conf, first_name, last_name, sessionToken)
+  def fetch_checkin_info_1(conf, first_name, last_name)
+    uri = URI("https://#{@hostname}/api/mobile-air-operations/v1/mobile-air-operations/page/check-in/#{conf}")
+    uri.query = URI.encode_www_form(
+      'first-name' => first_name,
+      'last-name'  => last_name
+    )
+    request = Net::HTTP::Get.new uri
+    json = fetch_json request
+    @config.save_file conf, 'checkin-info-1.json', json
+    json
+  end
+
+  def fetch_checkin_info_2(conf, first_name, last_name, sessionToken)
     uri = URI("https://#{@hostname}/api/mobile-air-operations/v1/mobile-air-operations/page/check-in")
     request = Net::HTTP::Post.new uri
     request.body = {
@@ -154,38 +177,38 @@ class Southy::Monkey
     }.to_json
     request.content_type = 'application/json'
     json = fetch_json request
-    @config.save_file conf, "boarding-passes-#{first_name.downcase}-#{last_name.downcase}.json", json
+    @config.save_file conf, "checkin-info-2--#{first_name.downcase}-#{last_name.downcase}.json", json
     json
   end
 
   def checkin(flights)
     checked_in_flights = []
     flight = flights[0]
-    json = fetch_trip_info flight.confirmation_number, flight.first_name, flight.last_name
-    sessionToken = json['checkInSessionToken']
+    json = fetch_trip_info_1 flight.confirmation_number, flight.first_name, flight.last_name
+    sessionToken = json.checkInSessionToken
 
-    json = fetch_checkin_info flight.confirmation_number, flight.first_name, flight.last_name, sessionToken
+    json = fetch_checkin_info_2 flight.confirmation_number, flight.first_name, flight.last_name, sessionToken
 
-    errmsg = json['errmsg']
+    errmsg = json.errmsg
     if errmsg
       puts errmsg
       return { :flights => [] }
     end
 
-    page = json['checkInConfirmationPage']
-    flightNodes = page['flights']
+    page = json.checkInConfirmationPage
+    flightNodes = page.flights
 
     flightNodes.each do |flightNode|
-      num = flightNode['flightNumber']
+      num = flightNode.flightNumber
 
-      passengers = flightNode['passengers']
+      passengers = flightNode.passengers
       passengers.each do |passenger|
-        name = passenger['name']
+        name = passenger.name
 
         existing = flights.find { |f| f.number == num && f.full_name == name }
         if existing
-          existing.group = passenger['boardingGroup']
-          existing.position = passenger['boardingPosition']
+          existing.group = passenger.boardingGroup
+          existing.position = passenger.boardingPosition
           checked_in_flights << existing
         end
       end
@@ -205,7 +228,7 @@ class Southy::Monkey
 
     json = parse_json response
 
-    if json['errmsg'] && json['opstatus'] && json['opstatus'] != 0 && n <= 10  # technical error, try again (for a while)
+    if json.errmsg && json.opstatus && json.opstatus != 0 && n <= 10  # technical error, try again (for a while)
       fetch_json request, n + 1
     else
       json
@@ -222,10 +245,10 @@ class Southy::TestMonkey < Southy::Monkey
       last = "#{base}_#{n}.json"
       n += 1
     end
-    JSON.parse IO.read(last).strip
+    JSON.parse IO.read(last).strip, object_class: OpenStruct
   end
 
   def fetch_trip_info(conf, first_name, last_name)
-    get_json conf, "record-locator"
+    get_json conf, "trip-info"
   end
 end
