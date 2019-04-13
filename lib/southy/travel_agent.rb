@@ -17,9 +17,11 @@ class Southy::TravelAgent
     if response[:error]
       if response[:error] == 'unknown'
         @config.log "Flight not removed due to '#{response[:error]}' : #{flight_info.conf} (#{flight_info.full_name})"
+        @config.log response
       else
         @config.remove flight_info.conf
         @config.log "Flight removed due to '#{response[:error]}' : #{flight_info.conf} (#{flight_info.full_name})"
+        @config.log response
       end
       return response
     end

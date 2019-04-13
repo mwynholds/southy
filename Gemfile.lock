@@ -50,7 +50,7 @@ GEM
       websocket-driver
     thread_safe (0.3.6)
     timecop (0.9.1)
-    tzinfo (1.2.3)
+    tzinfo (1.2.5)
       thread_safe (~> 0.1)
     websocket-driver (0.7.0)
       websocket-extensions (>= 0.1.0)
@@ -68,4 +68,4 @@ DEPENDENCIES
   timecop
 
 BUNDLED WITH
-   1.15.4
+   2.0.1

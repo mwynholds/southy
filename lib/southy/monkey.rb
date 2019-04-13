@@ -2,6 +2,7 @@ require 'json'
 require 'net/https'
 require 'fileutils'
 require 'pp'
+require 'tzinfo'
 
 class Southy::Monkey
 
@@ -9,10 +10,9 @@ class Southy::Monkey
 
   def initialize(config = nil)
     @config = config
-    @cookies = []
 
     @hostname = 'mobile.southwest.com'
-    @api_key = 'l7xx12ebcbc825eb480faa276e7f192d98d1'
+    @api_key = 'l7xx0a43088fe6254712b10787646d1b298e'
 
     @https = Net::HTTP.new @hostname, 443
     @https.use_ssl = true
@@ -42,26 +42,6 @@ class Southy::Monkey
     end
   end
 
-  def extract_flights(record_locator, passengers, segment)
-    depart_code = segment['originationAirportCode']
-    arrive_code = segment['destinationAirportCode']
-    return nil unless validate_airport_code(depart_code) && validate_airport_code(arrive_code)
-
-    passengers.map do |passenger|
-      flight = Southy::Flight.new
-      flight.first_name = passenger['secureFlightName']['firstName'].capitalize
-      flight.last_name = passenger['secureFlightName']['lastName'].capitalize
-      flight.confirmation_number = record_locator
-      flight.number = segment['operatingCarrierInfo']['flightNumber']
-      flight.depart_code = depart_code
-      flight.depart_airport = Southy::Airport.lookup(depart_code).name
-      flight.depart_date = DateTime.parse(segment['departureDateTime'])
-      flight.arrive_code = arrive_code
-      flight.arrive_airport = Southy::Airport.lookup(arrive_code).name
-      flight
-    end
-  end
-
   def alternate_names(first, last)
     f, l = first.split(' '), last.split(' ')
     if f.length == 1 && l.length == 2
@@ -73,11 +53,10 @@ class Southy::Monkey
   end
 
   def fetch_trip_info(conf, first_name, last_name)
-    uri = URI("https://#{@hostname}/api/extensions/v1/mobile/reservations/record-locator/#{conf}")
+    uri = URI("https://#{@hostname}/api/mobile-air-operations/v1/mobile-air-operations/page/check-in/#{conf}")
     uri.query = URI.encode_www_form(
       'first-name' => first_name,
-      'last-name'  => last_name,
-      'action'     => 'VIEW'
+      'last-name'  => last_name
     )
     request = Net::HTTP::Get.new uri
     json = fetch_json request
@@ -87,110 +66,131 @@ class Southy::Monkey
 
   def lookup(conf, first_name, last_name)
     json = fetch_trip_info conf, first_name, last_name
-    errmsg = json['errmsg']
 
-    if errmsg && errmsg != ''
+    statusCode = json['httpStatusCode']
+
+    if statusCode == 'NOT_FOUND'
       alternate_names(first_name, last_name).tap do |alt_first, alt_last|
         if alt_first != first_name || alt_last != last_name
           json = fetch_trip_info conf, alt_first, alt_last
-          errmsg = json['errmsg']
         end
       end
     end
 
-    if errmsg && errmsg != ''
+    statusCode = json['httpStatusCode']
+    code = json['code']
+    message = json['message']
+
+    if statusCode
+      puts json
       ident = "#{conf} #{first_name} #{last_name}"
-      return { error: 'cancelled', flights: [] } if errmsg =~ /SW107028/
-      return { error: 'invalid', flights: [] } if errmsg =~ /SW107023/
-
-      if json['opstatus'] != 0
-        @config.log "Technical error looking up flights for #{ident} - #{errmsg}"
-        return { error: 'unknown', reason: errmsg, flights: [] }
-      end
-
-      @config.log "Unknown error looking up flights for #{ident} - #{errmsg}"
-      return { error: 'unknown', reason: errmsg, flights: [] }
+      @config.log "Error looking up flights for #{ident} - #{statusCode} / #{code} - #{message}"
     end
 
-    itinerary = json['itinerary']
-    return { error: 'failure', reason: 'no itinerary', flights: [] } unless itinerary
+    if statusCode == 'BAD_REQUEST'
+      return { error: 'unknown', reason: statusCode, flights: [] }
+    end
 
-    originations = itinerary['originationDestinations']
-    return { error: 'failure', reason: 'no origination destinations', flights: [] } unless originations
+    if statusCode == 'NOT_FOUND'
+      return { error: 'invalid', reason: message, flights: [] } if code == 404511166
+      return { error: 'unknown', reason: message, flights: [] }
+    end
 
-    record_locator = json['recordLocator']
-    passengers = json['passengers']
+    page = json['checkInViewReservationPage']
+    return { error: 'failure', reason: 'no reservation', flights: [] } unless page
+
+    cards = page['cards']
+    return { error: 'failure', reason: 'no segments', flights: [] } unless cards
+
+    checkinInfo = page['_v1_infoNeededToCheckin'] && page['_v1_infoNeededToCheckin']['body']
+    return { error: 'failure', reason: 'no checkin info', flights: [] } unless checkinInfo
+
     response = { error: nil, flights: {} }
-    originations.each do |origination|
-      segments = origination['segments']
-      return { error: 'failure', reason: 'no segments', flights: [] } unless segments
+    cards.each do |card|
+      flights = card['flights']
+      flights.each do |flight|
 
-      segments.each do |segment|
-        segment_conf = record_locator
-        flights = extract_flights record_locator, passengers, segment
-        return { error: 'failure', reason: "invalid airport", flights: {} } unless flights
-        response[:flights][segment_conf] ||= []
-        response[:flights][segment_conf] += flights
+        depart_code = flight['originAirportCode']
+        arrive_code = flight['destinationAirportCode']
+        next unless validate_airport_code(depart_code) && validate_airport_code(arrive_code)
+
+        depart_airport = Southy::Airport.lookup depart_code
+        arrive_airport = Southy::Airport.lookup arrive_code
+
+        tz          = TZInfo::Timezone.get depart_airport.timezone
+        utc         = tz.local_to_utc DateTime.parse("#{flight['departureDate']} #{flight['departureTime']}")
+        depart_date = Southy::Flight.local_date_time utc, depart_code
+
+        names = checkinInfo['names']
+        names.each do |name|
+          f = Southy::Flight.new
+          f.confirmation_number = conf
+          f.first_name          = name['firstName'].capitalize
+          f.last_name           = name['lastName'].capitalize
+          f.number              = flight['flightNumber']
+          f.depart_date         = depart_date
+          f.depart_code         = depart_code
+          f.depart_airport      = depart_airport.name
+          f.arrive_code         = arrive_code
+          f.arrive_airport      = arrive_airport.name
+
+          response[:flights][conf] ||= []
+          response[:flights][conf] << f
+        end
       end
     end
 
     response
   end
 
-  def fetch_checkin_info(conf, first_name, last_name)
-    uri = URI("https://#{@hostname}/api/extensions/v1/mobile/reservations/record-locator/#{conf}/boarding-passes")
+  def fetch_checkin_info(conf, first_name, last_name, sessionToken)
+    uri = URI("https://#{@hostname}/api/mobile-air-operations/v1/mobile-air-operations/page/check-in")
     request = Net::HTTP::Post.new uri
     request.body = {
-      :names => [ {
-        :firstName => first_name.upcase,
-        :lastName =>  last_name.upcase
-      } ]
+      recordLocator: conf,
+      firstName: first_name,
+      lastName: last_name,
+      checkInSessionToken: sessionToken
     }.to_json
+    request.content_type = 'application/json'
     json = fetch_json request
     @config.save_file conf, "boarding-passes-#{first_name.downcase}-#{last_name.downcase}.json", json
     json
   end
 
   def checkin(flights)
-    @cookies = []
     checked_in_flights = []
-    flights.each do |flight|
-      json = fetch_checkin_info flight.confirmation_number, flight.first_name, flight.last_name
+    flight = flights[0]
+    json = fetch_trip_info flight.confirmation_number, flight.first_name, flight.last_name
+    sessionToken = json['checkInSessionToken']
 
-      passengerCheckins = json['passengerCheckInDocuments'] || []
-      if passengerCheckins.length == 0
-        alternate_names(flight.first_name, flight.last_name).tap do |alt_first, alt_last|
-          if alt_first != flight.first_name || alt_last != flight.last_name
-            json = fetch_checkin_info flight.confirmation_number, alt_first, alt_last
-            passengerCheckins = json['passengerCheckInDocuments'] || []
-          end
-        end
-      end
+    json = fetch_checkin_info flight.confirmation_number, flight.first_name, flight.last_name, sessionToken
 
-      if passengerCheckins.length == 0 && json['code']
-        @config.log " --> #{flight.conf} (#{flight.full_name}) - #{json['code']} #{json['httpStatusCode']} - #{json['message']}"
-      end
+    errmsg = json['errmsg']
+    if errmsg
+      puts errmsg
+      return { :flights => [] }
+    end
 
-      passengerCheckins.each do |pc|
-        passenger = pc['passenger']
-        fname = passenger['secureFlightFirstName'].downcase
-        lname = passenger['secureFlightLastName'].downcase
+    page = json['checkInConfirmationPage']
+    flightNodes = page['flights']
 
-        pc['checkinDocuments'].each do |cd|
-          num = cd['flightNumber']
-          flight = flights.find do |f|
-            f.number == num && f.first_name.downcase == fname && f.last_name.downcase == lname
-          end
-          if flight
-            flight.group = cd['boardingGroup']
-            flight.position = cd['boardingGroupNumber']
-            checked_in_flights << flight
-          end
+    flightNodes.each do |flightNode|
+      num = flightNode['flightNumber']
+
+      passengers = flightNode['passengers']
+      passengers.each do |passenger|
+        name = passenger['name']
+
+        existing = flights.find { |f| f.number == num && f.full_name == name }
+        if existing
+          existing.group = passenger['boardingGroup']
+          existing.position = passenger['boardingPosition']
+          checked_in_flights << existing
         end
       end
     end
 
-    @cookies = []
     { :flights => checked_in_flights.compact }
   end
 
@@ -199,30 +199,16 @@ class Southy::Monkey
   def fetch_json(request, n = 0)
     puts "Fetch #{request.path}" if DEBUG
     request['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4'
-    request['Content-Type'] = 'application/vnd.swacorp.com.mobile.boarding-passes-v1.0+json'
     request['X-API-Key'] = @api_key
 
-    restore_cookies request
     response = @https.request(request)
 
     json = parse_json response
 
-    if json['errmsg'] && json['opstatus'] != 0 && n <= 10  # technical error, try again (for a while)
+    if json['errmsg'] && json['opstatus'] && json['opstatus'] != 0 && n <= 10  # technical error, try again (for a while)
       fetch_json request, n + 1
     else
-      save_cookies response
       json
-    end
-  end
-
-  def restore_cookies(request)
-    request['Cookie'] = @cookies.join('; ') if @cookies.length
-  end
-
-  def save_cookies(response)
-    cookie_headers = response.get_fields('Set-Cookie') || []
-    cookie_headers.each do |c|
-      @cookies << c.split(';')[0]
     end
   end
 end
