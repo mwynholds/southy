@@ -182,7 +182,7 @@ class Southy::Monkey
   def checkin(flights)
     checked_in_flights = []
     flight = flights[0]
-    json = fetch_trip_info_1 flight.confirmation_number, flight.first_name, flight.last_name
+    json = fetch_checkin_info_1 flight.confirmation_number, flight.first_name, flight.last_name
     sessionToken = json.checkInSessionToken
 
     json = fetch_checkin_info_2 flight.confirmation_number, flight.first_name, flight.last_name, sessionToken
