@@ -177,7 +177,9 @@ EOM
       profile = user_profile data
       respond.call "Previous Southwest flights for #{profile[:email]}:"
       flights = @config.past.select { |f| f.email == profile[:email] }
-      print_flights flights, &respond
+      flights.each_slice(30) do |slice|
+        print_flights slice, &respond
+      end
     end
 
     def history_all(data, args, &respond)
