@@ -135,10 +135,9 @@ class Southy::Config
 
   def filter(flights, filter = nil)
     return flights unless filter
-    filter.downcase!
+    f = filter.downcase
     flights.select do |flight|
-      flight.email.downcase == filter || flight.confirmation_number.downcase == filter ||
-        flight.full_name.downcase.include?(filter)
+      flight.email.downcase == f || flight.confirmation_number.downcase == f || flight.full_name.downcase.include?(f)
     end
   end
 

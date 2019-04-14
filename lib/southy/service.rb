@@ -25,6 +25,14 @@ class Southy::Service
     puts "started"
   end
 
+  def pause
+    @daemon.pause
+  end
+
+  def resume
+    @daemon.resume
+  end
+
   def stop(persist = false)
     pid = get_pid
     unless pid

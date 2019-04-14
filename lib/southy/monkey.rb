@@ -80,7 +80,6 @@ class Southy::Monkey
     message = json.message
 
     if statusCode
-      puts json
       ident = "#{conf} #{first_name} #{last_name}"
       @config.log "Error looking up flights for #{ident} - #{statusCode} / #{code} - #{message}"
     end

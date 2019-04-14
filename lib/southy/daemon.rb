@@ -1,11 +1,14 @@
 class Southy::Daemon
 
-  def initialize(travel_agent, slackbot)
+  def initialize(travel_agent)
     @agent = travel_agent
-    @slackbot = slackbot
     @config = travel_agent.config
     @active = true
-    @running = false
+    @paused = false
+  end
+
+  def slackbot=(slackbot)
+    @slackbot = slackbot
   end
 
   def start(daemonize = true)
@@ -29,6 +32,16 @@ class Southy::Daemon
     end
   end
 
+  def pause
+    @paused = true
+    @config.log "Daemon paused"
+  end
+
+  def resume
+    @paused = false
+    @config.log "Daemon resumed"
+  end
+
   def cleanup
     delete_pid
   end
@@ -40,31 +53,32 @@ class Southy::Daemon
     attempts = {}
     running = {}
     while active? do
-      @running = true
-      @config.reload
+      if ! @paused
+        @config.reload
 
-      @config.unconfirmed.each do |flight|
-        @agent.confirm(flight)
-      end
+        @config.unconfirmed.each do |flight|
+          @agent.confirm(flight)
+        end
 
-      groups = @config.upcoming.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
-      groups.values.each do |flights|
-        flight = flights[0]
-        attempts[flight.conf] ||= 0
-        if flight.checkin_available?
-          if attempts[flight.conf] <= 5 || flight.checkin_time? || flight.late_checkin_time?
-            unless running[flight.conf]
-              running[flight.conf] = true
-              @config.log "Ready to check in flight #{flight.conf} (#{flight.full_name})" if Debug.is_debug?
-              Thread.abort_on_exception = true
-              Thread.new do
-                checked_in = @agent.checkin(flights)
-                if checked_in.empty?
-                  attempts[flight.conf] += 1
-                else
-                  attempts.delete flight.conf
+        groups = @config.upcoming.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
+        groups.values.each do |flights|
+          flight = flights[0]
+          attempts[flight.conf] ||= 0
+          if flight.checkin_available?
+            if attempts[flight.conf] <= 5 || flight.checkin_time? || flight.late_checkin_time?
+              unless running[flight.conf]
+                running[flight.conf] = true
+                @config.log "Ready to check in flight #{flight.conf} (#{flight.full_name})" if Debug.is_debug?
+                Thread.abort_on_exception = true
+                Thread.new do
+                  checked_in = @agent.checkin(flights)
+                  if checked_in.empty?
+                    attempts[flight.conf] += 1
+                  else
+                    attempts.delete flight.conf
+                  end
+                  running.delete flight.conf
                 end
-                running.delete flight.conf
               end
             end
           end

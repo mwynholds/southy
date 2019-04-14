@@ -3,9 +3,10 @@ require 'set'
 
 module Southy
   class Slackbot
-    def initialize(config, travel_agent)
+    def initialize(config, travel_agent, service)
       @config = config
       @agent = travel_agent
+      @service = service
       @restarts = []
       @channels = Set.new
 
@@ -149,7 +150,11 @@ EOM
     def list(data, args, &respond)
       profile = user_profile data
       respond.call "Upcoming Southwest flights for #{profile[:email]}:"
-      flights = @config.upcoming.select { |f| f.email == profile[:email] || f.full_name == profile[:full_name] }
+      if args && args.length > 0
+        flights = @config.upcoming.select { |f| f.confirmation_number.downcase == args[0].downcase }
+      else
+        flights = @config.upcoming.select { |f| f.email == profile[:email] || f.full_name == profile[:full_name] }
+      end
       print_flights flights, &respond
     end
 
@@ -195,16 +200,27 @@ EOM
         if email && match = email.match(/^<mailto:(.*)\|/)
           email = match.captures[0]
         end
-        #respond.call "Thank you #{fname}, now please enjoy this music while I process this... :musical_note: :guitar: :saxophone: :musical_note:"
-        result = @config.add conf, fname, lname, email
-        if result && result[:error]
-          respond.call result[:error]
-          flights = @config.upcoming.select { |f| f.conf == conf }
-          print_flights flights, &respond
-        else
-          sleep 7
-          list data, '', &respond
+
+        begin
+          @service.pause
+          result = @config.add conf, fname, lname, email
+          if result && result[:error]
+            respond.call result[:error]
+            return
+          end
+
+          flights = @config.find conf
+          result = @agent.confirm flights[0]
+          if result && result[:error]
+            respond.call "Could not confirm flights: #{result[:reason]}"
+            return
+          end
+        ensure
+          @service.resume
         end
+
+        flights = @config.upcoming.select { |f| f.conf.downcase == conf.downcase }
+        print_flights flights, &respond
       end
     end
 

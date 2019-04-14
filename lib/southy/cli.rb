@@ -7,9 +7,10 @@ module Southy
 
       @config = Config.new
       @agent = TravelAgent.new(@config)
-      slackbot = Slackbot.new(@config, @agent)
-      daemon = Daemon.new(@agent, slackbot)
+      daemon = Daemon.new(@agent)
       @service = Service.new(@agent, daemon)
+      slackbot = Slackbot.new(@config, @agent, @service)
+      daemon.slackbot = slackbot  # TODO: this is circular and ugly :-(
       @mailer = Mailer.new(@config)
     end
 
@@ -49,7 +50,13 @@ module Southy
 
     def add(params)
       result = @config.add(*params)
-      puts "Not added - #{result[:error]}" if result && result[:error]
+      if result[:error]
+        puts "Not added - #{result[:error]}"
+        return
+      end
+
+      flights = @config.find(params[0])
+      confirm_flights flights
     end
 
     def remove(params)
@@ -111,7 +118,7 @@ module Southy
 
     def list(params)
       puts 'Upcoming Southwest flights:'
-      puts @config.list :verbose => @options[:verbose]
+      puts @config.list :verbose => @options[:verbose], :filter => ( params && params[0] )
     end
 
     def history(params)
@@ -146,6 +153,7 @@ module Southy
     end
 
     def confirm_flights(to_confirm)
+      @service.pause
       to_confirm.uniq {|f| f.conf}.each do |flight|
         print "Confirming #{flight.conf} for #{flight.full_name}... "
         response = @agent.confirm(flight)
@@ -159,6 +167,7 @@ module Southy
           end
         end
       end
+      @service.resume
     end
 
   end
