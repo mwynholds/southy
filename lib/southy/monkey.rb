@@ -21,11 +21,15 @@ class Southy::Monkey
     @https.verify_depth = 5
   end
 
-  def parse_json(response)
+  def parse_json(conf, response, name)
     if response.body == nil || response.body == ''
       @config.log "Empty response body returned"
       return { 'errmsg' => "empty response body - #{response.code} (#{response.msg})"}
     end
+
+    json = JSON.parse response.body
+    @config.save_file conf, "#{name}.json", json
+
     JSON.parse response.body, object_class: OpenStruct
   end
 
@@ -55,9 +59,7 @@ class Southy::Monkey
       'last-name'  => last_name
     )
     request = Net::HTTP::Get.new uri
-    json = fetch_json request
-    @config.save_file conf, 'trip-info.json', json.to_h
-    json
+    fetch_json conf, request, 'trip-info'
   end
 
   def lookup(conf, first_name, last_name)
@@ -159,9 +161,7 @@ class Southy::Monkey
       'last-name'  => last_name
     )
     request = Net::HTTP::Get.new uri
-    json = fetch_json request
-    @config.save_file conf, 'checkin-info-1.json', json
-    json
+    fetch_json conf, request, 'checkin-info-1'
   end
 
   def fetch_checkin_info_2(conf, first_name, last_name, sessionToken)
@@ -174,9 +174,7 @@ class Southy::Monkey
       checkInSessionToken: sessionToken
     }.to_json
     request.content_type = 'application/json'
-    json = fetch_json request
-    @config.save_file conf, "checkin-info-2--#{first_name.downcase}-#{last_name.downcase}.json", json
-    json
+    fetch_json conf, request, "checkin-info-2--#{first_name.downcase}-#{last_name.downcase}"
   end
 
   def checkin(flights)
@@ -217,17 +215,17 @@ class Southy::Monkey
 
   private
 
-  def fetch_json(request, n = 0)
+  def fetch_json(conf, request, name, n=0)
     puts "Fetch #{request.path}" if DEBUG
     request['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4'
     request['X-API-Key'] = @api_key
 
     response = @https.request(request)
 
-    json = parse_json response
+    json = parse_json conf, response, name
 
     if json.errmsg && json.opstatus && json.opstatus != 0 && n <= 10  # technical error, try again (for a while)
-      fetch_json request, n + 1
+      fetch_json conf, request, name, n + 1
     else
       json
     end
