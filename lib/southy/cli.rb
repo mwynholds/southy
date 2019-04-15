@@ -57,6 +57,7 @@ module Southy
 
       flights = @config.find(params[0])
       confirm_flights flights
+      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
     end
 
     def remove(params)

@@ -186,11 +186,18 @@ class Southy::Monkey
 
     errmsg = json.errmsg
     if errmsg
+      @config.log "Error checking in passengers: #{errmsg}"
       puts errmsg
-      return { :flights => [] }
+      return { flights: [] }
     end
 
     page = json.checkInConfirmationPage
+    unless page
+      @config.log "Could not find checkin information for #{flight.conf}"
+      puts "No checkin information"
+      return { flight: [] }
+    end
+
     flightNodes = page.flights
 
     flightNodes.each do |flightNode|
