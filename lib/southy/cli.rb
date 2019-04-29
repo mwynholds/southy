@@ -71,11 +71,13 @@ module Southy
     def confirm(params)
       flights = params.length > 0 ? @config.find(params[0]) : @config.unconfirmed
       confirm_flights flights
+      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
     end
 
     def reconfirm(params)
       flights = params.length > 0 ? @config.find(params[0]) : ( @config.unconfirmed + @config.upcoming )
       confirm_flights flights
+      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
     end
 
     def checkin(params)
