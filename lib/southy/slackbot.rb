@@ -243,11 +243,23 @@ EOM
       message.reply "Reconfirming Southwest flights for #{profile[:email]}:"
       message.type
       flights = @config.upcoming.select { |f| f.email == profile[:email] }
-      flights.uniq { |f| f.conf }.each do |f|
-        @agent.confirm f
+      flights.group_by { |f| f.conf }.each do |conf, fs|
+        @agent.confirm fs.first
         message.type
       end
       flights = @config.upcoming.select { |f| f.email == profile[:email] }
+      print_flights flights, message
+    end
+
+    def reconfirm_all(data, args, message)
+      message.reply "Reconfirming all Southwest flights"
+      message.type
+      flights = @config.upcoming
+      flights.group_by { |f| f.conf }.each do |conf, fs|
+        @agent.confirm fs.first
+        message.type
+      end
+      flights = @config.upcoming
       print_flights flights, message
     end
   end
