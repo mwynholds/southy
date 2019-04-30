@@ -15,6 +15,7 @@ module Southy
   require 'southy/flight'
   require 'southy/travel_agent'
   require 'southy/airport'
+  require 'southy/message'
   require 'southy/cli'
   require 'southy/slackbot'
 end
