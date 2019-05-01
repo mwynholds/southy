@@ -92,6 +92,10 @@ class Southy::Monkey
       return { error: 'notfound', reason: message, flights: [] }
     end
 
+    if statusCode == 'INTERNAL_SERVER_ERROR'
+      return { error: 'internal error', reason: message, flights: [] }
+    end
+
     page = json.viewReservationViewPage
     return { error: 'failure', reason: 'no reservation', flights: [] } unless page
 
