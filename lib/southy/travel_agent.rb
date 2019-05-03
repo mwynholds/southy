@@ -60,7 +60,7 @@ class Southy::TravelAgent
 
     info = monkey.checkin(flights)
     checked_in_flights = info[:flights]
-    if checked_in_flights&.size > 0
+    if checked_in_flights && checked_in_flights.size > 0
       checked_in_flights.each do |checked_in_flight|
         @config.checkin checked_in_flight
       end
