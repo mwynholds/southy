@@ -137,14 +137,16 @@ EOM
     end
 
     def print_flights(flights, message)
-      out = '```'
-      if flights.length > 0
-        out += Southy::Flight.sprint flights, short: true
-      else
-        out += 'No upcoming flights.'
+      flights.each_slice(30) do |slice|
+        out = '```'
+        if slice.length > 0
+          out += Southy::Flight.sprint slice, short: true
+        else
+          out += 'No upcoming flights.'
+        end
+        out += '```'
+        message.reply out
       end
-      out += '```'
-      message.reply out
     end
 
     def list(data, args, message)
@@ -180,9 +182,7 @@ EOM
       message.reply "Previous Southwest flights for #{profile[:email]}:"
       message.type
       flights = @config.past.select { |f| f.email == profile[:email] }
-      flights.each_slice(30) do |slice|
-        print_flights slice, message
-      end
+      print_flights flights, message
     end
 
     def history_all(data, args, message)
