@@ -72,7 +72,7 @@ class Southy::Daemon
                 Thread.abort_on_exception = true
                 Thread.new do
                   checked_in = @agent.checkin(flights)
-                  if checked_in.empty?
+                  if !checked_in || checked_in.empty?
                     attempts[flight.conf] += 1
                   else
                     attempts.delete flight.conf
