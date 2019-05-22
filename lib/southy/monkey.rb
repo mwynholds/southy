@@ -209,9 +209,9 @@ class Southy::Monkey
 
       passengers = flightNode.passengers
       passengers.each do |passenger|
-        name = passenger.name
+        name = passenger.name.split " "
 
-        existing = flights.find { |f| f.number == num && f.full_name == name }
+        existing = flights.find { |f| f.number == num && f.first_name == name.first && f.last_name == name.last }
         if existing
           existing.group = passenger.boardingGroup
           existing.position = passenger.boardingPosition

@@ -105,6 +105,12 @@ module Southy
       end
     end
 
+    def checkout(params)
+      input = params.length > 0 ? @config.find(params[0]) : @config.upcoming
+      @agent.checkout input
+      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
+    end
+
     def resend(params)
       groups = @config.checked_in.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
       groups.values.each do |flights|

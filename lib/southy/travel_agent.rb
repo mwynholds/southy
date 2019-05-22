@@ -73,6 +73,12 @@ class Southy::TravelAgent
     checked_in_flights
   end
 
+  def checkout(flights)
+    flights.each do |flight|
+      @config.checkout flight
+    end
+  end
+
   def resend(flights)
     return false unless flights[0].checked_in?
 

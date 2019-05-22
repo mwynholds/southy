@@ -88,6 +88,15 @@ class Southy::Config
     dump_flights
   end
 
+  def checkout(flight)
+    existing = @flights.find { |f| f.matches_completely? flight }
+    if existing
+      existing.group = nil
+      existing.position = nil
+    end
+    dump_flights
+  end
+
   def remove(conf, first_name = nil, last_name = nil)
     @flights.delete_if do |flight|
       flight.confirmation_number == conf.upcase.gsub(/0/, 'O') &&

@@ -5,7 +5,7 @@ require 'optparse'
 require 'southy'
 
 config = { :write => false }
-operations = %w(init run rundebug start startdebug stop restart confirm reconfirm checkin resend status add remove delete list history prune test email)
+operations = %w(init run rundebug start startdebug stop restart confirm reconfirm checkin checkout resend status add remove delete list history prune test email)
 
 option_parser = OptionParser.new do |opts|
   opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [command] [options]"
