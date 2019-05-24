@@ -52,7 +52,7 @@ class Southy::TravelAgent
 
   def checkin(flights)
     flight = flights[0]
-    return nil unless flight.checkin_available?
+    return {} unless flight.checkin_available?
 
     name = flight.full_name
     len = flights.length
@@ -70,7 +70,7 @@ class Southy::TravelAgent
     else
       @config.log "Unable to check in #{flight.conf} for #{name}"
     end
-    checked_in_flights
+    info
   end
 
   def checkout(flights)

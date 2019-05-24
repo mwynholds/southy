@@ -71,7 +71,8 @@ class Southy::Daemon
                 @config.log "Ready to check in flight #{flight.conf} (#{flight.full_name})" if Debug.is_debug?
                 Thread.abort_on_exception = true
                 Thread.new do
-                  checked_in = @agent.checkin(flights)
+                  response = @agent.checkin(flights)
+                  checked_in = response[:flights]
                   if !checked_in || checked_in.empty?
                     attempts[flight.conf] += 1
                   else

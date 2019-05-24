@@ -31,7 +31,7 @@ class Southy::Mailer
     return false if flight.nil? || flight.email.nil?
 
     Net::SMTP.start(@config.smtp_host, @config.smtp_port, @config.smtp_domain, @config.smtp_account, @config.smtp_password, :plain) do |smtp|
-      smtp.send_message message, 'southy@carbonfive.com', flight.email
+      # smtp.send_message message, 'southy@carbonfive.com', flight.email
     end
   end
 

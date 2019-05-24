@@ -93,13 +93,18 @@ module Southy
         if flight.checked_in?
           puts "#{flights.map(&:seat).join(', ')}"
         else
-          checked_in_flights = @agent.checkin(flights)
-          if checked_in_flights.nil?
-            puts 'not available'
-          elsif checked_in_flights.empty?
-            puts 'unable to check in at this time'
+          response = @agent.checkin(flights)
+          if response[:error]
+            puts "#{response[:error]} (#{response[:reason]})"
           else
-            puts checked_in_flights.map(&:seat).join(', ')
+            checked_in_flights = response[:flights]
+            if checked_in_flights.nil?
+              puts 'not available'
+            elsif checked_in_flights.empty?
+              puts 'unable to check in at this time'
+            else
+              puts checked_in_flights.map(&:seat).join(', ')
+            end
           end
         end
       end

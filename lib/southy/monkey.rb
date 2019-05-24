@@ -188,6 +188,19 @@ class Southy::Monkey
 
     json = fetch_checkin_info_2 flight.confirmation_number, flight.first_name, flight.last_name, sessionToken
 
+    statusCode = json.httpStatusCode
+    code = json.code
+    message = json.message
+
+    if statusCode
+      ident = "#{flight.conf} #{flight.first_name} #{flight.last_name}"
+      @config.log "Error looking up flights for #{ident} - #{statusCode} / #{code} - #{message}"
+    end
+
+    if statusCode == 'BAD_REQUEST'
+      return { error: 'invalid', reason: message, flights: [] }
+    end
+
     errmsg = json.errmsg
     if errmsg
       @config.log "Error checking in passengers: #{errmsg}"
