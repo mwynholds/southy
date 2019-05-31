@@ -15,4 +15,7 @@ task 'test:lookup' do
   pp flights
 end
 
+require 'standalone_migrations'
+StandaloneMigrations::Tasks.load_tasks
+
 task :default => :test

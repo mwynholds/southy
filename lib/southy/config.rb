@@ -52,13 +52,6 @@ class Southy::Config
     @config.fetch(:slack_accept_channels, '').split ','
   end
 
-  def init(first_name, last_name, email = nil)
-    @config = {:first_name => first_name, :last_name => last_name, :email => email}
-    File.open config_file, "w" do |f|
-      f.write(@config.to_yaml)
-    end
-  end
-
   def add(conf, first_name = nil, last_name = nil, email = nil)
     flight = @flights.find { |f| f.conf == conf }
     if flight

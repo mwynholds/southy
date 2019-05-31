@@ -20,6 +20,9 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'tzinfo'
   s.add_runtime_dependency 'slack-ruby-client', ">= 0.14"
   s.add_runtime_dependency 'async-websocket'
+  s.add_runtime_dependency 'activerecord'
+  s.add_runtime_dependency 'standalone_migrations'
+  s.add_runtime_dependency 'pg'
 
   s.add_development_dependency 'rake'
   s.add_development_dependency 'minitest'

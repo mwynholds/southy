@@ -44,40 +44,30 @@ module Southy
       @service.status
     end
 
-    def init(params)
-      @config.init(*params)
-    end
-
     def add(params)
-      result = @config.add(*params)
-      if result[:error]
-        puts "Not added - #{result[:error]}"
+      if Reservation.where(confirmation_number: params[0]).length > 0
+        puts "That reservation already exists.  Try 'southy reconfirm #{params[0]}'"
         return
       end
 
-      flights = @config.find(params[0])
-      confirm_flights flights
-      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
+      reservation = confirm_reservation *params
+      puts Reservation.list [reservation]
     end
 
     def remove(params)
-      @config.remove(*params)
+      deleted = Reservation.where(confirmation_number: params).destroy_all
+      l = deleted.length
+      puts "Removed #{deleted.length} reservation(s) - #{deleted.map(&:conf).join(', ')}"
     end
 
     def delete(params)
       remove(params)
     end
 
-    def confirm(params)
-      flights = params.length > 0 ? @config.find(params[0]) : @config.unconfirmed
-      confirm_flights flights
-      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
-    end
-
     def reconfirm(params)
-      flights = params.length > 0 ? @config.find(params[0]) : ( @config.unconfirmed + @config.upcoming )
-      confirm_flights flights
-      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
+      reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
+      reservations = confirm_reservations reservations
+      puts Reservation.list reservations
     end
 
     def checkin(params)
@@ -132,7 +122,7 @@ module Southy
 
     def list(params)
       puts 'Upcoming Southwest flights:'
-      puts @config.list :verbose => @options[:verbose], :filter => ( params && params[0] )
+      puts Reservation.list Reservation.upcoming
     end
 
     def history(params)
@@ -146,7 +136,7 @@ module Southy
     end
 
     def test(params)
-      p Southy::Airport.all.map(&:timezone).uniq
+      p Airport.all.map(&:timezone).uniq
     end
 
     def email(params)
@@ -166,22 +156,25 @@ module Southy
       end
     end
 
-    def confirm_flights(to_confirm)
+    def confirm_reservation(conf, first, last, email = nil)
       @service.pause
-      to_confirm.uniq {|f| f.conf}.each do |flight|
-        print "Confirming #{flight.conf} for #{flight.full_name}... "
-        response = @agent.confirm(flight)
-        if response[:error]
-          puts "#{response[:error]} (#{response[:reason]})"
-        else
-          puts "success"
-          flights = response[:flights].reject { |conf, _| conf == flight.conf }
-          flights.each do |conf, legs|
-            puts "   Related #{conf} for #{legs[0].full_name}... success"
-          end
-        end
+
+      print "Confirming #{conf} for #{first} #{last}... "
+      begin
+        reservation, is_new = @agent.confirm conf, first, last, email
+        puts is_new ? "success" : "no changes"
+      rescue SouthyException => e
+        puts e.message
       end
+
       @service.resume
+      reservation
+    end
+
+    def confirm_reservations(reservations)
+      reservations.each do |r|
+        confirm_reservation r.conf, r.passengers.first.first_name, r.passengers.first.last_name, r.email
+      end
     end
 
   end

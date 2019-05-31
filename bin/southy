@@ -5,7 +5,7 @@ require 'optparse'
 require 'southy'
 
 config = { :write => false }
-operations = %w(init run rundebug start startdebug stop restart confirm reconfirm checkin checkout resend status add remove delete list history prune test email)
+operations = %w(init run rundebug start startdebug stop restart reconfirm checkin checkout resend status add remove delete list history prune test email)
 
 option_parser = OptionParser.new do |opts|
   opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [command] [options]"
@@ -28,9 +28,8 @@ Supported commands:
  prune                               Remove historical flights
  add <conf> [<personal_info>]        Add a new check-in
  remove <conf>                       Remove a check-in (synonym: delete)
- confirm                             Confirm all unconfirmed flights
- reconfirm                           Reconfirm all flights (picks up any ticketing changes)
- checkin                             Check-in for all available flights
+ reconfirm [<conf>]                  Reconfirm flights (picks up any ticketing changes)
+ checkin                             Check-in to all available flights
  resend                              Resend emails for all upcoming, checked-in flights
  run                                 Run Southy in the foreground (kill with ctrl-c)
  start [-w]                          Start Southy so that it can check you in
