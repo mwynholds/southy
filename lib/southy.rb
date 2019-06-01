@@ -11,6 +11,7 @@ module Southy
   require 'southy/debug'
   require 'southy/southy_exception'
   require 'southy/models/airport'
+  require 'southy/models/seat'
   require 'southy/models/source'
   require 'southy/models/stop'
   require 'southy/models/passenger'

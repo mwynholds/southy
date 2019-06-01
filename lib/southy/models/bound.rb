@@ -6,7 +6,7 @@ module Southy
     validates  :arrival_code, presence: true
 
     belongs_to :reservation
-    has_many   :stops, dependent: :destroy
+    has_many   :stops, dependent: :destroy, autosave: true
 
     def departure_airport
       Airport.lookup departure_code
@@ -14,6 +14,48 @@ module Southy
 
     def arrival_airport
       Airport.lookup arrival_code
+    end
+
+    def local_departure_time
+      departure_airport.local_time departure_time
+    end
+
+    def local_arrival_time
+      arrival_airport.local_time arrival_time
+    end
+
+    def ident
+      "#{reservation.ident} - SW#{flights.first}"
+    end
+
+    def seats_ident
+      reservation.passengers.map do |passenger|
+        reservation.seats_for(passenger, self).map(&:ident).first
+      end.compact.join(', ')
+    end
+
+    def checked_in?
+      reservation.passengers.any? { |p| p.checked_in_for? self }
+    end
+
+    def checkin_available?
+      return false if departure_time < DateTime.now    # oops you missed your flight
+      DateTime.now >= departure_time - (60*60*24) - 1  # start trying 1 second early!
+    end
+
+    def checkin_time?
+      return false unless checkin_available?
+      now = DateTime.now
+      checkin_time = departure_time - (60*60*24)
+      # try hard for one minute
+      now >= checkin_time - 3 && now <= checkin_time + 60
+    end
+
+    def late_checkin_time?
+      return false unless checkin_available?
+      now = DateTime.now
+      # then keep trying every hour for one minute
+      now.min == 0
     end
 
     def ==(other)

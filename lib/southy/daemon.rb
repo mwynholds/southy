@@ -54,32 +54,24 @@ class Southy::Daemon
     running = {}
     while active? do
       if ! @paused
-        @config.reload
+        reservations = Reservation.upcoming
+        reservations.each do |r|
+          attempts[r.conf] ||= 0
 
-        @config.unconfirmed.each do |flight|
-          @agent.confirm(flight)
-        end
+          if r.checkin_available?
+            if attempts[r.conf] <= 5 || r.checkin_time? || r.late_checkin_time?
+              next if running[r.conf]
 
-        groups = @config.upcoming.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
-        groups.values.each do |flights|
-          flight = flights[0]
-          attempts[flight.conf] ||= 0
-          if flight.checkin_available?
-            if attempts[flight.conf] <= 5 || flight.checkin_time? || flight.late_checkin_time?
-              unless running[flight.conf]
-                running[flight.conf] = true
-                @config.log "Ready to check in flight #{flight.conf} (#{flight.full_name})" if Debug.is_debug?
-                Thread.abort_on_exception = true
-                Thread.new do
-                  response = @agent.checkin(flights)
-                  checked_in = response[:flights]
-                  if !checked_in || checked_in.empty?
-                    attempts[flight.conf] += 1
-                  else
-                    attempts.delete flight.conf
-                  end
-                  running.delete flight.conf
+              running[r.conf] = true
+              Thread.abort_on_exception = true
+              Thread.new do
+                begin
+                  checked_in = @agent.checkin r
+                  attemps.delete r.conf
+                rescue SouthyException => e
+                  attemps[r.conf] += 1
                 end
+                running.delete r.conf
               end
             end
           end

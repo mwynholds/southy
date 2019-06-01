@@ -33,39 +33,27 @@ module Southy
       end
     end
 
-    def checkin(flights)
-      flight = flights[0]
-      return {} unless flight.checkin_available?
+    def checkin(bound)
+      return bound.reservation if bound.checked_in?
+      raise SouthyException.new("check in not available") unless bound.checkin_available?
 
-      name = flight.full_name
-      len = flights.length
-      name += " (and #{len - 1} other passenger#{len > 2 ? 's' : ''})" if len > 1
-
-      info = monkey.checkin(flights)
-      checked_in_flights = info[:flights]
-      if checked_in_flights && checked_in_flights.size > 0
-        checked_in_flights.each do |checked_in_flight|
-          @config.checkin checked_in_flight
-        end
-        @mailer.send_email checked_in_flights
-        seats = checked_in_flights.map(&:seat).join(', ')
-        @config.log "Checked in #{flight.conf} for #{name} - #{seats}"
-      else
-        @config.log "Unable to check in #{flight.conf} for #{name}"
-      end
-      info
-    end
-
-    def checkout(flights)
-      flights.each do |flight|
-        @config.checkout flight
+      begin
+        checked_in = monkey.checkin bound.reservation
+        checked_in.save!
+        @mailer.send_email bound
+        @config.log "Checked in #{bound.ident} - #{bound.seats_ident}"
+        checked_in
+      rescue SouthyException => e
+        @config.log "Unable to check in #{bound.ident}"
+        raise e
       end
     end
 
-    def resend(flights)
-      return false unless flights[0].checked_in?
-
-      @mailer.send_email flights
+    def checkout(reservations)
+      reservations.each do |r|
+        r.checkout
+        r.save!
+      end
     end
   end
 end

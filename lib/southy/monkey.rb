@@ -115,60 +115,58 @@ module Southy
       fetch_json conf, request, "checkin-info-2--#{first_name.downcase}-#{last_name.downcase}"
     end
 
-    def checkin(flights)
-      checked_in_flights = []
-      flight = flights[0]
-      json = fetch_checkin_info_1 flight.confirmation_number, flight.first_name, flight.last_name
+    def checkin(reservation)
+      json = fetch_checkin_info_1 reservation.conf, reservation.first_name, reservation.last_name
       sessionToken = json.checkInSessionToken
 
-      json = fetch_checkin_info_2 flight.confirmation_number, flight.first_name, flight.last_name, sessionToken
+      json = fetch_checkin_info_2 reservation.conf, reservation.first_name, reservation.last_name, sessionToken
 
       statusCode = json.httpStatusCode
       code = json.code
       message = json.message
 
       if statusCode
-        ident = "#{flight.conf} #{flight.first_name} #{flight.last_name}"
-        @config.log "Error looking up flights for #{ident} - #{statusCode} / #{code} - #{message}"
-      end
-
-      if statusCode == 'BAD_REQUEST'
-        return { error: 'invalid', reason: message, flights: [] }
+        @config.log "Error looking up flights for #{reservation.ident} - #{statusCode} / #{code} - #{message}"
+        raise SouthyException.new(message)
       end
 
       errmsg = json.errmsg
       if errmsg
         @config.log "Error checking in passengers: #{errmsg}"
-        puts errmsg
-        return { flights: [] }
+        raise SouthyException.new(errmsg)
       end
 
       page = json.checkInConfirmationPage
       unless page
         @config.log "Could not find checkin information for #{flight.conf}"
-        puts "No checkin information"
-        return { flight: [] }
+        raise SouthyException.new("No check in information")
       end
 
       flightNodes = page.flights
 
       flightNodes.each do |flightNode|
-        num = flightNode.flightNumber
+        boundIndex = flightNode.boundIndex
+        bound = reservation.bounds[boundIndex]
+        raise SouthyException.new("Missing bound #{boundIndex}") unless bound
 
-        passengers = flightNode.passengers
-        passengers.each do |passenger|
-          name = passenger.name.split " "
+        flightNode.passengers.each do |passengerNode|
+          name = passengerNode.name.split " "
 
-          existing = flights.find { |f| f.number == num && f.first_name == name.first && f.last_name == name.last }
-          if existing
-            existing.group = passenger.boardingGroup
-            existing.position = passenger.boardingPosition
-            checked_in_flights << existing
+          passenger = reservation.passengers.find { |p| p.first_name == name.first && p.last_name == name.last }
+          if passenger
+            seat = Seat.new
+            seat.group    = passengerNode.boardingGroup
+            seat.position = passengerNode.boardingPosition
+            seat.flight   = flightNode.flightNumber
+
+            passenger.assign_seat seat, bound
+          else
+            @config.log "Could not find passenger #{passengerNode.name} for reservation #{reservation.conf} durin check in"
           end
         end
       end
 
-      { :flights => checked_in_flights.compact }
+      reservation
     end
 
     private

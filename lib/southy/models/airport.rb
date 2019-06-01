@@ -45,13 +45,17 @@ module Southy
       (@@codes[code] || @@offsets[tz_offset]) or raise "Unknown timezone offset: #{self.name} (#{self.code}): #{tz_offset}"
     end
 
+    def ident
+      "#{name} (#{code})"
+    end
+
     def to_s
       "#{name} (#{code}): #{tz_offset} #{timezone}"
     end
 
-    def local_time(date, time)
+    def local_time(date, time = nil)
       tz      = TZInfo::Timezone.get timezone
-      utc     = tz.local_to_utc DateTime.parse("#{date} #{time}")
+      utc     = time ? tz.local_to_utc(DateTime.parse("#{date} #{time}")) : date
       local   = tz.utc_to_local utc
       offset  = tz.period_for_local(local).utc_total_offset / (60 * 60)
 

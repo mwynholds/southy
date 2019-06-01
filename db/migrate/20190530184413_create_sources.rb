@@ -3,7 +3,7 @@ class CreateSources < ActiveRecord::Migration[5.2]
     create_table :sources do |t|
       t.jsonb :json, null: false
 
-      t.belongs_to :reservation
+      t.belongs_to :reservation, index: true
 
       t.timestamps
     end

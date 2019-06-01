@@ -13,11 +13,6 @@ class Southy::Config
 
     @timestamps = {}
     load_config :force => true
-    load_flights :force => true
-  end
-
-  def flights_lock
-    @lock ||= Mutex.new
   end
 
   def smtp_host
@@ -52,116 +47,9 @@ class Southy::Config
     @config.fetch(:slack_accept_channels, '').split ','
   end
 
-  def add(conf, first_name = nil, last_name = nil, email = nil)
-    flight = @flights.find { |f| f.conf == conf }
-    if flight
-      return { error: "Confirmation #{conf} already exists" }
-    end
-
-    flight = Southy::Flight.new
-    flight.confirmation_number = conf.upcase.gsub(/0/, 'O')
-    flight.first_name = (first_name || @config[:first_name]).gsub '-', ' '
-    flight.last_name = (last_name || @config[:last_name]).gsub '-', ' '
-    flight.email = email || @config[:email]
-
-    @flights << flight
-    dump_flights
-    {}
-  end
-
-  def confirm(flight)
-    @flights.delete_if { |f| f.confirmation_number == flight.confirmation_number and ! f.confirmed? }
-    @flights << flight unless @flights.any? { |f| f.matches_completely? flight }
-    dump_flights
-  end
-
-  def checkin(flight)
-    @flights.delete_if { |f| f.matches_completely? flight }
-    @flights << flight
-    dump_flights
-  end
-
-  def checkout(flight)
-    existing = @flights.find { |f| f.matches_completely? flight }
-    if existing
-      existing.group = nil
-      existing.position = nil
-    end
-    dump_flights
-  end
-
-  def remove(conf, first_name = nil, last_name = nil)
-    @flights.delete_if do |flight|
-      flight.confirmation_number == conf.upcase.gsub(/0/, 'O') &&
-              ( first_name.nil? || flight.first_name.downcase == first_name.downcase ) &&
-              ( last_name.nil?  || flight.last_name.downcase  == last_name.downcase  )
-    end
-    dump_flights
-  end
-
-  def remove_pending(conf)
-    @flights.delete_if do |flight|
-      flight.confirmation_number == conf.upcase.gsub(/0/, 'O') && !flight.checked_in?
-    end
-  end
-
-  def find(conf)
-    @flights.select { |f| f.conf == conf.strip }
-  end
-
-  def unconfirmed
-    @flights.select { |f| ! f.confirmed? }
-  end
-
-  def upcoming
-    @flights.select { |f| f.confirmed? && f.depart_date > DateTime.now }
-  end
-
-  def past
-    @flights.select { |f| f.confirmed? && f.depart_date <= DateTime.now }
-  end
-
-  def checked_in
-    @flights.select { |f| f.checked_in? && f.depart_date > DateTime.now }
-  end
-
-  def list(options = {})
-    flights = filter upcoming + unconfirmed, options[:filter]
-    Southy::Flight.sprint flights, options
-  end
-
-  def history(options = {})
-    flights = filter past, options[:filter]
-    Southy::Flight.sprint flights, options
-  end
-
-  def filter(flights, filter = nil)
-    return flights unless filter
-    f = filter.downcase
-    flights.select do |flight|
-      flight.email.downcase == f || flight.confirmation_number.downcase == f || flight.full_name.downcase.include?(f)
-    end
-  end
-
-  def matches(flights)
-    flights.all? do |flight|
-      upcoming.any? { |f| f.matches_completely? flight }
-    end
-  end
-
-  def prune
-    past_flights = past
-    past_flights.each do |flight|
-      remove flight.conf
-    end
-
-    past_flights.length
-  end
-
   def reload(options = {})
     options = { :force => false }.merge options
     load_config options
-    load_flights options
   end
 
   def log(msg, ex = nil)
@@ -204,36 +92,8 @@ class Southy::Config
     @config ||= {}
   end
 
-  def load_flights(options)
-    flights = nil
-    flights_lock.synchronize do
-      flights = if_updated? flights_file, options do
-        IO.read(flights_file).split("\n").map {|line| Southy::Flight.from_csv(line)}
-      end
-    end
-    if flights
-      @flights = flights || []
-      @flights.sort!
-    end
-  end
-
-  def dump_flights
-    @flights.sort!
-    flights_lock.synchronize do
-      File.open flights_file, 'w' do |f|
-        @flights.each do |flight|
-          f.write flight.to_csv
-        end
-      end
-    end
-  end
-
   def config_file
     "#{@dir}/config.yml"
-  end
-
-  def flights_file
-    "#{@dir}/flights.csv"
   end
 
   def log_file

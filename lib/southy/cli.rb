@@ -2,8 +2,7 @@ module Southy
 
   class CLI
     def initialize(opts)
-      @options = { :verbose => false, :write => false }.merge opts
-      check_options
+      @options = { :verbose => false }.merge opts
 
       @config = Config.new
       @agent = TravelAgent.new(@config)
@@ -71,53 +70,24 @@ module Southy
     end
 
     def checkin(params)
-      input = params.length > 0 ? @config.find(params[0]) : @config.upcoming
-      groups = input.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
-
-      groups.values.each do |flights|
-        flight = flights[0]
-        name = flight.full_name
-        len = flights.length
-        name += " (and #{len - 1} other passenger#{len > 2 ? 's' : ''})" if len > 1
-        print "Checking in #{flight.confirmation_number} (SW#{flight.number}) for #{name}... "
-        if flight.checked_in?
-          puts "#{flights.map(&:seat).join(', ')}"
-        else
-          response = @agent.checkin(flights)
-          if response[:error]
-            puts "#{response[:error]} (#{response[:reason]})"
-          else
-            checked_in_flights = response[:flights]
-            if checked_in_flights.nil?
-              puts 'not available'
-            elsif checked_in_flights.empty?
-              puts 'unable to check in at this time'
-            else
-              puts checked_in_flights.map(&:seat).join(', ')
-            end
-          end
+      reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
+      bounds = reservations.map(&:bounds).flatten.sort_by(&:departure_time)
+      bounds.each do |b|
+        r = b.reservation
+        print "Checking in #{r.conf} (SW#{b.flights.first}) for #{r.passengers_ident} ... "
+        begin
+          checked_in = @agent.checkin b
+          puts checked_in ? b.seats_ident : "unable to check in"
+        rescue SouthyException => e
+          puts e.message
         end
       end
     end
 
     def checkout(params)
-      input = params.length > 0 ? @config.find(params[0]) : @config.upcoming
-      @agent.checkout input
-      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
-    end
-
-    def resend(params)
-      groups = @config.checked_in.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
-      groups.values.each do |flights|
-        flight = flights[0]
-        name = flight.full_name
-        len = flights.length
-        name += " (and #{len - 1} other passenger#{len > 2 ? 's' : ''})" if len > 1
-        print "Re-sending #{flight.confirmation_number} (SW#{flight.number}) to #{name}... "
-        sent = @agent.resend flights
-        puts( sent ? 'sent' : 'not sent' )
-      end
-
+      reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
+      @agent.checkout reservations
+      puts Reservation.list reservations
     end
 
     def list(params)
@@ -127,34 +97,10 @@ module Southy
 
     def history(params)
       puts 'Previous Southwest flights:'
-      puts @config.history :verbose => @options[:verbose]
-    end
-
-    def prune(params)
-      n = @config.prune
-      puts "Removed #{n} flight#{n == 1 ? '' : 's'}."
-    end
-
-    def test(params)
-      p Airport.all.map(&:timezone).uniq
-    end
-
-    def email(params)
-      ( return puts "No email provided" ) unless params.length > 0
-      @mailer.send_test_email params[0]
-      puts "Sent email to #{params[0]}"
+      puts Reservation.list Reservation.past
     end
 
     private
-
-    def check_options
-      if @options[:write]
-        unless RUBY_PLATFORM =~ /darwin/
-          puts "The -w option is only implemented for OS X.  That option will be ignored."
-          @options[:write] = false
-        end
-      end
-    end
 
     def confirm_reservation(conf, first, last, email = nil)
       @service.pause
@@ -173,7 +119,7 @@ module Southy
 
     def confirm_reservations(reservations)
       reservations.each do |r|
-        confirm_reservation r.conf, r.passengers.first.first_name, r.passengers.first.last_name, r.email
+        confirm_reservation r.conf, r.first_name, r.last_name, r.email
       end
     end
 
