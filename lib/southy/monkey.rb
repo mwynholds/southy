@@ -145,9 +145,9 @@ module Southy
       flightNodes = page.flights
 
       flightNodes.each do |flightNode|
-        boundIndex = flightNode.boundIndex
-        bound = reservation.bounds[boundIndex]
-        raise SouthyException.new("Missing bound #{boundIndex}") unless bound
+        flight = flightNode.flightNumber
+        bound  = reservation.bound_for flight
+        raise SouthyException.new("Missing bound for flight #{flight}") unless bound
 
         flightNode.passengers.each do |passengerNode|
           name = passengerNode.name.split " "

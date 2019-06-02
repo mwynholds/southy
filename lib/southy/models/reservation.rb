@@ -60,6 +60,10 @@ module Southy
       end
     end
 
+    def bound_for(flight)
+      bounds.find { |b| b.flights.include? flight }
+    end
+
     def checkout
       passengers.each do |passenger|
         passenger.seats.each do |seat|
@@ -136,8 +140,9 @@ module Southy
           time   = b.local_departure_time.strftime "%Y-%m-%d %l:%M%P"
           depart = sprintf "%#{max_depart}s", "#{b.departure_airport.name} (#{b.departure_airport.code})"
           arrive = sprintf "%#{max_arrive}s", "#{b.arrival_airport.name} (#{b.arrival_airport.code})"
+          seats  = p.seats_for(b).length > 0 ? " - #{p.seats_ident_for(b)}" : ""
 
-          out += "#{leader}: #{name}  #{time}  #{depart} -> #{arrive}\n"
+          out += "#{leader}: #{name}  #{time}  #{depart} -> #{arrive}#{seats}\n"
         end
       end
 

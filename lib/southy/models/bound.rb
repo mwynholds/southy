@@ -7,6 +7,7 @@ module Southy
 
     belongs_to :reservation
     has_many   :stops, dependent: :destroy, autosave: true
+    has_many   :seats, dependent: :destroy, autosave: true
 
     def departure_airport
       Airport.lookup departure_code
@@ -26,6 +27,10 @@ module Southy
 
     def ident
       "#{reservation.ident} - SW#{flights.first}"
+    end
+
+    def has_seats?
+      seats && seats.length > 0
     end
 
     def seats_ident

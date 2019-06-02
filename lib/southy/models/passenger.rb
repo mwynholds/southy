@@ -32,6 +32,10 @@ module Southy
       seats.select { |s| s.bound == bound }
     end
 
+    def seats_ident_for(bound)
+      seats_for(bound).map { |s| s.ident }.join(", ")
+    end
+
     def checked_in_for?(bound)
       seats_for(bound).length == bound.flights.length
     end
