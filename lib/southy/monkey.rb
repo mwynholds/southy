@@ -83,11 +83,11 @@ module Southy
       if statusCode
         ident = "#{conf} #{first_name} #{last_name}"
         @config.log "Error looking up flights for #{ident} - #{statusCode} / #{code} - #{message}"
-        throw SouthyException.new message
+        raise SouthyException.new(message)
       end
 
       page = json.viewReservationViewPage
-      throw SouthyException.new "No reservation" unless page
+      raise SouthyException.new("No reservation") unless page
 
       Reservation.from_json page
     end

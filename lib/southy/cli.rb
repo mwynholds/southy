@@ -50,7 +50,7 @@ module Southy
       end
 
       reservation = confirm_reservation *params
-      puts Reservation.list [reservation]
+      puts Reservation.list [reservation].compact
     end
 
     def remove(params)
@@ -111,9 +111,12 @@ module Southy
         puts is_new ? "success" : "no changes"
       rescue SouthyException => e
         puts e.message
+      rescue Exception => e
+        p e
+      ensure
+        @service.resume
       end
 
-      @service.resume
       reservation
     end
 

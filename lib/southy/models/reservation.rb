@@ -124,7 +124,7 @@ module Southy
     end
 
     def self.list(reservations, options = {})
-      return "No available reservations" if reservations.empty?
+      return "No available reservations" unless reservations && reservations.length > 0
 
       max_name   = reservations.map(&:passengers).flatten.map(&:name).map(&:length).max
       max_depart = reservations.map(&:bounds).flatten.map(&:departure_airport).map(&:name).map(&:length).max + 6
