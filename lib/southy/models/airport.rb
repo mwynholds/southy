@@ -33,7 +33,7 @@ module Southy
     end
 
     def self.validate(code)
-      throw SouthyException.new("Unknown airport: #{code}") unless lookup code
+      raise SouthyException.new("Unknown airport: #{code}") unless lookup code
     end
 
     def self.all

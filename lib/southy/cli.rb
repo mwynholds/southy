@@ -50,7 +50,7 @@ module Southy
       end
 
       reservation = confirm_reservation *params
-      puts Reservation.list [reservation].compact
+      puts Reservation.list(reservation && reservation.bounds)
     end
 
     def remove(params)
@@ -66,7 +66,7 @@ module Southy
     def reconfirm(params)
       reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
       reservations = confirm_reservations reservations
-      puts Reservation.list reservations
+      puts Reservation.list reservations.map(&:bounds).flatten
     end
 
     def checkin(params)
@@ -87,17 +87,17 @@ module Southy
     def checkout(params)
       reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
       @agent.checkout reservations
-      puts Reservation.list reservations
+      puts Reservation.list reservations.map(&:bounds).flatten
     end
 
     def list(params)
       puts 'Upcoming Southwest flights:'
-      puts Reservation.list Reservation.upcoming
+      puts Reservation.list Bound.upcoming
     end
 
     def history(params)
       puts 'Previous Southwest flights:'
-      puts Reservation.list Reservation.past
+      puts Reservation.list Bound.past
     end
 
     private
@@ -111,8 +111,6 @@ module Southy
         puts is_new ? "success" : "no changes"
       rescue SouthyException => e
         puts e.message
-      rescue Exception => e
-        p e
       ensure
         @service.resume
       end

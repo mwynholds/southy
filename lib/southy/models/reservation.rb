@@ -8,8 +8,8 @@ module Southy
     has_many :bounds,     dependent: :destroy, autosave: true
     has_many :passengers, dependent: :destroy, autosave: true
 
-    scope    :upcoming, -> { joins(:bounds).where("bounds.arrival_time >= '#{Date.today}'").distinct }
-    scope    :past,     -> { joins(:bounds).where("bounds.arrival_time <= '#{Date.today}'").distinct }
+    scope    :upcoming, -> { joins(:bounds).where("bounds.departure_time >= '#{DateTime.now}'").distinct }
+    scope    :past,     -> { joins(:bounds).where("bounds.departure_time < '#{DateTime.now}'").distinct }
 
     def conf
       confirmation_number
@@ -82,8 +82,8 @@ module Southy
       res.source = Source.new
       res.source.json = json
 
-      throw SouthyException.new("No inbound or outbound flights") unless json.bounds
-      throw SouthyException.new("No passengers") unless json.passengers
+      raise SouthyException.new("No inbound or outbound flights") unless json.bounds
+      raise SouthyException.new("No passengers") unless json.passengers
 
       res.confirmation_number = json.confirmationNumber
       res.origin_code         = json.originAirport.code
@@ -105,7 +105,7 @@ module Southy
         bound.stops = boundJson.stops.map do |stopJson|
           stop                = Stop.new
           stop.code           = stopJson.airport.code
-          stop.arrival_time   = stop.airport.local_time boundJson.departureDate, stopJson.arrivateTime
+          stop.arrival_time   = stop.airport.local_time boundJson.departureDate, stopJson.arrivalTime
           stop.departure_time = stop.airport.local_time boundJson.departureDate, stopJson.departureTime
           Airport.validate stop.code
           stop
@@ -123,17 +123,15 @@ module Southy
       res
     end
 
-    def self.list(reservations, options = {})
-      return "No available reservations" unless reservations && reservations.length > 0
+    def self.list(bounds, options = {})
+      return "No available reservations" unless bounds && bounds.length > 0
 
-      max_name   = reservations.map(&:passengers).flatten.map(&:name).map(&:length).max
-      max_depart = reservations.map(&:bounds).flatten.map(&:departure_airport).map(&:name).map(&:length).max + 6
-      max_arrive = reservations.map(&:bounds).flatten.map(&:arrival_airport).map(&:name).map(&:length).max + 6
-
-      bounds = reservations.map(&:bounds).flatten.sort_by(&:departure_time)
+      max_name   = bounds.map(&:passengers).flatten.map(&:name).map(&:length).max
+      max_depart = bounds.map(&:departure_airport).map(&:name).map(&:length).max + 6
+      max_arrive = bounds.map(&:arrival_airport).map(&:name).map(&:length).max + 6
 
       out = ""
-      bounds.each do |b|
+      bounds.sort_by(&:departure_time).each do |b|
         b.reservation.passengers.each_with_index do |p, i|
           leader = i == 0 ? sprintf("#{b.reservation.conf} - SW%-4s", b.flights.first) : "               "
           name   = sprintf "%-#{max_name}s", p.name

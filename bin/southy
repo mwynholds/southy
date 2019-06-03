@@ -45,9 +45,6 @@ if operations.include?(op)
     exit ( cli.send(op.to_sym, ARGV) ? 0 : 1 )
   rescue SystemExit => e
     exit e.status
-  rescue ArgumentError => e
-    puts e.message
-    exit 2
   rescue Exception => e
     puts "Uh oh, I didn't expect this:"
     puts e.message
