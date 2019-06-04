@@ -22,7 +22,6 @@ module Southy
   require 'southy/service'
   require 'southy/config'
   require 'southy/daemon'
-  require 'southy/flight'
   require 'southy/travel_agent'
   require 'southy/message'
   require 'southy/cli'
