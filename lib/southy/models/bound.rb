@@ -9,8 +9,16 @@ module Southy
     has_many   :stops, dependent: :destroy, autosave: true
     has_many   :seats, dependent: :destroy, autosave: true
 
-    scope    :upcoming, -> { where("arrival_time >= '#{Date.today}'").order(:departure_time) }
-    scope    :past,     -> { where("arrival_time <= '#{Date.today}'").order(:departure_time) }
+    scope :upcoming, -> { where("arrival_time >= '#{Date.today}'").order(:departure_time) }
+    scope :past,     -> { where("arrival_time <= '#{Date.today}'").order(:departure_time) }
+
+    def self.for_reservation(conf)
+      select { |b| b.reservation.conf == conf }
+    end
+
+    def self.for_person(email, name)
+      select { |b| b.reservation.person_matches? email, name }
+    end
 
     def departure_airport
       Airport.lookup departure_code

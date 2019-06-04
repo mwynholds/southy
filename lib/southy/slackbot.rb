@@ -136,36 +136,34 @@ EOM
       end
     end
 
-    def print_flights(flights, message)
-      flights.each_slice(30) do |slice|
-        out = '```'
-        if slice.length > 0
-          out += Southy::Flight.sprint slice, short: true
-        else
-          out += 'No upcoming flights.'
-        end
-        out += '```'
-        message.reply out
+    def print_bounds(bounds, message)
+      if !bounds || bounds.empty?
+        message.reply "```No available flights.```"
+        return
+      end
+
+      bounds.sort_by(&:departure_time).each_slice(10) do |slice|
+        message.reply('```' + Reservation.list(slice, short: true) + '```')
       end
     end
 
     def list(data, args, message)
       profile = user_profile data
-      message.reply "Upcoming Southwest flights for #{profile[:email]}:"
+      message.reply "Upcoming Southwest flights for #{profile[:full_name]}:"
       message.type
       if args && args.length > 0
-        flights = @config.upcoming.select { |f| f.confirmation_number.downcase == args[0].downcase }
+        bounds = Bound.upcoming.for_reservation args[0]
       else
-        flights = @config.upcoming.select { |f| f.email == profile[:email] || f.full_name == profile[:full_name] }
+        bounds = Bound.upcoming.for_person profile[:email], profile[:full_name]
       end
-      print_flights flights, message
+      print_bounds bounds, message
     end
 
     def list_all(data, args, message)
       message.reply "Upcoming Southwest flights:"
       message.type
-      flights = @config.upcoming
-      print_flights flights, message
+      bounds = Bound.upcoming
+      print_bounds bounds, message
     end
 
     def whatup(data, args, message)
@@ -179,22 +177,28 @@ EOM
 
     def history(data, args, message)
       profile = user_profile data
-      message.reply "Previous Southwest flights for #{profile[:email]}:"
+      message.reply "Previous Southwest flights for #{profile[:full_name]}:"
       message.type
-      flights = @config.past.select { |f| f.email == profile[:email] }
-      print_flights flights, message
+      bounds = Bound.past.for_person profile[:email], profile[:full_name]
+      print_bounds bounds, message
     end
 
     def history_all(data, args, message)
       message.reply "Previous Southwest flights:"
       message.type
-      flights = @config.past
-      print_flights flights, message
+      bounds = Bound.past
+      print_bounds bounds, message
     end
 
     def add(data, args, message)
       args.tap do |(conf, fname, lname, email)|
         return ( message.reply "You didn't enter a confirmation number!" ) unless conf
+
+        if Bound.for_reservation(conf).length > 0
+          message.reply "That reservation already exists. Try `southy reconfirm #{conf}`"
+          return
+        end
+
         profile = user_profile data
         unless fname and lname
           fname = profile[:first_name]
@@ -207,60 +211,59 @@ EOM
           email = match.captures[0]
         end
 
-        begin
-          @service.pause
-          result = @config.add conf, fname, lname, email
-          if result && result[:error]
-            message.reply result[:error]
-            return
-          end
-
-          flights = @config.find conf
-          result = @agent.confirm flights[0]
-          if result && result[:error]
-            message.reply "Could not confirm flights: #{result[:reason]}"
-            return
-          end
-        ensure
-          @service.resume
-        end
-
-        flights = @config.upcoming.select { |f| f.conf.downcase == conf.downcase }
-        print_flights flights, message
+        reservation = confirm_reservation conf, fname, lname, email, message
+        print_bounds reservation&.bounds, message
       end
     end
 
     def remove(data, args, message)
       args.tap do |(conf)|
         return ( message.reply "You didn't enter a confirmation number!" ) unless conf
-        @config.remove conf
-        list data, '', message
+        deleted = Reservation.where(confirmation_number: conf).destroy_all
+        l = deleted.length
+        message.reply "Removed #{deleted.length} reservation(s) - #{deleted.map(&:conf).join(', ')}"
       end
     end
 
     def reconfirm(data, args, message)
       profile = user_profile data
-      message.reply "Reconfirming Southwest flights for #{profile[:email]}:"
-      message.type
-      flights = @config.upcoming.select { |f| f.email == profile[:email] }
-      flights.group_by { |f| f.conf }.each do |conf, fs|
-        @agent.confirm fs.first
-        message.type
+      reservations = Reservation.upcoming.for_person profile[:email], profile[:full_name]
+      if reservations.empty?
+        message.reply "No flights available for #{profile[:full_name]}"
+        return
       end
-      flights = @config.upcoming.select { |f| f.email == profile[:email] }
-      print_flights flights, message
+
+      reservations = confirm_reservations reservations, message
+      print_bounds reservations.map(&:bounds).flatten, message
     end
 
     def reconfirm_all(data, args, message)
-      message.reply "Reconfirming all Southwest flights"
-      message.type
-      flights = @config.upcoming
-      flights.group_by { |f| f.conf }.each do |conf, fs|
-        @agent.confirm fs.first
-        message.type
+      reservations = Reservation.upcoming
+      if reservations.empty?
+        message.reply "No flights available"
+        return
       end
-      flights = @config.upcoming
-      print_flights flights, message
+
+      reservations = confirm_reservations reservations, message
+      print_bounds reservations.map(&:bounds).flatten, message
+    end
+
+    private
+
+    def confirm_reservation(conf, first, last, email, message)
+      message.reply "Confirming #{conf} for *#{first} #{last}*..."
+      message.type
+      reservation, is_new = @agent.confirm conf, first, last, email
+      reservation
+    rescue SouthyException => e
+      message.reply "Could not confirm reservation #{conf} - #{e.message}"
+      nil
+    end
+
+    def confirm_reservations(reservations, message)
+      reservations.map do |r|
+        confirm_reservation r.conf, r.first_name, r.last_name, r.email, message
+      end
     end
   end
 end

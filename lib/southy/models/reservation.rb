@@ -11,6 +11,10 @@ module Southy
     scope    :upcoming, -> { joins(:bounds).where("bounds.departure_time >= '#{DateTime.now}'").distinct }
     scope    :past,     -> { joins(:bounds).where("bounds.departure_time < '#{DateTime.now}'").distinct }
 
+    def self.for_person(email, name)
+      select { |r| r.person_matches? email, name }
+    end
+
     def conf
       confirmation_number
     end
@@ -29,6 +33,10 @@ module Southy
 
     def last_name
       passengers.first.last_name
+    end
+
+    def person_matches?(email, name)
+      self.email == email || passengers.any? { |p| p.name_matches? name }
     end
 
     def ==(other)
@@ -133,14 +141,21 @@ module Southy
       out = ""
       bounds.sort_by(&:departure_time).each do |b|
         b.reservation.passengers.each_with_index do |p, i|
-          leader = i == 0 ? sprintf("#{b.reservation.conf} - SW%-4s", b.flights.first) : "               "
-          name   = sprintf "%-#{max_name}s", p.name
-          time   = b.local_departure_time.strftime "%Y-%m-%d %l:%M%P"
-          depart = sprintf "%#{max_depart}s", "#{b.departure_airport.name} (#{b.departure_airport.code})"
-          arrive = sprintf "%#{max_arrive}s", "#{b.arrival_airport.name} (#{b.arrival_airport.code})"
-          seats  = p.seats_for(b).length > 0 ? " - #{p.seats_ident_for(b)}" : ""
+          if options[:short]
+            leader = i == 0 ? "#{b.reservation.conf}:" : "       "
+            depart = b.departure_airport.code
+            arrive = b.arrival_airport.code
+          else
+            leader = i == 0 ? sprintf("#{b.reservation.conf} - SW%-4s:", b.flights.first) : "                "
+            depart = sprintf "%#{max_depart}s", "#{b.departure_airport.name} (#{b.departure_airport.code})"
+            arrive = sprintf "%#{max_arrive}s", "#{b.arrival_airport.name} (#{b.arrival_airport.code})"
+          end
 
-          out += "#{leader}: #{name}  #{time}  #{depart} -> #{arrive}#{seats}\n"
+          name     = sprintf "%-#{max_name}s", p.name
+          time     = b.local_departure_time.strftime "%Y-%m-%d %l:%M%P"
+          seats    = p.seats_for(b).length > 0 ? " - #{p.seats_ident_for(b)}" : ""
+
+          out += "#{leader} #{name}  #{time}  #{depart} -> #{arrive}#{seats}\n"
         end
       end
 

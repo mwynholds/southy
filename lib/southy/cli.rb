@@ -44,13 +44,13 @@ module Southy
     end
 
     def add(params)
-      if Reservation.where(confirmation_number: params[0]).length > 0
+      if Bound.for_reservation(params[0]).length > 0
         puts "That reservation already exists.  Try 'southy reconfirm #{params[0]}'"
         return
       end
 
       reservation = confirm_reservation *params
-      puts Reservation.list(reservation && reservation.bounds)
+      puts Reservation.list(reservation&.bounds)
     end
 
     def remove(params)
@@ -103,23 +103,19 @@ module Southy
     private
 
     def confirm_reservation(conf, first, last, email = nil)
-      @service.pause
-
       print "Confirming #{conf} for #{first} #{last}... "
       begin
         reservation, is_new = @agent.confirm conf, first, last, email
         puts is_new ? "success" : "no changes"
       rescue SouthyException => e
         puts e.message
-      ensure
-        @service.resume
       end
 
       reservation
     end
 
     def confirm_reservations(reservations)
-      reservations.each do |r|
+      reservations.map do |r|
         confirm_reservation r.conf, r.first_name, r.last_name, r.email
       end
     end

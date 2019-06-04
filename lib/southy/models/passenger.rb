@@ -5,6 +5,11 @@ module Southy
     belongs_to :reservation
     has_many   :seats,       dependent: :destroy, autosave: true
 
+    NICKNAMES = {
+      "Bill" => "William",
+      "Mike" => "Michael",
+    }
+
     def ==(other)
       name == other.name
     end
@@ -15,6 +20,20 @@ module Southy
 
     def last_name
       name.split(' ').last
+    end
+
+    def name_matches?(n)
+      ns = n.split(' ')
+      n.last == last_name && ( n.first.starts_with(first_name) || first_name.starts_with(n.first) )
+    end
+
+    def first_name_matches?(a, b)
+      return true if a == b
+      return true if a.starts_with b
+      return true if b.starts_with a
+      return true if NICKNAMES.any? { |nick, name| (nick == a && name == b) ||
+                                                   (nick == b && name == a) }
+      false
     end
 
     def assign_seat(seat, bound)
