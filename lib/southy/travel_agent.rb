@@ -15,6 +15,7 @@ module Southy
 
       begin
         reservation = monkey.lookup conf, first, last
+        reservation.email = email
       rescue SouthyException => e
         @config.log "Flight not confirmed due to '#{e.message}' : #{flight_info}"
         raise e
@@ -30,9 +31,12 @@ module Southy
       end
     end
 
-    def checkin(bound)
+    def checkin(bound, force: false)
       return bound.reservation if bound.checked_in?
-      raise SouthyException.new("check in not available") unless bound.checkin_available?
+
+      unless force
+        raise SouthyException.new("check in not available") unless bound.checkin_available?
+      end
 
       begin
         checked_in = monkey.checkin bound.reservation

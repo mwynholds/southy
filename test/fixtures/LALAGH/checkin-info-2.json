@@ -1,0 +1,95 @@
+{
+  "checkInConfirmationPage": {
+    "messages": null,
+    "flights": [
+      {
+        "boundIndex": 0,
+        "segmentType": "DEPARTING",
+        "departureTime": "08:20",
+        "gate": null,
+        "passengers": [
+          {
+            "name": "Clay Smalley",
+            "hasPrecheck": false,
+            "boardingGroup": "B",
+            "boardingPosition": "03",
+            "mobileBoardingPassEligible": false,
+            "mobileBoardingPassIneligibilityErrorCode": "MBP_UNAVAILABLE_USE_OTHER_SELF_SERVICE",
+            "greyBoxMessage": {
+              "key": "GREY_BOX_UNAVAILABLE_MULTIPAX_NO_MBP",
+              "header": null,
+              "body": "Passengers can log in to their account to view their own mobile boarding pass."
+            },
+            "specialAssistanceMessage": null,
+            "checkedIn": true,
+            "confirmationNumber": "LALAGH"
+          },
+          {
+            "name": "Maxwell Holder",
+            "hasPrecheck": false,
+            "boardingGroup": "B",
+            "boardingPosition": "04",
+            "mobileBoardingPassEligible": false,
+            "mobileBoardingPassIneligibilityErrorCode": "MBP_UNAVAILABLE_USE_OTHER_SELF_SERVICE",
+            "greyBoxMessage": {
+              "key": "GREY_BOX_UNAVAILABLE_MULTIPAX_NO_MBP",
+              "header": null,
+              "body": "Passengers can log in to their account to view their own mobile boarding pass."
+            },
+            "specialAssistanceMessage": null,
+            "checkedIn": true,
+            "confirmationNumber": "LALAGH"
+          }
+        ],
+        "flightNumber": "4963",
+        "hasWifi": true,
+        "travelTime": "3h 25m"
+      },
+      {
+        "boundIndex": 1,
+        "segmentType": "ARRIVING",
+        "departureTime": "11:50",
+        "gate": null,
+        "passengers": [
+          {
+            "name": "Clay Smalley",
+            "hasPrecheck": false,
+            "boardingGroup": "A",
+            "boardingPosition": "54",
+            "mobileBoardingPassEligible": false,
+            "mobileBoardingPassIneligibilityErrorCode": "MBP_UNAVAILABLE_USE_OTHER_SELF_SERVICE",
+            "greyBoxMessage": {
+              "key": "GREY_BOX_UNAVAILABLE_MULTIPAX_NO_MBP",
+              "header": null,
+              "body": "Passengers can log in to their account to view their own mobile boarding pass."
+            },
+            "specialAssistanceMessage": null,
+            "checkedIn": true,
+            "confirmationNumber": "LALAGH"
+          },
+          {
+            "name": "Maxwell Holder",
+            "hasPrecheck": false,
+            "boardingGroup": "A",
+            "boardingPosition": "55",
+            "mobileBoardingPassEligible": false,
+            "mobileBoardingPassIneligibilityErrorCode": "MBP_UNAVAILABLE_USE_OTHER_SELF_SERVICE",
+            "greyBoxMessage": {
+              "key": "GREY_BOX_UNAVAILABLE_MULTIPAX_NO_MBP",
+              "header": null,
+              "body": "Passengers can log in to their account to view their own mobile boarding pass."
+            },
+            "specialAssistanceMessage": null,
+            "checkedIn": true,
+            "confirmationNumber": "LALAGH"
+          }
+        ],
+        "flightNumber": "993",
+        "hasWifi": true,
+        "travelTime": "3h 55m"
+      }
+    ],
+    "_v1_infoNeededToViewBoardingPasses": null,
+    "_links": null
+  }
+}

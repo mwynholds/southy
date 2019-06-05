@@ -197,8 +197,16 @@ module Southy
       JSON.parse IO.read("#{@dir}/#{conf}/#{name}.json"), object_class: OpenStruct
     end
 
-    def fetch_trip_info(conf, first_name, last_name)
+    def fetch_trip_info(conf, first, last)
       get_json conf, "trip-info"
+    end
+
+    def fetch_checkin_info_1(conf, first, last)
+      get_json conf, "checkin-info-1"
+    end
+
+    def fetch_checkin_info_2(conf, first, last, token)
+      get_json conf, "checkin-info-2"
     end
   end
 end

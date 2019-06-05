@@ -37,7 +37,7 @@ def expect_reservation(reservation, conf:, email:)
 end
 
 def expect_passengers(reservation, *names)
-  expect(reservation.passengers.map(&:name)).must_equal names
+  expect(reservation.passengers.map(&:name).sort).must_equal names
 end
 
 def expect_bound(bound, departure:, arrival:, flights:)
@@ -56,4 +56,10 @@ def expect_stops(stops, *infos)
   pieces = infos.map { |i| parse_time i }
   expect(stops.map(&:airport).map(&:code)).must_equal pieces.map(&:first)
   expect(stops.map(&:arrival_time)).must_equal pieces.map(&:last)
+end
+
+def expect_seats(bound, seats)
+  seats.each do |name, seat|
+    expect(bound.passengers.find { |p| p.name == name }.seats_ident_for(bound)).must_equal seat
+  end
 end
