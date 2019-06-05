@@ -27,6 +27,7 @@ module Southy
   require 'southy/cli'
   require 'southy/slackbot'
 
+  env    = ENV['RUBY_ENV'] || 'development'
   config = YAML.load File.read "#{__dir__}/../db/config.yml"
-  ActiveRecord::Base.establish_connection config["development"]
+  ActiveRecord::Base.establish_connection config[env]
 end

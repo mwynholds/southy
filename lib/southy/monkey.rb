@@ -25,7 +25,7 @@ module Southy
     def parse_json(conf, response, name)
       if response.body == nil || response.body == ''
         @config.log "Empty response body returned"
-        return { 'errmsg' => "empty response body - #{response.code} (#{response.msg})"}
+        raise SouthyException.new "empty response body - #{response.code} (#{response.msg})"
       end
 
       json = JSON.parse response.body
@@ -188,16 +188,13 @@ module Southy
     end
   end
 
-  class Southy::TestMonkey < Southy::Monkey
+  class TestMonkey < Monkey
+    def initialize(dir)
+      @dir = dir
+    end
+
     def get_json(conf, name)
-      base = File.dirname(__FILE__) + "/../../test/fixtures/#{conf}/#{name}"
-      last = "#{base}.json"
-      n = 1
-      while File.exist? "#{base}_#{n}.json"
-        last = "#{base}_#{n}.json"
-        n += 1
-      end
-      JSON.parse IO.read(last).strip, object_class: OpenStruct
+      JSON.parse IO.read("#{@dir}/#{conf}/#{name}.json"), object_class: OpenStruct
     end
 
     def fetch_trip_info(conf, first_name, last_name)

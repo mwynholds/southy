@@ -220,7 +220,6 @@ EOM
       args.tap do |(conf)|
         return ( message.reply "You didn't enter a confirmation number!" ) unless conf
         deleted = Reservation.where(confirmation_number: conf).destroy_all
-        l = deleted.length
         message.reply "Removed #{deleted.length} reservation(s) - #{deleted.map(&:conf).join(', ')}"
       end
     end
@@ -253,7 +252,7 @@ EOM
     def confirm_reservation(conf, first, last, email, message)
       message.reply "Confirming #{conf} for *#{first} #{last}*..."
       message.type
-      reservation, is_new = @agent.confirm conf, first, last, email
+      reservation, _ = @agent.confirm conf, first, last, email
       reservation
     rescue SouthyException => e
       message.reply "Could not confirm reservation #{conf} - #{e.message}"

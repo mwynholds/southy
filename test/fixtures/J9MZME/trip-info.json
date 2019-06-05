@@ -1,0 +1,173 @@
+{
+  "viewReservationViewPage": {
+    "dates": {
+      "first": "2019-06-26",
+      "second": null
+    },
+    "checkInIneligibilityReason": null,
+    "greyBoxMessage": null,
+    "greyBoxPassengerMessage": null,
+    "destinationDescription": "San Francisco",
+    "originAirport": {
+      "name": "Tucson",
+      "state": "AZ",
+      "code": "TUS",
+      "country": null
+    },
+    "destinationAirport": {
+      "name": "San Francisco",
+      "state": "CA",
+      "code": "SFO",
+      "country": null
+    },
+    "companion": null,
+    "passengers": [
+      {
+        "name": "Donald L Thompson",
+        "accountNumber": "88501486",
+        "passengerReference": "2",
+        "hasAnyEarlyBird": false,
+        "hasCompletePassportInfo": false,
+        "checkInIneligibilityReason": null,
+        "isCheckedIn": false,
+        "isCheckInEligible": false,
+        "isUnaccompaniedMinor": false
+      },
+      {
+        "name": "West Thompson",
+        "accountNumber": "329004701",
+        "passengerReference": "3",
+        "hasAnyEarlyBird": false,
+        "hasCompletePassportInfo": false,
+        "checkInIneligibilityReason": null,
+        "isCheckedIn": false,
+        "isCheckInEligible": false,
+        "isUnaccompaniedMinor": false
+      }
+    ],
+    "confirmationNumber": "J9MZME",
+    "shouldShowAddEarlyBirdButton": false,
+    "bounds": [
+      {
+        "departureStatus": null,
+        "departureStatusType": null,
+        "arrivalStatus": null,
+        "arrivalStatusType": null,
+        "flights": [
+          {
+            "number": "960",
+            "wifiOnBoard": true
+          },
+          {
+            "number": "543",
+            "wifiOnBoard": true
+          }
+        ],
+        "travelTime": "4h 35m",
+        "departureDate": "2019-06-26",
+        "departureTime": "19:10",
+        "departureAirport": {
+          "name": "Tucson",
+          "state": "AZ",
+          "code": "TUS",
+          "country": null
+        },
+        "arrivalTime": "23:45",
+        "arrivalAirport": {
+          "name": "San Francisco",
+          "state": "CA",
+          "code": "SFO",
+          "country": null
+        },
+        "passengerTypeCounts": {
+          "adult": 2,
+          "senior": 0
+        },
+        "fareType": "WannaGetAway",
+        "boundType": "DEPARTING",
+        "standbyFlight": null,
+        "stops": [
+          {
+            "departureStatus": null,
+            "departureStatusType": null,
+            "arrivalStatus": null,
+            "arrivalStatusType": null,
+            "airport": {
+              "name": "Las Vegas",
+              "state": "NV",
+              "code": "LAS",
+              "country": null
+            },
+            "arrivalTime": "20:25",
+            "departureTime": "22:20",
+            "changePlanes": true,
+            "missingAirportDetails": false
+          }
+        ],
+        "isNextDayArrival": false
+      }
+    ],
+    "pageHeader": "TUS - SFO",
+    "shareDetails": {
+      "subject": "Southwest Flight 960 Tucson to San Francisco",
+      "confirmationInfo": "Confirmation #: J9MZME",
+      "passengerInfo": "Passenger names: Donald L Thompson, West Thompson",
+      "flightInfo": [
+        {
+          "header": "Departing Flight: Wed, Jun 26, 2019",
+          "title": "Southwest Flight 960/543 Tucson to San Francisco",
+          "flightInfo": "Flight #: 960/543",
+          "departureInfo": "Departs: 07:10 PM TUS",
+          "departureDateTime": "2019-06-26T19:10:00.000-07:00",
+          "stops": [
+            "Stop: Las Vegas, NV. Change planes"
+          ],
+          "arrivalInfo": "Arrives: 11:45 PM SFO",
+          "arrivalDateTime": "2019-06-26T23:45:00.000-07:00",
+          "travelTime": "Travel time: 4hr 35 mins"
+        }
+      ]
+    },
+    "hasAnyCancelledFlights": false,
+    "isCheckInEligible": false,
+    "isCheckedIn": false,
+    "isInternational": false,
+    "isDynamicWaiver": false,
+    "isNonRevPnr": false,
+    "isSwabiz": false,
+    "_links": {
+      "checkInSessionToken": null,
+      "earlyBird": null,
+      "change": null,
+      "cancel": null,
+      "viewStandbyList": null,
+      "checkIn": null,
+      "viewBoardingPassIssuance": null,
+      "viewBoardingPass": null,
+      "viewBoardingPositions": null,
+      "addCompanion": null,
+      "passportEmergencyContacts": null,
+      "editPNRPassengers": [
+        {
+          "href": "/v1/mobile-air-booking/page/view-reservation/edit-pnr-passenger/J9MZME",
+          "method": "GET",
+          "query": {
+            "first-name": "Donald",
+            "last-name": "Thompson",
+            "passenger-reference": "2"
+          }
+        },
+        {
+          "href": "/v1/mobile-air-booking/page/view-reservation/edit-pnr-passenger/J9MZME",
+          "method": "GET",
+          "query": {
+            "first-name": "West",
+            "last-name": "Thompson",
+            "passenger-reference": "3"
+          }
+        }
+      ]
+    },
+    "hasUnaccompaniedMinor": false
+  }
+}

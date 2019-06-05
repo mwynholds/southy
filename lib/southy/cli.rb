@@ -49,13 +49,12 @@ module Southy
         return
       end
 
-      reservation = confirm_reservation *params
+      reservation = confirm_reservation(*params)
       puts Reservation.list(reservation&.bounds)
     end
 
     def remove(params)
       deleted = Reservation.where(confirmation_number: params).destroy_all
-      l = deleted.length
       puts "Removed #{deleted.length} reservation(s) - #{deleted.map(&:conf).join(', ')}"
     end
 

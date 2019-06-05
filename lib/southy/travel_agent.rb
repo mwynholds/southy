@@ -2,15 +2,12 @@ module Southy
   class TravelAgent
 
     attr_reader :config
+    attr_accessor :monkey
 
-    def initialize(config, opts = {})
-      @is_test = opts[:test] == true
+    def initialize(config)
       @config = config
-      @mailer = Southy::Mailer.new config
-    end
-
-    def monkey
-      @is_test ? Southy::TestMonkey.new : Southy::Monkey.new(config)
+      @mailer = Mailer.new config
+      @monkey = Monkey.new config
     end
 
     def confirm(conf, first, last, email = nil)

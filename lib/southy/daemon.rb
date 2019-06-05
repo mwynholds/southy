@@ -68,9 +68,9 @@ module Southy
                 Thread.abort_on_exception = true
                 Thread.new do
                   begin
-                    checked_in = @agent.checkin b
+                    @agent.checkin b
                     attemps.delete r.conf
-                  rescue SouthyException => e
+                  rescue SouthyException
                     attemps[r.conf] += 1
                   end
                   running.delete r.conf

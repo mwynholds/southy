@@ -53,9 +53,9 @@ module Southy
       "#{name} (#{code}): #{tz_offset} #{timezone}"
     end
 
-    def local_time(date, time = nil)
+    def local_time(datetime)
       tz      = TZInfo::Timezone.get timezone
-      utc     = time ? tz.local_to_utc(DateTime.parse("#{date} #{time}")) : date
+      utc     = datetime.is_a?(Time) ? datetime : tz.local_to_utc(DateTime.parse(datetime))
       local   = tz.utc_to_local utc
       offset  = tz.period_for_local(local).utc_total_offset / (60 * 60)
 

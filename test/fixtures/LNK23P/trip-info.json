@@ -1,0 +1,132 @@
+{
+  "viewReservationViewPage": {
+    "dates": {
+      "first": "2019-06-07",
+      "second": null
+    },
+    "checkInIneligibilityReason": null,
+    "greyBoxMessage": null,
+    "greyBoxPassengerMessage": null,
+    "destinationDescription": "San Jose",
+    "originAirport": {
+      "name": "Los Angeles",
+      "state": "CA",
+      "code": "LAX",
+      "country": null
+    },
+    "destinationAirport": {
+      "name": "San Jose",
+      "state": "CA",
+      "code": "SJC",
+      "country": null
+    },
+    "companion": null,
+    "passengers": [
+      {
+        "name": "Dimas Guardado",
+        "accountNumber": "20577815381",
+        "passengerReference": "2",
+        "hasAnyEarlyBird": false,
+        "hasCompletePassportInfo": false,
+        "checkInIneligibilityReason": null,
+        "isCheckedIn": false,
+        "isCheckInEligible": false,
+        "isUnaccompaniedMinor": false
+      }
+    ],
+    "confirmationNumber": "LNK23P",
+    "shouldShowAddEarlyBirdButton": false,
+    "bounds": [
+      {
+        "departureStatus": null,
+        "departureStatusType": null,
+        "arrivalStatus": null,
+        "arrivalStatusType": null,
+        "flights": [
+          {
+            "number": "1331",
+            "wifiOnBoard": true
+          }
+        ],
+        "travelTime": "1h 5m",
+        "departureDate": "2019-06-07",
+        "departureTime": "21:50",
+        "departureAirport": {
+          "name": "Los Angeles",
+          "state": "CA",
+          "code": "LAX",
+          "country": null
+        },
+        "arrivalTime": "22:55",
+        "arrivalAirport": {
+          "name": "San Jose",
+          "state": "CA",
+          "code": "SJC",
+          "country": null
+        },
+        "passengerTypeCounts": {
+          "adult": 1,
+          "senior": 0
+        },
+        "fareType": "WannaGetAway",
+        "boundType": "DEPARTING",
+        "standbyFlight": null,
+        "stops": [
+
+        ],
+        "isNextDayArrival": false
+      }
+    ],
+    "pageHeader": "LAX - SJC",
+    "shareDetails": {
+      "subject": "Southwest Flight 1331 Los Angeles to San Jose",
+      "confirmationInfo": "Confirmation #: LNK23P",
+      "passengerInfo": "Passenger names: Dimas Guardado",
+      "flightInfo": [
+        {
+          "header": "Departing Flight: Fri, Jun 07, 2019",
+          "title": "Southwest Flight 1331 Los Angeles to San Jose",
+          "flightInfo": "Flight #: 1331",
+          "departureInfo": "Departs: 09:50 PM LAX",
+          "departureDateTime": "2019-06-07T21:50:00.000-07:00",
+          "stops": null,
+          "arrivalInfo": "Arrives: 10:55 PM SJC",
+          "arrivalDateTime": "2019-06-07T22:55:00.000-07:00",
+          "travelTime": "Travel time: 1hr 5 mins"
+        }
+      ]
+    },
+    "hasAnyCancelledFlights": false,
+    "isCheckInEligible": false,
+    "isCheckedIn": false,
+    "isInternational": false,
+    "isDynamicWaiver": false,
+    "isNonRevPnr": false,
+    "isSwabiz": false,
+    "_links": {
+      "checkInSessionToken": null,
+      "earlyBird": null,
+      "change": null,
+      "cancel": null,
+      "viewStandbyList": null,
+      "checkIn": null,
+      "viewBoardingPassIssuance": null,
+      "viewBoardingPass": null,
+      "viewBoardingPositions": null,
+      "addCompanion": null,
+      "passportEmergencyContacts": null,
+      "editPNRPassengers": [
+        {
+          "href": "/v1/mobile-air-booking/page/view-reservation/edit-pnr-passenger/LNK23P",
+          "method": "GET",
+          "query": {
+            "first-name": "Dimas",
+            "last-name": "Guardado",
+            "passenger-reference": "2"
+          }
+        }
+      ]
+    },
+    "hasUnaccompaniedMinor": false
+  }
+}

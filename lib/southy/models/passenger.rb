@@ -24,7 +24,7 @@ module Southy
 
     def name_matches?(n)
       ns = n.split(' ')
-      n.last == last_name && ( n.first.starts_with(first_name) || first_name.starts_with(n.first) )
+      ns.last == last_name && ( ns.first.starts_with(first_name) || first_name.starts_with(ns.first) )
     end
 
     def first_name_matches?(a, b)
