@@ -38,6 +38,9 @@ module Southy
         raise SouthyException.new("check in not available") unless bound.checkin_available?
       end
 
+      bound.reservation.last_checkin_attempt = DateTime.now
+      bound.reservation.save!
+
       begin
         checked_in = monkey.checkin bound.reservation
         checked_in.save!

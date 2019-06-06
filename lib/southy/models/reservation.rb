@@ -8,8 +8,8 @@ module Southy
     has_many :bounds,     dependent: :destroy, autosave: true
     has_many :passengers, dependent: :destroy, autosave: true
 
-    scope    :upcoming, -> { joins(:bounds).where("bounds.departure_time >= '#{DateTime.now}'").distinct }
-    scope    :past,     -> { joins(:bounds).where("bounds.departure_time < '#{DateTime.now}'").distinct }
+    scope    :upcoming, -> { joins(:bounds).where("bounds.departure_time >  ?", DateTime.now).distinct }
+    scope    :past    , -> { joins(:bounds).where("bounds.departure_time <= ?", DateTime.now).distinct }
 
     def self.for_person(email, name)
       select { |r| r.person_matches? email, name }
@@ -73,6 +73,7 @@ module Southy
     end
 
     def checkout
+      self.last_checkin_attempt = nil
       passengers.each do |passenger|
         passenger.seats.each do |seat|
           seat.mark_for_destruction

@@ -40,6 +40,7 @@ ActiveRecord::Schema.define(version: 2019_05_31_233849) do
     t.string "origin_code", null: false
     t.string "destination_code", null: false
     t.string "email"
+    t.datetime "last_checkin_attempt"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

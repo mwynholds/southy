@@ -9,8 +9,8 @@ module Southy
     has_many   :stops, dependent: :destroy, autosave: true
     has_many   :seats, dependent: :destroy, autosave: true
 
-    scope :upcoming, -> { where("arrival_time >= '#{Date.today}'").order(:departure_time) }
-    scope :past,     -> { where("arrival_time <= '#{Date.today}'").order(:departure_time) }
+    scope :upcoming, -> { where("departure_time >  '#{DateTime.now}'").order(:departure_time) }
+    scope :past,     -> { where("departure_time <= '#{DateTime.now}'").order(:departure_time) }
 
     def self.for_reservation(conf)
       select { |b| b.reservation.conf == conf }
@@ -52,6 +52,13 @@ module Southy
       reservation.passengers.map do |passenger|
         reservation.seats_for(passenger, self).map(&:ident).first
       end.compact.join(', ')
+    end
+
+    def ready_for_checkin?
+      return false if checked_in?
+      return false unless checkin_available?
+      return true  if reservation.last_checkin_attempt == nil
+      checkin_time? || late_checkin_time?
     end
 
     def checked_in?

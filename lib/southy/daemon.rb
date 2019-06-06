@@ -5,7 +5,6 @@ module Southy
       @agent = travel_agent
       @config = travel_agent.config
       @active = true
-      @paused = false
     end
 
     def slackbot=(slackbot)
@@ -25,22 +24,13 @@ module Southy
 
       begin
         @slackthread = Thread.new { @slackbot.run }
+        sleep 1
         run
       rescue => e
         @config.log "Unexpected error", e
       ensure
         cleanup
       end
-    end
-
-    def pause
-      @paused = true
-      @config.log "Daemon paused"
-    end
-
-    def resume
-      @paused = false
-      @config.log "Daemon resumed"
     end
 
     def cleanup
@@ -51,32 +41,25 @@ module Southy
 
     def run
       @config.log "Southy is running."
-      attempts = {}
+      Thread.abort_on_exception = true
       running = {}
       while active? do
-        if ! @paused
-          bounds = Bound.upcoming
-          bounds.each do |b|
-            r = b.reservation
-            attempts[r.conf] ||= 0
+        bounds = Bound.upcoming.uniq { |b| b.reservation.conf }
+        bounds.each do |b|
+          next unless b.ready_for_checkin?
 
-            if b.checkin_available?
-              if attempts[r.conf] <= 5 || b.checkin_time? || b.late_checkin_time?
-                next if running[r.conf]
+          r = b.reservation
+          next if running[r.conf]
 
-                running[r.conf] = true
-                Thread.abort_on_exception = true
-                Thread.new do
-                  begin
-                    @agent.checkin b
-                    attemps.delete r.conf
-                  rescue SouthyException
-                    attemps[r.conf] += 1
-                  end
-                  running.delete r.conf
-                end
-              end
-            end
+          Thread.new do
+            running[r.conf] = true
+            print "Checking in #{r.conf} (SW#{b.flights.first}) for #{r.passengers_ident} ... "
+            checked_in = @agent.checkin b
+            puts checked_in ? b.seats_ident : "unable to check in"
+          rescue SouthyException => e
+            puts e.message
+          ensure
+            running.delete r.conf
           end
         end
 
