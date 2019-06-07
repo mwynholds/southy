@@ -15,11 +15,6 @@ module Southy
 
       @hostname = 'mobile.southwest.com'
       @api_key = 'l7xx0a43088fe6254712b10787646d1b298e'
-
-      @https = Net::HTTP.new @hostname, 443
-      @https.use_ssl = true
-      @https.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      @https.verify_depth = 5
     end
 
     def parse_json(conf, response, name)
@@ -176,7 +171,11 @@ module Southy
       request['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4'
       request['X-API-Key'] = @api_key
 
-      response = @https.request(request)
+      https = Net::HTTP.new @hostname, 443
+      https.use_ssl = true
+      https.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      https.verify_depth = 5
+      response = https.request(request)
 
       json = parse_json conf, response, name
 

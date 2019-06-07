@@ -51,15 +51,16 @@ module Southy
           r = b.reservation
           next if running[r.conf]
 
+          seats = nil
           Thread.new do
             running[r.conf] = true
-            print "Checking in #{r.conf} (SW#{b.flights.first}) for #{r.passengers_ident} ... "
             checked_in = @agent.checkin b
-            puts checked_in ? b.seats_ident : "unable to check in"
+            seats =  checked_in ? b.seats_ident : "unable to check in"
           rescue SouthyException => e
-            puts e.message
+            seats = e.message
           ensure
             running.delete r.conf
+            puts "Checked in #{r.conf} (SW#{b.flights.first}) for #{r.passengers_ident} : #{seats}"
           end
         end
 
