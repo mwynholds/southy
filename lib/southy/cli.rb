@@ -10,6 +10,7 @@ module Southy
       @service = Service.new(@agent, daemon)
       slackbot = Slackbot.new(@config, @agent, @service)
       daemon.slackbot = slackbot  # TODO: this is circular and ugly :-(
+      @agent.slackbot = slackbot  # more ugly
       @mailer = Mailer.new(@config)
     end
 

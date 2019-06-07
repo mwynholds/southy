@@ -18,10 +18,11 @@ module Southy
         slack_cfg.token = @config.slack_api_token
       end
 
+      @webclient = Slack::Web::Client.new
+      @slack_users = get_slack_users
     end
 
     def run
-      @webclient = Slack::Web::Client.new
       auth = @webclient.auth_test
       if auth['ok']
         puts "Slackbot is active!"
@@ -73,9 +74,25 @@ module Southy
       end
     end
 
+    def notify_checked_in(bound)
+      email_slack_user = @slack_users.find { |su| su.profile.email == bound.reservation.email }
+      name_slack_users = bound.passengers.map { |p| @slack_users.find { |su| p.name_matches? "#{su.profile.first_name} #{su.profile.last_name}" } }.compact
+      slack_users = Set.new(name_slack_users)
+      slack_users << email_slack_user if email_slack_user
+
+      slack_users.each do |su|
+        message   = "Your party has been checked in to flight `SW#{bound.flights.first}`"
+        itinerary = "```#{Reservation.list([bound], short: true)}```"
+        resp = @webclient.im_open user: su.id
+        @webclient.chat_postMessage channel: resp.channel.id, text: message,   as_user: true
+        @webclient.chat_postMessage channel: resp.channel.id, text: itinerary, as_user: true
+      end
+    end
+
     def method_missing(name, *args)
       @config.log "No method found for: #{name}"
       @config.log args[0]
+      nil
     end
 
     def user_profile(data)
@@ -263,6 +280,22 @@ EOM
       reservations.sort_by { |r| r.bounds.first.departure_time }.map do |r|
         confirm_reservation r.conf, r.first_name, r.last_name, r.email, message
       end
+    end
+
+    def get_slack_users
+      #print "Getting users from Slack... "
+      resp = @webclient.users_list
+      throw resp unless resp.ok
+      users = resp.members.map do |member|
+        next unless member.profile.email # no bots
+        next if member.deleted # no ghosts
+        member
+      end
+      #puts "done (#{users.length} users)"
+      users.compact
+    rescue => e
+      #puts e.message
+      raise e
     end
   end
 end

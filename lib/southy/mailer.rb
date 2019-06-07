@@ -23,7 +23,7 @@ class Southy::Mailer
   def generate_email(bound)
     return nil unless bound.reservation.email
 
-    seats = bound.passengers.map { |p| "#{p.name} : #{p.seats_for(bound).map(&:ident)}" }.join("\n")
+    seats = bound.passengers.map { |p| "#{p.name} : #{p.seats_for(bound).map(&:ident).join(", ")}" }.join("\n")
     marker = 'MIMECONTENTMARKER'
 
     message = <<EOM

@@ -10,6 +10,10 @@ module Southy
       @monkey = Monkey.new config
     end
 
+    def slackbot=(slackbot)
+      @slackbot = slackbot
+    end
+
     def confirm(conf, first, last, email = nil)
       flight_info = "#{conf} (#{first} #{last})"
 
@@ -46,6 +50,7 @@ module Southy
         checked_in = monkey.checkin bound.reservation
         checked_in.save!
         @mailer.send_email bound
+        @slackbot.notify_checked_in bound
         @config.log "Checked in #{bound.ident} - #{bound.seats_ident}"
         checked_in
       rescue SouthyException => e
