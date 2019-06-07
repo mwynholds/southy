@@ -154,7 +154,7 @@ module Southy
 
           name     = sprintf "%-#{max_name}s", p.name
           time     = b.local_departure_time.strftime "%Y-%m-%d %l:%M%P"
-          seats    = p.seats_for(b).length > 0 ? " - #{p.seats_ident_for(b)}" : ""
+          seats    = p.seats_for(b).length > 0 ? " *** #{p.seats_ident_for(b)}" : ""
 
           out += "#{leader} #{name}  #{time}  #{depart} -> #{arrive}#{seats}\n"
         end
