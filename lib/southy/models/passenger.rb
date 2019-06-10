@@ -6,8 +6,9 @@ module Southy
     has_many   :seats,       dependent: :destroy, autosave: true
 
     NICKNAMES = {
-      "Bill" => "William",
-      "Mike" => "Michael",
+      "Bill"  => "William",
+      "Mike"  => "Michael",
+      "Katie" => "Katherine",
     }
 
     def ==(other)
