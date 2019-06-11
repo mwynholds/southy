@@ -159,8 +159,9 @@ EOM
         return
       end
 
-      bounds.sort_by(&:departure_time).each_slice(10) do |slice|
-        message.reply('```' + Reservation.list(slice, short: true) + '```')
+      all = Reservation.list bounds, short: true
+      all.split("\n").each_slice(50) do |slice|
+        message.reply "```#{slice.join("\n")}```"
       end
     end
 
