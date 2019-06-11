@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_05_31_233849) do
+ActiveRecord::Schema.define(version: 2019_06_11_215952) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -55,14 +55,6 @@ ActiveRecord::Schema.define(version: 2019_05_31_233849) do
     t.datetime "updated_at", null: false
     t.index ["bound_id"], name: "index_seats_on_bound_id"
     t.index ["passenger_id"], name: "index_seats_on_passenger_id"
-  end
-
-  create_table "sources", force: :cascade do |t|
-    t.jsonb "json", null: false
-    t.bigint "reservation_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["reservation_id"], name: "index_sources_on_reservation_id"
   end
 
   create_table "stops", force: :cascade do |t|

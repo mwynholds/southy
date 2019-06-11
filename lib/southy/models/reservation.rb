@@ -4,7 +4,6 @@ module Southy
     validates :origin_code, presence: true
     validates :destination_code, presence: true
 
-    has_one  :source,     dependent: :destroy, autosave: true
     has_many :bounds,     dependent: :destroy, autosave: true
     has_many :passengers, dependent: :destroy, autosave: true
 
@@ -87,12 +86,10 @@ module Southy
     end
 
     def self.from_json(json)
-      res = Reservation.new
-      res.source = Source.new
-      res.source.json = json
-
       raise SouthyException.new("No inbound or outbound flights") unless json.bounds
       raise SouthyException.new("No passengers") unless json.passengers
+
+      res = Reservation.new
 
       res.confirmation_number = json.confirmationNumber
       res.origin_code         = json.originAirport.code
