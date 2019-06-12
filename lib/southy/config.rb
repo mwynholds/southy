@@ -47,6 +47,10 @@ class Southy::Config
     @config.fetch(:slack_accept_channels, '').split ','
   end
 
+  def notify_on_checkin?
+    @config.fetch(:notify_on_checkin, false)
+  end
+
   def reload(options = {})
     options = { :force => false }.merge options
     load_config options

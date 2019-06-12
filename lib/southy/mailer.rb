@@ -10,7 +10,9 @@ class Southy::Mailer
     return false unless message
     return false unless bound.reservation.email
 
-    if ENV['RUBY_ENV'] == 'test'
+    return if ENV['RUBY_ENV'] == 'test'
+
+    if ! @config.notify_on_checkin?
       puts "Not sending email to #{bound.reservation.email}"
       return
     end

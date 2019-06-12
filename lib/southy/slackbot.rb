@@ -77,7 +77,9 @@ module Southy
     end
 
     def notify_checked_in(bound)
-      if ENV['RUBY_ENV'] == 'test'
+      return if ENV['RUBY_ENV'] == 'test'
+
+      if ! @config.notify_on_checkin?
         puts "Not confirming #{bound.reservation.conf} on Slack"
         return
       end
