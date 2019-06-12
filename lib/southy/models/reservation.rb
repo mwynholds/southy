@@ -135,13 +135,10 @@ module Southy
       max_name   = bounds.map(&:passengers).flatten.map(&:name).map(&:length).max
       max_depart = bounds.map(&:departure_airport).map(&:name).map(&:length).max + 6
       max_arrive = bounds.map(&:arrival_airport).map(&:name).map(&:length).max + 6
-      max_stops  = bounds.map(&:stops).all?(&:empty?) ? 0 : 5
 
       out = ""
       bounds.sort_by(&:departure_time).each do |b|
         b.reservation.passengers.each_with_index do |p, i|
-          s = b.stops.length
-
           if options[:short]
             leader = i == 0 ? "#{b.reservation.conf}:" : "       "
             depart = b.departure_airport.code
@@ -155,7 +152,7 @@ module Southy
           name     = sprintf "%-#{max_name}s", p.name
           time     = b.local_departure_time.strftime "%Y-%m-%d %l:%M%P"
           seats    = p.seats_for(b).length > 0 ? " *** #{p.seats_ident_for(b)}" : ""
-          stops    = b.stops.empty? ? "" : " (+#{b.stops.length})"
+          stops    = b.stops.length > 0 ? " (+#{b.stops.length})" : "     "
 
           out += "#{leader} #{name}  #{time}  #{depart} -> #{arrive}#{stops}#{seats}\n"
         end

@@ -8,7 +8,7 @@ module Southy
       @agent = TravelAgent.new(@config)
       daemon = Daemon.new(@agent)
       @service = Service.new(@agent, daemon)
-      slackbot = Slackbot.new(@config, @agent, @service)
+      slackbot = Slackbot.new(@config, @agent)
       daemon.slackbot = slackbot  # TODO: this is circular and ugly :-(
       @agent.slackbot = slackbot  # more ugly
       @mailer = Mailer.new(@config)

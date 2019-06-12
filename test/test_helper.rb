@@ -6,7 +6,6 @@ require 'southy'
 require 'minitest/autorun'
 
 def clean_db
-  Southy::Source.delete_all
   Southy::Seat.delete_all
   Southy::Stop.delete_all
   Southy::Bound.delete_all
@@ -19,7 +18,9 @@ def agent
   monkey   = Southy::TestMonkey.new fixtures
   config   = Southy::Config.new
   agent    = Southy::TravelAgent.new config
-  agent.monkey = monkey
+  slackbot = Southy::Slackbot.new config, agent
+  agent.monkey   = monkey
+  agent.slackbot = slackbot
 
   agent
 end

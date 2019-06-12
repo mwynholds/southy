@@ -3,10 +3,9 @@ require 'set'
 
 module Southy
   class Slackbot
-    def initialize(config, travel_agent, service)
+    def initialize(config, travel_agent)
       @config = config
       @agent = travel_agent
-      @service = service
       @restarts = []
       @channels = Set.new
 
@@ -19,7 +18,10 @@ module Southy
       end
 
       @webclient = Slack::Web::Client.new
-      @slack_users = get_slack_users
+    end
+
+    def slack_users
+      @slack_users ||= get_slack_users
     end
 
     def run
@@ -75,12 +77,17 @@ module Southy
     end
 
     def notify_checked_in(bound)
-      email_slack_user = @slack_users.find { |su| su.profile.email == bound.reservation.email }
-      name_slack_users = bound.passengers.map { |p| @slack_users.find { |su| p.name_matches? "#{su.profile.first_name} #{su.profile.last_name}" } }.compact
-      slack_users = Set.new(name_slack_users)
-      slack_users << email_slack_user if email_slack_user
+      if ENV['RUBY_ENV'] == 'test'
+        puts "Not confirming #{bound.reservation.conf} on Slack"
+        return
+      end
 
-      slack_users.each do |su|
+      email_slack_user = slack_users.find { |su| su.profile.email == bound.reservation.email }
+      name_slack_users = bound.passengers.map { |p| slack_users.find { |su| p.name_matches? "#{su.profile.first_name} #{su.profile.last_name}" } }.compact
+      bound_slack_users = Set.new(name_slack_users)
+      bound_slack_users << email_slack_user if email_slack_user
+
+      bound_slack_users.each do |su|
         message   = "Your party has been checked in to flight `SW#{bound.flights.first}`"
         itinerary = "```#{Reservation.list([bound], short: true)}```"
         resp = @webclient.im_open user: su.id
