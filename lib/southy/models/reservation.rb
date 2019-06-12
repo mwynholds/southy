@@ -48,7 +48,7 @@ module Southy
 
     def passengers_ident
       l = passengers.length
-      passengers.first.name + ( l == 1 ? "" : " +#{l-1}" )
+      passengers.first.name + ( l == 1 ? "" : " (+#{l-1})" )
     end
 
     def ident

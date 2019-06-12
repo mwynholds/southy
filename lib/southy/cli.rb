@@ -71,10 +71,13 @@ module Southy
 
     def checkin(params)
       reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
-      bounds = reservations.map(&:bounds).flatten.sort_by(&:departure_time)
+      bounds   = reservations.map(&:bounds).flatten.sort_by(&:departure_time)
+      max_pass = reservations.map(&:passengers_ident).map(&:length).max
       bounds.each do |b|
-        r = b.reservation
-        print "Checking in #{r.conf} (SW#{b.flights.first}) for #{r.passengers_ident} ... "
+        r      = b.reservation
+        fnum   = sprintf "%-8s", "(SW#{b.flights.first})"
+        pident = sprintf "%-#{max_pass}s", r.passengers_ident
+        print "Checking in #{r.conf} #{fnum} for #{pident} ... "
         begin
           checked_in = @agent.checkin b
           puts checked_in ? b.seats_ident : "unable to check in"
