@@ -2,15 +2,15 @@ module Southy
 
   class CLI
     def initialize(opts)
-      @options = { :verbose => false, :write => false }.merge opts
-      check_options
+      @options = { :verbose => false }.merge opts
 
       @config = Config.new
       @agent = TravelAgent.new(@config)
       daemon = Daemon.new(@agent)
       @service = Service.new(@agent, daemon)
-      slackbot = Slackbot.new(@config, @agent, @service)
+      slackbot = Slackbot.new(@config, @agent)
       daemon.slackbot = slackbot  # TODO: this is circular and ugly :-(
+      @agent.slackbot = slackbot  # more ugly
       @mailer = Mailer.new(@config)
     end
 
@@ -44,144 +44,83 @@ module Southy
       @service.status
     end
 
-    def init(params)
-      @config.init(*params)
-    end
-
     def add(params)
-      result = @config.add(*params)
-      if result[:error]
-        puts "Not added - #{result[:error]}"
+      if Bound.for_reservation(params[0]).length > 0
+        puts "That reservation already exists.  Try 'southy reconfirm #{params[0]}'"
         return
       end
 
-      flights = @config.find(params[0])
-      confirm_flights flights
-      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
+      reservation = confirm_reservation(*params)
+      puts Reservation.list(reservation&.bounds)
     end
 
     def remove(params)
-      @config.remove(*params)
+      deleted = Reservation.where(confirmation_number: params).destroy_all
+      puts "Removed #{deleted.length} reservation(s) - #{deleted.map(&:conf).join(', ')}"
     end
 
     def delete(params)
       remove(params)
     end
 
-    def confirm(params)
-      flights = params.length > 0 ? @config.find(params[0]) : @config.unconfirmed
-      confirm_flights flights
-      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
-    end
-
     def reconfirm(params)
-      flights = params.length > 0 ? @config.find(params[0]) : ( @config.unconfirmed + @config.upcoming )
-      confirm_flights flights
-      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
+      reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
+      reservations = confirm_reservations reservations
+      puts Reservation.list reservations.map(&:bounds).flatten
     end
 
     def checkin(params)
-      input = params.length > 0 ? @config.find(params[0]) : @config.upcoming
-      groups = input.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
-
-      groups.values.each do |flights|
-        flight = flights[0]
-        name = flight.full_name
-        len = flights.length
-        name += " (and #{len - 1} other passenger#{len > 2 ? 's' : ''})" if len > 1
-        print "Checking in #{flight.confirmation_number} (SW#{flight.number}) for #{name}... "
-        if flight.checked_in?
-          puts "#{flights.map(&:seat).join(', ')}"
-        else
-          response = @agent.checkin(flights)
-          if response[:error]
-            puts "#{response[:error]} (#{response[:reason]})"
-          else
-            checked_in_flights = response[:flights]
-            if checked_in_flights.nil?
-              puts 'not available'
-            elsif checked_in_flights.empty?
-              puts 'unable to check in at this time'
-            else
-              puts checked_in_flights.map(&:seat).join(', ')
-            end
-          end
+      reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
+      bounds   = reservations.map(&:bounds).flatten.sort_by(&:departure_time)
+      max_pass = reservations.map(&:passengers_ident).map(&:length).max
+      bounds.each do |b|
+        r      = b.reservation
+        fnum   = sprintf "%-8s", "(SW#{b.flights.first})"
+        pident = sprintf "%-#{max_pass}s", r.passengers_ident
+        print "Checking in #{r.conf} #{fnum} for #{pident} ... "
+        begin
+          checked_in = @agent.checkin b
+          puts checked_in ? b.seats_ident : "unable to check in"
+        rescue SouthyException => e
+          puts e.message
         end
       end
     end
 
     def checkout(params)
-      input = params.length > 0 ? @config.find(params[0]) : @config.upcoming
-      @agent.checkout input
-      puts @config.list :verbose => @options[:verbose], :filter => ( params[0] )
-    end
-
-    def resend(params)
-      groups = @config.checked_in.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
-      groups.values.each do |flights|
-        flight = flights[0]
-        name = flight.full_name
-        len = flights.length
-        name += " (and #{len - 1} other passenger#{len > 2 ? 's' : ''})" if len > 1
-        print "Re-sending #{flight.confirmation_number} (SW#{flight.number}) to #{name}... "
-        sent = @agent.resend flights
-        puts( sent ? 'sent' : 'not sent' )
-      end
-
+      reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
+      @agent.checkout reservations
+      puts Reservation.list reservations.map(&:bounds).flatten
     end
 
     def list(params)
       puts 'Upcoming Southwest flights:'
-      puts @config.list :verbose => @options[:verbose], :filter => ( params && params[0] )
+      puts Reservation.list Bound.upcoming
     end
 
     def history(params)
       puts 'Previous Southwest flights:'
-      puts @config.history :verbose => @options[:verbose]
-    end
-
-    def prune(params)
-      n = @config.prune
-      puts "Removed #{n} flight#{n == 1 ? '' : 's'}."
-    end
-
-    def test(params)
-      p Southy::Airport.all.map(&:timezone).uniq
-    end
-
-    def email(params)
-      ( return puts "No email provided" ) unless params.length > 0
-      @mailer.send_test_email params[0]
-      puts "Sent email to #{params[0]}"
+      puts Reservation.list Bound.past
     end
 
     private
 
-    def check_options
-      if @options[:write]
-        unless RUBY_PLATFORM =~ /darwin/
-          puts "The -w option is only implemented for OS X.  That option will be ignored."
-          @options[:write] = false
-        end
+    def confirm_reservation(conf, first, last, email = nil)
+      print "Confirming #{conf} for #{first} #{last}... "
+      begin
+        reservation, is_new = @agent.confirm conf, first, last, email
+        puts is_new ? "success" : "no changes"
+      rescue SouthyException => e
+        puts e.message
       end
+
+      reservation
     end
 
-    def confirm_flights(to_confirm)
-      @service.pause
-      to_confirm.uniq {|f| f.conf}.each do |flight|
-        print "Confirming #{flight.conf} for #{flight.full_name}... "
-        response = @agent.confirm(flight)
-        if response[:error]
-          puts "#{response[:error]} (#{response[:reason]})"
-        else
-          puts "success"
-          flights = response[:flights].reject { |conf, _| conf == flight.conf }
-          flights.each do |conf, legs|
-            puts "   Related #{conf} for #{legs[0].full_name}... success"
-          end
-        end
+    def confirm_reservations(reservations)
+      reservations.map do |r|
+        confirm_reservation r.conf, r.first_name, r.last_name, r.email
       end
-      @service.resume
     end
 
   end

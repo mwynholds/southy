@@ -1,0 +1,10 @@
+{
+  "code": 400308192,
+  "message": "Sorry! We can't check you into this flight. Please see a gate agent.",
+  "messageKey": "ERROR__AIR_TRAVEL__NOT_OPEN",
+  "httpStatusCode": "BAD_REQUEST",
+  "requestId": "no-exp-id:-GgqTVv1SpGb4sC72R33yw:mobile-air-operations",
+  "infoList": [
+
+  ]
+}

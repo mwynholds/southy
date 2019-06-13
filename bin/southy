@@ -4,18 +4,14 @@ $LOAD_PATH << File.dirname(__FILE__) + "/../lib" if $0 == __FILE__
 require 'optparse'
 require 'southy'
 
-config = { :write => false }
-operations = %w(init run rundebug start startdebug stop restart confirm reconfirm checkin checkout resend status add remove delete list history prune test email)
+operations = %w(init run rundebug start startdebug stop restart reconfirm checkin checkout status add remove delete list history)
 
+config = { verbose: false }
 option_parser = OptionParser.new do |opts|
   opts.banner = "Southy #{Southy::VERSION}, auto check-in for Southwest flights\nUsage: #{__FILE__} [command] [options]"
 
   opts.on("-v", "--verbose", "Be verbose") do
     config[:verbose] = true
-  end
-
-  opts.on("-w", "--write", "Persist command") do
-    config[:write] = true
   end
 
   opts.separator <<-EOS
@@ -25,23 +21,18 @@ Supported commands:
  init <personal_info>                Initialize Southy with your personal info
  list                                Display upcoming flight check-ins
  history                             Display past flight check-ins
- prune                               Remove historical flights
  add <conf> [<personal_info>]        Add a new check-in
  remove <conf>                       Remove a check-in (synonym: delete)
- confirm                             Confirm all unconfirmed flights
- reconfirm                           Reconfirm all flights (picks up any ticketing changes)
- checkin                             Check-in for all available flights
- resend                              Resend emails for all upcoming, checked-in flights
+ reconfirm [<conf>]                  Reconfirm flights (picks up any ticketing changes)
+ checkin [<conf>]                    Check-in to all available flights
  run                                 Run Southy in the foreground (kill with ctrl-c)
- start [-w]                          Start Southy so that it can check you in
- stop [-w]                           Stop Southy
+ start                               Start Southy so that it can check you in
+ stop                                Stop Southy
  restart                             Stop and start Southy
  status                              Show Southy's status (and PID if running)
 
 <personal_info> is in the form of: <first_name> <last_name> <email>
 where email is always optional.  Southy will email your boarding pass to you if it can.
-
--w will persist the start/stop command so the agent will load on startup or never load, respectively.
 EOS
 end
 option_parser.parse!
@@ -54,9 +45,6 @@ if operations.include?(op)
     exit ( cli.send(op.to_sym, ARGV) ? 0 : 1 )
   rescue SystemExit => e
     exit e.status
-  rescue ArgumentError => e
-    puts e.message
-    exit 2
   rescue Exception => e
     puts "Uh oh, I didn't expect this:"
     puts e.message

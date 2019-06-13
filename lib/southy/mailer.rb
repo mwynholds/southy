@@ -5,52 +5,33 @@ class Southy::Mailer
     @config = config
   end
 
-  def send_test_email(recipient)
-    flight = Southy::Flight.new(
-      email:               recipient,
-      first_name:          'Joey',
-      last_name:           'Shabadoo',
-      confirmation_number: 'ABCDEF',
-      number:              '1234',
-      depart_airport:      'Los Angeles',
-      depart_code:         'LAX',
-      arrive_airport:      'San Francisco',
-      arrive_code:         'SFO',
-      depart_date:         DateTime.now,
-      group:               'A',
-      position:            '15'
-    )
-    send_email [flight]
-  end
+  def send_email(bound)
+    message = generate_email bound
+    return false unless message
+    return false unless bound.reservation.email
 
-  def send_email(flights)
-    message = generate_email flights
-    return false if message.nil?
+    return if ENV['RUBY_ENV'] == 'test'
 
-    flight = flights[0]
-    return false if flight.nil? || flight.email.nil?
+    if ! @config.notify_on_checkin?
+      puts "Not sending email to #{bound.reservation.email}"
+      return
+    end
 
     Net::SMTP.start(@config.smtp_host, @config.smtp_port, @config.smtp_domain, @config.smtp_account, @config.smtp_password, :plain) do |smtp|
-      # smtp.send_message message, 'southy@carbonfive.com', flight.email
+      smtp.send_message message, 'southy@carbonfive.com', bound.reservation.email
     end
   end
 
-  def generate_email(flights)
-    flight = flights[0]
-    return nil unless flight.email
+  def generate_email(bound)
+    return nil unless bound.reservation.email
 
-    seats = ""
-    flights.each do |f|
-      seats += "#{f.full_name} : #{f.seat}\n"
-    end
-
-    local = Southy::Flight.local_date_time(flight.depart_date, flight.depart_code)
+    seats = bound.passengers.map { |p| "#{p.name} : #{p.seats_for(bound).map(&:ident).join(", ")}" }.join("\n")
     marker = 'MIMECONTENTMARKER'
 
     message = <<EOM
 From: Southy <southy@carbonfive.com>
-To: #{flight.full_name} <#{flight.email}>
-Subject: You are checked in for Southwest flight #{flight.number} to #{flight.arrive_airport} (#{flight.arrive_code})
+To: #{bound.passengers.first.name} <#{bound.reservation.email}>
+Subject: You are checked in for Southwest conf #{bound.reservation.conf} to #{bound.arrival_airport.ident})
 MIME-Version: 1.0
 Content-Type: multipart/mixed; boundary=#{marker}
 --#{marker}
@@ -59,10 +40,10 @@ Content-Transfer-Encoding:8bit
 
 You have been successfully checked in to your flight(s).  Details are as follows:
 
-Confirmation number : #{flight.confirmation_number}
-Flight : SW#{flight.number}
-Departing : #{local.strftime('%F %l:%M%P')}
-Route : #{flight.depart_airport} (#{flight.depart_code}) --> #{flight.arrive_airport} (#{flight.arrive_code})
+Confirmation number : #{bound.reservation.conf}
+Flight : SW#{bound.flights.first}
+Departing : #{bound.local_departure_time.strftime('%F %l:%M%P')}
+Route : #{bound.departure_airport.ident} --> #{bound.arrival_airport.ident}
 
 #{seats}
 Love, southy

@@ -18,12 +18,12 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency 'json'
   s.add_runtime_dependency 'tzinfo'
-  s.add_runtime_dependency 'slack-ruby-client', ">= 0.14"
-  s.add_runtime_dependency 'async-websocket'
+  s.add_runtime_dependency 'slack-ruby-client', "= 0.14.1"
+  s.add_runtime_dependency 'async-websocket', "= 0.8.0"  # slack-ruby-client breaks with anything greater
+  s.add_runtime_dependency 'activerecord'
+  s.add_runtime_dependency 'standalone_migrations'
+  s.add_runtime_dependency 'pg'
 
   s.add_development_dependency 'rake'
   s.add_development_dependency 'minitest'
-  s.add_development_dependency 'launchy'
-  s.add_development_dependency 'factory_girl'
-  s.add_development_dependency 'timecop'
 end

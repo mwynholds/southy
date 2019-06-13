@@ -4,18 +4,29 @@ module Southy
   rescue LoadError
   end
 
+  require 'active_record'
+
   require 'southy/version'
   require 'southy/helpers'
   require 'southy/debug'
+  require 'southy/southy_exception'
+  require 'southy/models/airport'
+  require 'southy/models/seat'
+  require 'southy/models/stop'
+  require 'southy/models/passenger'
+  require 'southy/models/bound'
+  require 'southy/models/reservation'
+  require 'southy/models/message'
   require 'southy/mailer'
   require 'southy/monkey'
   require 'southy/service'
   require 'southy/config'
   require 'southy/daemon'
-  require 'southy/flight'
   require 'southy/travel_agent'
-  require 'southy/airport'
-  require 'southy/message'
   require 'southy/cli'
   require 'southy/slackbot'
+
+  env    = ENV['RUBY_ENV'] || 'development'
+  config = YAML.load File.read "#{__dir__}/../db/config.yml"
+  ActiveRecord::Base.establish_connection config[env]
 end

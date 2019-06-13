@@ -1,74 +1,68 @@
 require 'test_helper'
-require 'tmpdir'
-require 'fileutils'
-require 'timecop'
 
-class Southy::IntegrationTest < MiniTest::Spec
-  EXPECTED =
-          {
-                  #'WBWHS8' => { 1814 => { 'Robin Pak' => 'A31' },
-                  #              2198 => { 'Robin Pak' => 'A49' },
-                  #              1278 => { 'Robin Pak' => 'B26' } },
-                  #'IU6ITC' => { 2531 => { 'Candace Wynholds' => 'A25', 'Hans Wynholds' => 'A33' },
-                  #              3411 => { 'Candace Wynholds' => 'B25', 'Hans Wynholds' => 'B33' } }#,
-                  #'IBG773' => { 246  => { 'Lora Wynholds' => nil },
-                  #              1827 => { 'Lora Wynholds' => nil } }
-          }
+module Southy
+  class IntegrationTest < MiniTest::Spec
 
-  describe 'Itineraries' do
+    describe "Integration tests" do
 
-    EXPECTED.each do |conf, flights|
-      describe "#{conf}" do
+      before do
+        clean_db
+      end
+
+      describe "Single passenger, single bound, no stops" do
         before do
-          @dir = Dir.mktmpdir "southy"
-          config = Southy::Config.new @dir
-          @agent = Southy::TravelAgent.new config, :test => true
-          @agent.monkey.itinerary = conf
-          name = flights.first[1].first[0].split
-          flight_info = Southy::Flight.new :confirmation_number => conf, :first_name => name[0], :last_name => name[1]
-          @confirmed = @agent.confirm flight_info
-          @checked_in = []
-          @confirmed.each do |c|
-            Timecop.travel(c.depart_date - 1.0/2)
-            @checked_in += @agent.checkin([c.dup], :pdf => false)
-            Timecop.return
-          end
+          agent.confirm "LNK23P", "Dimas", "Guardado"
+          @reservations = Reservation.where confirmation_number: "LNK23P"
         end
 
-        after do
-          FileUtils.remove_entry_secure @dir
+        it "adds the right flights" do
+          expect(@reservations.length).must_equal 1
+          expect(@reservations.first.bounds.length).must_equal 1
+          expect_reservation @reservations.first, conf: "LNK23P", email: nil
+          expect_passengers  @reservations.first, "Dimas Guardado"
+          expect_bound       @reservations.first.bounds.first, departure: "LAX 2019-06-07 21:50", arrival: "SJC 2019-06-07 22:55", flights: [ 1331 ]
+          expect_stops       @reservations.first.bounds.first.stops
         end
 
-        it 'confirms the flights' do
-          total_flights = flights.reduce(0) { |total, (_, passengers)| total += passengers.length }
-          @confirmed.length.must_equal total_flights
-          flights.each do |num, passengers|
-            f2 = @confirmed.select { |f| f.number == num.to_s }
-            f2.length.must_equal passengers.length
-            passengers.each do |name, seat|
-              f3 = f2.select { |f| f.full_name == name }
-              f3.length.must_equal 1
-            end
-          end
+      end
+
+      describe "Multiple passengers, single bound, single stop" do
+        before do
+          agent.confirm "J9MZME", "Don", "Thompson"
+          @reservations = Reservation.where confirmation_number: "J9MZME"
         end
 
-        it 'checks in the flights' do
-          total_flights = flights.reduce(0) { |total, (_, passengers)| total += passengers.length }
-          @checked_in.length.must_equal total_flights
-          flights.each do |num, passengers|
-            f2 = @checked_in.select { |f| f.number == num.to_s }
-            f2.length.must_equal passengers.length
-            passengers.each do |name, seat|
-              f3 = f2.select { |f| f.full_name == name }
-              f3.length.must_equal 1
-              f = f3[0]
-              if seat.nil?
-                f.seat.must_be_nil
-              else
-                f.seat.must_equal seat
-              end
-            end
-          end
+        it "adds the right flights" do
+          expect(@reservations.length).must_equal 1
+          expect(@reservations.first.bounds.length).must_equal 1
+          expect_reservation @reservations.first, conf: "J9MZME", email: nil
+          expect_passengers  @reservations.first, "Donald L Thompson", "West Thompson"
+          expect_bound       @reservations.first.bounds.first, departure: "TUS 2019-06-26 19:10", arrival: "SFO 2019-06-26 23:45", flights: [ 960, 543 ]
+          expect_stops       @reservations.first.bounds.first.stops, "LAS 2019-06-26 20:25"
+        end
+      end
+
+      describe "Multiple passengers, multiple bounds, no stops" do
+        before do
+          agent.confirm "LALAGH", "Max", "Holder", "max@carbonfive.com"
+          @reservations = Reservation.where confirmation_number: "LALAGH"
+          @reservations = @reservations.map { |r| agent.checkin r.bounds.first, force: true }
+        end
+
+        it "adds the right flights" do
+          expect(@reservations.length).must_equal 1
+          expect(@reservations.first.bounds.length).must_equal 2
+          expect_reservation @reservations.first, conf: "LALAGH", email: "max@carbonfive.com"
+          expect_passengers  @reservations.first, "Clay Campbell Smalley", "Maxwell Hanson Holder"
+          expect_bound       @reservations.first.bounds.first, departure: "OAK 2019-06-01 08:20", arrival: "AUS 2019-06-01 13:45", flights: [ 4963 ]
+          expect_stops       @reservations.first.bounds.first.stops
+          expect_bound       @reservations.first.bounds.last, departure: "AUS 2019-06-03 11:50", arrival: "OAK 2019-06-03 13:45", flights: [ 993 ]
+          expect_stops       @reservations.first.bounds.last.stops
+        end
+
+        it "gets the right seats" do
+          expect_seats       @reservations.first.bounds.first, "Maxwell Hanson Holder" => "B04", "Clay Campbell Smalley" => "B03"
+          expect_seats       @reservations.first.bounds.second, "Maxwell Hanson Holder" => "A55", "Clay Campbell Smalley" => "A54"
         end
       end
     end

@@ -3,10 +3,9 @@ require 'set'
 
 module Southy
   class Slackbot
-    def initialize(config, travel_agent, service)
+    def initialize(config, travel_agent)
       @config = config
       @agent = travel_agent
-      @service = service
       @restarts = []
       @channels = Set.new
 
@@ -18,10 +17,14 @@ module Southy
         slack_cfg.token = @config.slack_api_token
       end
 
+      @webclient = Slack::Web::Client.new
+    end
+
+    def slack_users
+      @slack_users ||= get_slack_users
     end
 
     def run
-      @webclient = Slack::Web::Client.new
       auth = @webclient.auth_test
       if auth['ok']
         puts "Slackbot is active!"
@@ -73,9 +76,32 @@ module Southy
       end
     end
 
+    def notify_checked_in(bound)
+      return if ENV['RUBY_ENV'] == 'test'
+
+      if ! @config.notify_on_checkin?
+        puts "Not confirming #{bound.reservation.conf} on Slack"
+        return
+      end
+
+      email_slack_user = slack_users.find { |su| su.profile.email == bound.reservation.email }
+      name_slack_users = bound.passengers.map { |p| slack_users.find { |su| p.name_matches? "#{su.profile.first_name} #{su.profile.last_name}" } }.compact
+      bound_slack_users = Set.new(name_slack_users)
+      bound_slack_users << email_slack_user if email_slack_user
+
+      bound_slack_users.each do |su|
+        message   = "Your party has been checked in to flight `SW#{bound.flights.first}`"
+        itinerary = "```#{Reservation.list([bound], short: true)}```"
+        resp = @webclient.im_open user: su.id
+        @webclient.chat_postMessage channel: resp.channel.id, text: message,   as_user: true
+        @webclient.chat_postMessage channel: resp.channel.id, text: itinerary, as_user: true
+      end
+    end
+
     def method_missing(name, *args)
       @config.log "No method found for: #{name}"
       @config.log args[0]
+      nil
     end
 
     def user_profile(data)
@@ -136,36 +162,35 @@ EOM
       end
     end
 
-    def print_flights(flights, message)
-      flights.each_slice(30) do |slice|
-        out = '```'
-        if slice.length > 0
-          out += Southy::Flight.sprint slice, short: true
-        else
-          out += 'No upcoming flights.'
-        end
-        out += '```'
-        message.reply out
+    def print_bounds(bounds, message)
+      if !bounds || bounds.empty?
+        message.reply "```No available flights.```"
+        return
+      end
+
+      all = Reservation.list bounds, short: true
+      all.split("\n").each_slice(50) do |slice|
+        message.reply "```#{slice.join("\n")}```"
       end
     end
 
     def list(data, args, message)
       profile = user_profile data
-      message.reply "Upcoming Southwest flights for #{profile[:email]}:"
+      message.reply "Upcoming Southwest flights for #{profile[:full_name]}:"
       message.type
       if args && args.length > 0
-        flights = @config.upcoming.select { |f| f.confirmation_number.downcase == args[0].downcase }
+        bounds = Bound.upcoming.for_reservation args[0]
       else
-        flights = @config.upcoming.select { |f| f.email == profile[:email] || f.full_name == profile[:full_name] }
+        bounds = Bound.upcoming.for_person profile[:email], profile[:full_name]
       end
-      print_flights flights, message
+      print_bounds bounds, message
     end
 
     def list_all(data, args, message)
       message.reply "Upcoming Southwest flights:"
       message.type
-      flights = @config.upcoming
-      print_flights flights, message
+      bounds = Bound.upcoming
+      print_bounds bounds, message
     end
 
     def whatup(data, args, message)
@@ -179,22 +204,28 @@ EOM
 
     def history(data, args, message)
       profile = user_profile data
-      message.reply "Previous Southwest flights for #{profile[:email]}:"
+      message.reply "Previous Southwest flights for #{profile[:full_name]}:"
       message.type
-      flights = @config.past.select { |f| f.email == profile[:email] }
-      print_flights flights, message
+      bounds = Bound.past.for_person profile[:email], profile[:full_name]
+      print_bounds bounds, message
     end
 
     def history_all(data, args, message)
       message.reply "Previous Southwest flights:"
       message.type
-      flights = @config.past
-      print_flights flights, message
+      bounds = Bound.past
+      print_bounds bounds, message
     end
 
     def add(data, args, message)
       args.tap do |(conf, fname, lname, email)|
         return ( message.reply "You didn't enter a confirmation number!" ) unless conf
+
+        if Bound.for_reservation(conf).length > 0
+          message.reply "That reservation already exists. Try `southy reconfirm #{conf}`"
+          return
+        end
+
         profile = user_profile data
         unless fname and lname
           fname = profile[:first_name]
@@ -207,60 +238,74 @@ EOM
           email = match.captures[0]
         end
 
-        begin
-          @service.pause
-          result = @config.add conf, fname, lname, email
-          if result && result[:error]
-            message.reply result[:error]
-            return
-          end
-
-          flights = @config.find conf
-          result = @agent.confirm flights[0]
-          if result && result[:error]
-            message.reply "Could not confirm flights: #{result[:reason]}"
-            return
-          end
-        ensure
-          @service.resume
-        end
-
-        flights = @config.upcoming.select { |f| f.conf.downcase == conf.downcase }
-        print_flights flights, message
+        reservation = confirm_reservation conf, fname, lname, email, message
+        print_bounds reservation&.bounds, message
       end
     end
 
     def remove(data, args, message)
       args.tap do |(conf)|
         return ( message.reply "You didn't enter a confirmation number!" ) unless conf
-        @config.remove conf
-        list data, '', message
+        deleted = Reservation.where(confirmation_number: conf).destroy_all
+        message.reply "Removed #{deleted.length} reservation(s) - #{deleted.map(&:conf).join(', ')}"
       end
     end
 
     def reconfirm(data, args, message)
       profile = user_profile data
-      message.reply "Reconfirming Southwest flights for #{profile[:email]}:"
-      message.type
-      flights = @config.upcoming.select { |f| f.email == profile[:email] }
-      flights.group_by { |f| f.conf }.each do |conf, fs|
-        @agent.confirm fs.first
-        message.type
+      reservations = Reservation.upcoming.for_person profile[:email], profile[:full_name]
+      if reservations.empty?
+        message.reply "No flights available for #{profile[:full_name]}"
+        return
       end
-      flights = @config.upcoming.select { |f| f.email == profile[:email] }
-      print_flights flights, message
+
+      reservations = confirm_reservations reservations, message
+      print_bounds reservations.map(&:bounds).flatten, message
     end
 
     def reconfirm_all(data, args, message)
-      message.reply "Reconfirming all Southwest flights"
-      message.type
-      flights = @config.upcoming
-      flights.group_by { |f| f.conf }.each do |conf, fs|
-        @agent.confirm fs.first
-        message.type
+      reservations = Reservation.upcoming
+      if reservations.empty?
+        message.reply "No flights available"
+        return
       end
-      flights = @config.upcoming
-      print_flights flights, message
+
+      reservations = confirm_reservations reservations, message
+      print_bounds reservations.map(&:bounds).flatten, message
+    end
+
+    private
+
+    def confirm_reservation(conf, first, last, email, message)
+      message.reply "Confirming #{conf} for *#{first} #{last}*..."
+      message.type
+      reservation, _ = @agent.confirm conf, first, last, email
+      reservation
+    rescue SouthyException => e
+      message.reply "Could not confirm reservation #{conf} - #{e.message}"
+      nil
+    end
+
+    def confirm_reservations(reservations, message)
+      reservations.sort_by { |r| r.bounds.first.departure_time }.map do |r|
+        confirm_reservation r.conf, r.first_name, r.last_name, r.email, message
+      end
+    end
+
+    def get_slack_users
+      #print "Getting users from Slack... "
+      resp = @webclient.users_list
+      throw resp unless resp.ok
+      users = resp.members.map do |member|
+        next unless member.profile.email # no bots
+        next if member.deleted # no ghosts
+        member
+      end
+      #puts "done (#{users.length} users)"
+      users.compact
+    rescue => e
+      #puts e.message
+      raise e
     end
   end
 end

@@ -1,112 +1,91 @@
-class Southy::Daemon
+module Southy
+  class Daemon
 
-  def initialize(travel_agent)
-    @agent = travel_agent
-    @config = travel_agent.config
-    @active = true
-    @paused = false
-  end
+    def initialize(travel_agent)
+      @agent = travel_agent
+      @config = travel_agent.config
+      @active = true
+    end
 
-  def slackbot=(slackbot)
-    @slackbot = slackbot
-  end
+    def slackbot=(slackbot)
+      @slackbot = slackbot
+    end
 
-  def start(daemonize = true)
-    Process.daemon if daemonize
-    write_pid
+    def start(daemonize = true)
+      Process.daemon if daemonize
+      write_pid
 
-    [ 'HUP', 'INT', 'QUIT', 'TERM' ].each do |sig|
-      Signal.trap(sig) do
-        @config.log "Interrupted with signal: #{sig}"
-        kill
+      [ 'HUP', 'INT', 'QUIT', 'TERM' ].each do |sig|
+        Signal.trap(sig) do
+          @config.log "Interrupted with signal: #{sig}"
+          kill
+        end
+      end
+
+      begin
+        @slackthread = Thread.new { @slackbot.run }
+        sleep 1
+        run
+      rescue => e
+        @config.log "Unexpected error", e
+      ensure
+        cleanup
       end
     end
 
-    begin
-      @slackthread = Thread.new { @slackbot.run }
-      run
-    rescue => e
-      @config.log "Unexpected error", e
-    ensure
-      cleanup
+    def cleanup
+      delete_pid
     end
-  end
 
-  def pause
-    @paused = true
-    @config.log "Daemon paused"
-  end
+    private
 
-  def resume
-    @paused = false
-    @config.log "Daemon resumed"
-  end
+    def run
+      @config.log "Southy is running."
+      Thread.abort_on_exception = true
+      running = {}
+      while active? do
+        bounds = Bound.upcoming.uniq { |b| b.reservation.conf }
+        bounds.each do |b|
+          next unless b.ready_for_checkin?
 
-  def cleanup
-    delete_pid
-  end
+          r = b.reservation
+          next if running[r.conf]
 
-  private
-
-  def run
-    @config.log "Southy is running."
-    attempts = {}
-    running = {}
-    while active? do
-      if ! @paused
-        @config.reload
-
-        @config.unconfirmed.each do |flight|
-          @agent.confirm(flight)
-        end
-
-        groups = @config.upcoming.group_by { |flight| { :conf => flight.conf, :number => flight.number } }
-        groups.values.each do |flights|
-          flight = flights[0]
-          attempts[flight.conf] ||= 0
-          if flight.checkin_available?
-            if attempts[flight.conf] <= 5 || flight.checkin_time? || flight.late_checkin_time?
-              unless running[flight.conf]
-                running[flight.conf] = true
-                @config.log "Ready to check in flight #{flight.conf} (#{flight.full_name})" if Debug.is_debug?
-                Thread.abort_on_exception = true
-                Thread.new do
-                  response = @agent.checkin(flights)
-                  checked_in = response[:flights]
-                  if !checked_in || checked_in.empty?
-                    attempts[flight.conf] += 1
-                  else
-                    attempts.delete flight.conf
-                  end
-                  running.delete flight.conf
-                end
-              end
-            end
+          seats = nil
+          Thread.new do
+            running[r.conf] = true
+            checked_in = @agent.checkin b
+            seats =  checked_in ? b.seats_ident : "unable to check in"
+          rescue SouthyException => e
+            seats = e.message
+          ensure
+            running.delete r.conf
+            puts "Checked in #{r.conf} (SW#{b.flights.first}) for #{r.passengers_ident} : #{seats}"
           end
         end
+
+        sleep 0.5
       end
-
-      sleep 0.5
+      @config.log "Southy got killed"
+      @slackthread.kill
     end
-    @config.log "Southy got killed"
-    @slackthread.kill
-  end
 
-  def active?
-    @active
-  end
-
-  def kill
-    @active = false
-  end
-
-  def write_pid
-    File.open @config.pid_file, 'w' do |f|
-      f.write Process.pid.to_s
+    def active?
+      @active
     end
-  end
 
-  def delete_pid
-    File.delete @config.pid_file if File.exists? @config.pid_file
+    def kill
+      @active = false
+    end
+
+    def write_pid
+      File.open @config.pid_file, 'w' do |f|
+        f.write Process.pid.to_s
+      end
+    end
+
+    def delete_pid
+      File.delete @config.pid_file if File.exists? @config.pid_file
+    end
   end
 end
