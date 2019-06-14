@@ -61,7 +61,7 @@ class Southy::Service
   def status
     pid = get_pid
     if pid
-      puts "Southy is running with PID #{pid}"
+      puts "Southy is running with PID #{pid} in env #{ENV['RUBY_ENV']}"
       true
     else
       puts "Southy is not running"
