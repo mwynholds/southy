@@ -79,17 +79,18 @@ module Southy
     def notify_checked_in(bound)
       return if ENV['RUBY_ENV'] == 'test'
 
-      if ! @config.notify_on_checkin?
-        puts "Not confirming #{bound.reservation.conf} on Slack"
-        return
-      end
-
       email_slack_user = slack_users.find { |su| su.profile.email == bound.reservation.email }
       name_slack_users = bound.passengers.map { |p| slack_users.find { |su| p.name_matches? "#{su.profile.first_name} #{su.profile.last_name}" } }.compact
       bound_slack_users = Set.new(name_slack_users)
       bound_slack_users << email_slack_user if email_slack_user
 
       bound_slack_users.each do |su|
+        if ! @config.notify_on_checkin?
+          @config.log "Not confirming #{bound.reservation.conf} on Slack to #{su.profile.first_name} #{su.profile.last_name}"
+          next
+        end
+
+        @config.log "Confirmation #{bound.reservation} to #{su.profile.first_name} #{su.profile.last_name}"
         message   = "Your party has been checked in to flight `SW#{bound.flights.first}`"
         itinerary = "```#{Reservation.list([bound], short: true)}```"
         resp = @webclient.im_open user: su.id

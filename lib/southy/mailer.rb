@@ -13,9 +13,11 @@ class Southy::Mailer
     return if ENV['RUBY_ENV'] == 'test'
 
     if ! @config.notify_on_checkin?
-      puts "Not sending email to #{bound.reservation.email}"
+      @config.log "Not sending email to #{bound.reservation.email}"
       return
     end
+
+    @config.log "Sending email to #{bound.reservation.email}"
 
     Net::SMTP.start(@config.smtp_host, @config.smtp_port, @config.smtp_domain, @config.smtp_account, @config.smtp_password, :plain) do |smtp|
       smtp.send_message message, 'southy@carbonfive.com', bound.reservation.email
