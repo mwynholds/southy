@@ -40,7 +40,7 @@ module Southy
     private
 
     def run
-      @config.log "Southy is running."
+      @config.log "Southy is running with env #{ENV['RUBY_ENV']}."
       Thread.abort_on_exception = true
       running = {}
       while active? do
