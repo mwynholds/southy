@@ -27,7 +27,7 @@ module Southy
 
       if Reservation.matches? reservation
         @config.log "No changes to #{reservation.ident}"
-        return reservation, false
+        return Reservation.where(confirmation_number: conf).first, false
       else
         Reservation.where(confirmation_number: conf).destroy_all
         reservation.save!
