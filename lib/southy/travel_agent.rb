@@ -49,9 +49,9 @@ module Southy
       begin
         checked_in = monkey.checkin bound.reservation
         checked_in.save!
+        @config.log "Checked in #{bound.ident} - #{bound.seats_ident}"
         @mailer.send_email bound
         @slackbot.notify_checked_in bound
-        @config.log "Checked in #{bound.ident} - #{bound.seats_ident}"
         checked_in
       rescue SouthyException => e
         @config.log "Unable to check in #{bound.ident}"
