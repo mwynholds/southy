@@ -17,7 +17,7 @@ class Southy::Service
       return
     end
 
-    print "Starting Southy... "
+    print "Starting Southy in #{ENV['RUBY_ENV']}... "
     new_pid = Process.fork { @daemon.start }
     Process.detach new_pid
     persist_start if persist
