@@ -86,11 +86,11 @@ module Southy
 
       bound_slack_users.each do |su|
         if ! @config.notify_on_checkin?
-          @config.log "Not confirming #{bound.reservation.conf} on Slack to #{su.profile.first_name} #{su.profile.last_name}"
+          @config.log "Not Slack confirming #{bound.reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
           next
         end
 
-        @config.log "Confirmation #{bound.reservation} to #{su.profile.first_name} #{su.profile.last_name}"
+        @config.log "Slack confirming #{bound.reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
         message   = "Your party has been checked in to flight `SW#{bound.flights.first}`"
         itinerary = "```#{Reservation.list([bound], short: true)}```"
         resp = @webclient.im_open user: su.id
