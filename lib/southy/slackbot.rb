@@ -54,7 +54,12 @@ module Southy
         method = tokens[1].downcase
         args = tokens[2..-1]
         method = "#{method}_all" if args == [ 'all' ]
-        send method, data, args, message
+        if respond_to? method
+          send method, data, args, message
+        else
+          message.reply "I don't know how to `#{method}`"
+          help data, [], message
+        end
       end
 
       client.start!
@@ -97,12 +102,6 @@ module Southy
         @webclient.chat_postMessage channel: resp.channel.id, text: message,   as_user: true
         @webclient.chat_postMessage channel: resp.channel.id, text: itinerary, as_user: true
       end
-    end
-
-    def method_missing(name, *args)
-      @config.log "No method found for: #{name}"
-      @config.log args[0]
-      nil
     end
 
     def user_profile(data)
