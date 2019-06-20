@@ -80,6 +80,11 @@ module Southy
       end
     end
 
+    def self.exists?(reservation)
+      existing = Reservation.where confirmation_number: reservation.conf
+      existing && existing.length > 0
+    end
+
     def self.matches?(reservation)
       existing = Reservation.where confirmation_number: reservation.conf
       existing && existing.first == reservation

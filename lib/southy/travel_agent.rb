@@ -25,13 +25,18 @@ module Southy
         raise e
       end
 
-      if Reservation.matches? reservation
+      if ! Reservation.exists? reservation
+        reservation.save!
+        @config.log "Confirmed #{reservation.ident}"
+        return reservation, true
+      elsif Reservation.matches? reservation
         @config.log "No changes to #{reservation.ident}"
         return Reservation.where(confirmation_number: conf).first, false
       else
         Reservation.where(confirmation_number: conf).destroy_all
         reservation.save!
-        @config.log "Confirmed #{reservation.ident}"
+        @slackbot.notify_reconfirmed reservation
+        @config.log "Re-confirmed #{reservation.ident}"
         return reservation, true
       end
     end

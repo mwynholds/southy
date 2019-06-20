@@ -81,21 +81,42 @@ module Southy
       end
     end
 
-    def notify_checked_in(bound)
+    def slack_users_to_notify(reservation)
+      email_slack_user = slack_users.find { |su| su.profile.email == reservation.email }
+      name_slack_users = reservation.passengers.map { |p| slack_users.find { |su| p.name_matches? "#{su.profile.first_name} #{su.profile.last_name}" } }.compact
+      to_notify = Set.new(name_slack_users)
+      to_notify << email_slack_user if email_slack_user
+      to_notify
+    end
+
+    def notify_reconfirmed(reservation)
       return if ENV['RUBY_ENV'] == 'test'
 
-      email_slack_user = slack_users.find { |su| su.profile.email == bound.reservation.email }
-      name_slack_users = bound.passengers.map { |p| slack_users.find { |su| p.name_matches? "#{su.profile.first_name} #{su.profile.last_name}" } }.compact
-      bound_slack_users = Set.new(name_slack_users)
-      bound_slack_users << email_slack_user if email_slack_user
-
-      bound_slack_users.each do |su|
-        if ! @config.notify_on_checkin?
-          @config.log "Not Slack confirming #{bound.reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
+      slack_users_to_notify(reservation).each do |su|
+        if ! @config.notify_on_slack?
+          @config.log "Not Slacking re-confirmation #{reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
           next
         end
 
-        @config.log "Slack confirming #{bound.reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
+        @config.log "Slacking re-confirmation #{reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
+        message   = "Your reservation has been updated for `#{reservation.conf}`."
+        itinerary = "```#{Reservation.list(reservation.bounds, short: true)}```"
+        resp = @webclient.im_open user: su.id
+        @webclient.chat_postMessage channel: resp.channel.id, text: message,   as_user: true
+        @webclient.chat_postMessage channel: resp.channel.id, text: itinerary, as_user: true
+      end
+    end
+
+    def notify_checked_in(bound)
+      return if ENV['RUBY_ENV'] == 'test'
+
+      slack_users_to_notify(reservation).each do |su|
+        if ! @config.notify_on_slack?
+          @config.log "Not Slacking checkin #{bound.reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
+          next
+        end
+
+        @config.log "Slacking checkin #{bound.reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
         message   = "Your party has been checked in to flight `SW#{bound.flights.first}`"
         itinerary = "```#{Reservation.list([bound], short: true)}```"
         resp = @webclient.im_open user: su.id
