@@ -4,7 +4,7 @@ $LOAD_PATH << File.dirname(__FILE__) + "/../lib" if $0 == __FILE__
 require 'optparse'
 require 'southy'
 
-operations = %w(init run rundebug start startdebug stop restart reconfirm checkin checkout status add remove delete list history)
+operations = %w(init run rundebug reconfirm checkin checkout add remove delete list history)
 
 config = { verbose: false }
 option_parser = OptionParser.new do |opts|
@@ -26,17 +26,12 @@ Supported commands:
  reconfirm [<conf>]                  Reconfirm flights (picks up any ticketing changes)
  checkin [<conf>]                    Check-in to all available flights
  run                                 Run Southy in the foreground (kill with ctrl-c)
- start                               Start Southy so that it can check you in
- stop                                Stop Southy
- restart                             Stop and start Southy
- status                              Show Southy's status (and PID if running)
 
 <personal_info> is in the form of: <first_name> <last_name> <email>
 where email is always optional.  Southy will email your boarding pass to you if it can.
 EOS
 end
 option_parser.parse!
-
 
 op = ARGV.shift
 if operations.include?(op)
@@ -45,6 +40,8 @@ if operations.include?(op)
     exit ( cli.send(op.to_sym, ARGV) ? 0 : 1 )
   rescue SystemExit => e
     exit e.status
+  rescue SignalException => e
+    exit 128 + e.signo
   rescue Exception => e
     puts "Uh oh, I didn't expect this:"
     puts e.message

@@ -6,7 +6,6 @@ module Southy
     def initialize(config, travel_agent)
       @config = config
       @agent = travel_agent
-      @restarts = []
       @channels = Set.new
 
       @conversions = {
@@ -28,11 +27,11 @@ module Southy
       auth = @webclient.auth_test
       if auth['ok']
         puts "Slackbot is active!"
-        @config.log "Slackbot is active!"
-        @config.log "Accepting channels: #{@config.slack_accept_channels}" if @config.slack_accept_channels.length > 0
-        @config.log "Ignoring channels: #{@config.slack_reject_channels}" if @config.slack_reject_channels.length > 0
+        puts "Accepting channels: #{@config.slack_accept_channels}" if @config.slack_accept_channels.length > 0
+        puts "Ignoring channels: #{@config.slack_reject_channels}" if @config.slack_reject_channels.length > 0
       else
-        @config.log "Slackbot is doomed :-("
+        puts
+        puts "Slackbot is doomed :-("
         return
       end
 
@@ -63,22 +62,6 @@ module Southy
       end
 
       client.start!
-    rescue => e
-      @config.log "An error ocurring inside the Slackbot", e
-      @restarts << Time.new
-      @restarts.shift while (@restarts.length > 3)
-      if @restarts.length == 3 and ( Time.new - @restarts.first < 30 )
-        @config.log "Too many errors.  Not restarting anymore."
-        client.on :hello do
-          @channels.each do |channel|
-            client.message channel: channel, text: "Oh no... I have died!  Please make me live again @mike"
-          end
-          client.stop!
-        end
-        client.start!
-      else
-        run
-      end
     end
 
     def slack_users_to_notify(reservation)
@@ -93,12 +76,8 @@ module Southy
       return if ENV['RUBY_ENV'] == 'test'
 
       slack_users_to_notify(reservation).each do |su|
-        if ! @config.notify_on_slack?
-          @config.log "Not Slacking re-confirmation #{reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
-          next
-        end
+        next unless @config.notify_on_slack?
 
-        @config.log "Slacking re-confirmation #{reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
         message   = "Your reservation has been updated for `#{reservation.conf}`."
         itinerary = "```#{Reservation.list(reservation.bounds, short: true)}```"
         resp = @webclient.im_open user: su.id
@@ -111,12 +90,8 @@ module Southy
       return if ENV['RUBY_ENV'] == 'test'
 
       slack_users_to_notify(reservation).each do |su|
-        if ! @config.notify_on_slack?
-          @config.log "Not Slacking checkin #{bound.reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
-          next
-        end
+        next unless @config.notify_on_slack?
 
-        @config.log "Slacking checkin #{bound.reservation.conf} to #{su.profile.first_name} #{su.profile.last_name}"
         message   = "Your party has been checked in to flight `SW#{bound.flights.first}`"
         itinerary = "```#{Reservation.list([bound], short: true)}```"
         resp = @webclient.im_open user: su.id
@@ -162,9 +137,7 @@ EOM
 
     def blowup(data, args, message)
       message.reply "Tick... tick... tick... BOOM!   Goodbye."
-      EM.next_tick do
-        raise "kablammo!"
-      end
+      raise Exception.new("kablammo!")
     end
 
     def hello(data, args, message)
@@ -268,7 +241,9 @@ EOM
       args.tap do |(conf)|
         return ( message.reply "You didn't enter a confirmation number!" ) unless conf
         deleted = Reservation.where(confirmation_number: conf).destroy_all
-        message.reply "Removed #{deleted.length} reservation(s) - #{deleted.map(&:conf).join(', ')}"
+        response = "Removed #{deleted.length} reservation(s) - #{deleted.map(&:conf).join(', ')}"
+        message.reply response
+        puts response
       end
     end
 
@@ -298,11 +273,14 @@ EOM
     private
 
     def confirm_reservation(conf, first, last, email, message)
+      print "Confirming #{conf} for #{first} #{last}... "
       message.reply "Confirming #{conf} for *#{first} #{last}*..."
       message.type
-      reservation, _ = @agent.confirm conf, first, last, email
+      reservation, is_new = @agent.confirm conf, first, last, email
+      puts ( is_new ? "success" : "no changes" )
       reservation
     rescue SouthyException => e
+      puts e.message
       message.reply "Could not confirm reservation #{conf} - #{e.message}"
       nil
     end

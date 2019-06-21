@@ -1,92 +1,50 @@
-require 'fileutils'
+module Southy
+  class Service
 
-class Southy::Service
-  def initialize(travel_agent, daemon)
-    @agent = travel_agent
-    @daemon = daemon
-  end
-
-  def run
-    @daemon.start false
-  end
-
-  def start(persist = false)
-    pid = get_pid
-    if pid
-      puts "Southy is already running with PID #{pid}"
-      return
+    def initialize(config, travel_agent, slackbot)
+      @config = config
+      @agent = travel_agent
+      @slackbot = slackbot
     end
 
-    print "Starting Southy in #{ENV['RUBY_ENV']}... "
-    new_pid = Process.fork { @daemon.start }
-    Process.detach new_pid
-    persist_start if persist
-
-    puts "started"
-  end
-
-  def stop(persist = false)
-    pid = get_pid
-    unless pid
-      puts "Southy is not running"
-      return
+    def run
+      puts "Southy is running with env #{@config.env}."
+      Thread.abort_on_exception = true
+      Thread.report_on_exception = false
+      Thread.new { @slackbot.run }
+      sleep 1
+      checkin_loop
     end
 
-    print "Stopping Southy..."
+    private
 
-    if persist
-      persist_stop
-    else
-      begin
-        Process.kill 'HUP', pid
-      rescue
-        @daemon.cleanup
+    def checkin_loop
+      running = {}
+      loop do
+        bounds = Bound.upcoming.uniq { |b| b.reservation.conf }
+        bounds.each do |b|
+          next unless b.ready_for_checkin?
+
+          r = b.reservation
+          next if running[r.conf]
+
+          seats = nil
+          Thread.new do
+            begin
+              running[r.conf] = true
+              checked_in = @agent.checkin b
+              seats =  checked_in ? b.seats_ident : "unable to check in"
+            rescue SouthyException => e
+              seats = e.message
+            ensure
+              running.delete r.conf
+              puts "Checked in #{r.conf} (SW#{b.flights.first}) for #{r.passengers_ident} : #{seats}"
+            end
+          end
+        end
+
+        sleep 0.5
       end
     end
-
-    ticks = 0
-    while pid = get_pid && ticks < 40
-      sleep 0.5
-      ticks += 1
-      print '.' if ticks % 4 == 0
-    end
-    puts " #{pid.nil? ? 'stopped' : 'failed'}"
   end
-
-  def restart
-    start
-    stop
-  end
-
-  def status
-    pid = get_pid
-    if pid
-      puts "Southy is running with PID #{pid} in env #{ENV['RUBY_ENV']}"
-      true
-    else
-      puts "Southy is not running"
-      false
-    end
-  end
-
-  private
-
-  def get_pid
-    return nil unless File.exists? @agent.config.pid_file
-    IO.read(@agent.config.pid_file).to_i
-  end
-
-  PLIST_SRC = File.join(File.dirname(__FILE__), '../../etc/wynholds.mike.southy.plist')
-  PLIST_DEST = "#{ENV['HOME']}/Library/LaunchAgents/wynholds.mike.southy.plist"
-
-  def persist_start
-    FileUtils.cp PLIST_SRC, PLIST_DEST
-    system "launchctl load -w #{PLIST_DEST}"
-  end
-
-  def persist_stop
-    system "launchctl unload -w #{File.basename PLIST_DEST}"
-    File.delete PLIST_DEST if File.exists? PLIST_DEST
-  end
-
 end

@@ -3,16 +3,18 @@ require 'time'
 require 'thread'
 
 class Southy::Config
-  attr_reader :config, :flights, :pid_file
+  attr_reader :config
 
   def initialize(config_dir = nil)
     @dir = config_dir || "#{ENV['HOME']}/.southy"
     FileUtils.mkdir @dir unless File.directory? @dir
 
-    @pid_file = "#{@dir}/pid"
-
     @timestamps = {}
     load_config :force => true
+  end
+
+  def env
+    ENV['RUBY_ENV'] || 'development'
   end
 
   def smtp_host
@@ -56,18 +58,6 @@ class Southy::Config
     load_config options
   end
 
-  def log(msg, ex = nil)
-    log = File.new(log_file, 'a')
-    timestamp = Time.now.strftime('%Y-%m-%d %H:%M:%S')
-    type = ex ? 'ERROR' : ' INFO'
-    log.puts "#{type}  #{timestamp}  #{msg}"
-    if ex
-      log.puts ex.message
-      log.puts("Stacktrace:\n" + ex.backtrace.join("\n"))
-    end
-    log.flush
-  end
-
   def save_file(conf, name, json)
     saved_files = saved_files_dir
     FileUtils.mkdir saved_files unless File.directory? saved_files
@@ -98,10 +88,6 @@ class Southy::Config
 
   def config_file
     "#{@dir}/config.yml"
-  end
-
-  def log_file
-    "#{@dir}/southy.log"
   end
 
   def saved_files_dir
