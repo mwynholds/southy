@@ -8,7 +8,10 @@ module Southy
     end
 
     def run
-      @slackthread = Thread.new { @slackbot.run }
+      puts "Southy is running with env #{@config.env}."
+      Thread.abort_on_exception = true
+      Thread.report_on_exception = false
+      Thread.new { @slackbot.run }
       sleep 1
       checkin_loop
     end
@@ -16,8 +19,6 @@ module Southy
     private
 
     def checkin_loop
-      puts "Southy is running with env #{@config.env}."
-      Thread.abort_on_exception = true
       running = {}
       loop do
         bounds = Bound.upcoming.uniq { |b| b.reservation.conf }

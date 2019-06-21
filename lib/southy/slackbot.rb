@@ -137,9 +137,7 @@ EOM
 
     def blowup(data, args, message)
       message.reply "Tick... tick... tick... BOOM!   Goodbye."
-      EM.next_tick do
-        raise "kablammo!"
-      end
+      raise Exception.new("kablammo!")
     end
 
     def hello(data, args, message)

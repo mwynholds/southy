@@ -7,9 +7,8 @@ module Southy
       @config = Config.new
       @agent = TravelAgent.new(@config)
       slackbot = Slackbot.new(@config, @agent)
+      @agent.slackbot = slackbot  # ugly
       @service = Service.new(@config, @agent, slackbot)
-      @agent.slackbot = slackbot  # more ugly
-      @mailer = Mailer.new(@config)
     end
 
     def run(params)
