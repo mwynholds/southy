@@ -6,8 +6,8 @@ ssh="ssh deploy@$dest"
 
 rake build
 scp pkg/southy-$version.gem deploy@$dest:
-$ssh "which southy && southy stop"
+$ssh "sudo systemctl stop southy"
 $ssh "gem list | grep southy && sudo gem uninstall southy"
 $ssh "sudo gem install --no-ri --no-rdoc ./southy-$version.gem"
-$ssh "southy start"
+$ssh "sudo systemctl start southy"
 $ssh "rm -f ./southy-$version.gem"
