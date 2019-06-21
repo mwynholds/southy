@@ -19,7 +19,6 @@ module Southy
 
     def parse_json(conf, response, name)
       if response.body == nil || response.body == ''
-        @config.log "Empty response body returned"
         raise SouthyException.new "empty response body - #{response.code} (#{response.msg})"
       end
 
@@ -27,15 +26,6 @@ module Southy
       @config.save_file conf, "#{name}.json", json
 
       JSON.parse response.body, object_class: OpenStruct
-    end
-
-    def validate_airport_code(code)
-      if Southy::Airport.lookup code
-        true
-      else
-        @config.log "Unknown airport code: #{code}"
-        false
-      end
     end
 
     def alternate_names(first, last)
@@ -77,7 +67,6 @@ module Southy
 
       if statusCode
         ident = "#{conf} #{first_name} #{last_name}"
-        @config.log "Error looking up flights for #{ident} - #{statusCode} / #{code} - #{message}"
         raise SouthyException.new("#{code} - #{message}")
       end
 
@@ -121,19 +110,16 @@ module Southy
       message = json.message
 
       if statusCode
-        @config.log "Error looking up flights for #{reservation.ident} - #{statusCode} / #{code} - #{message}"
-        raise SouthyException.new(message)
+        raise SouthyException.new("#{code} - #{message}")
       end
 
       errmsg = json.errmsg
       if errmsg
-        @config.log "Error checking in passengers: #{errmsg}"
         raise SouthyException.new(errmsg)
       end
 
       page = json.checkInConfirmationPage
       unless page
-        @config.log "Could not find checkin information for #{flight.conf}"
         raise SouthyException.new("No check in information")
       end
 
@@ -156,7 +142,7 @@ module Southy
 
             passenger.assign_seat seat, bound
           else
-            @config.log "Could not find passenger #{passengerNode.name} for reservation #{reservation.conf} durin check in"
+            raise SouthyException("Missing passenger #{passengerNode.name}")
           end
         end
       end

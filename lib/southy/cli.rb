@@ -6,10 +6,8 @@ module Southy
 
       @config = Config.new
       @agent = TravelAgent.new(@config)
-      daemon = Daemon.new(@agent)
-      @service = Service.new(@agent, daemon)
       slackbot = Slackbot.new(@config, @agent)
-      daemon.slackbot = slackbot  # TODO: this is circular and ugly :-(
+      @service = Service.new(@config, @agent, slackbot)
       @agent.slackbot = slackbot  # more ugly
       @mailer = Mailer.new(@config)
     end
@@ -21,27 +19,6 @@ module Southy
     def rundebug(params)
       Debug.debug = true
       run params
-    end
-
-    def start(params)
-      @service.start @options[:write]
-    end
-
-    def startdebug(params)
-      Debug.debug = true
-      start params
-    end
-
-    def stop(params)
-      @service.stop @options[:write]
-    end
-
-    def restart(params)
-      @service.restart
-    end
-
-    def status(params)
-      @service.status
     end
 
     def add(params)

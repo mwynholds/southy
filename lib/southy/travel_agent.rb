@@ -17,26 +17,18 @@ module Southy
     def confirm(conf, first, last, email = nil)
       flight_info = "#{conf} (#{first} #{last})"
 
-      begin
-        reservation = monkey.lookup conf, first, last
-        reservation.email = email
-      rescue SouthyException => e
-        @config.log "Flight not confirmed due to '#{e.message}' : #{flight_info}"
-        raise e
-      end
+      reservation = monkey.lookup conf, first, last
+      reservation.email = email
 
       if ! Reservation.exists? reservation
         reservation.save!
-        @config.log "Confirmed #{reservation.ident}"
         return reservation, true
       elsif Reservation.matches? reservation
-        @config.log "No changes to #{reservation.ident}"
         return Reservation.where(confirmation_number: conf).first, false
       else
         Reservation.where(confirmation_number: conf).destroy_all
         reservation.save!
         @slackbot.notify_reconfirmed reservation
-        @config.log "Re-confirmed #{reservation.ident}"
         return reservation, true
       end
     end
@@ -51,17 +43,11 @@ module Southy
       bound.reservation.last_checkin_attempt = DateTime.now
       bound.reservation.save!
 
-      begin
-        checked_in = monkey.checkin bound.reservation
-        checked_in.save!
-        @config.log "Checked in #{bound.ident} - #{bound.seats_ident}"
-        @mailer.send_email bound
-        @slackbot.notify_checked_in bound
-        checked_in
-      rescue SouthyException => e
-        @config.log "Unable to check in #{bound.ident}"
-        raise e
-      end
+      checked_in = monkey.checkin bound.reservation
+      checked_in.save!
+      @mailer.send_email bound
+      @slackbot.notify_checked_in bound
+      checked_in
     end
 
     def checkout(reservations)

@@ -21,7 +21,6 @@ module Southy
   require 'southy/monkey'
   require 'southy/service'
   require 'southy/config'
-  require 'southy/daemon'
   require 'southy/travel_agent'
   require 'southy/cli'
   require 'southy/slackbot'
