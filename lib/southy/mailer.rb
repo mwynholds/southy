@@ -6,13 +6,13 @@ class Southy::Mailer
   end
 
   def send_email(bound)
+    return false unless @config.notify_users?
+
     message = generate_email bound
     return false unless message
     return false unless bound.reservation.email
 
-    return false if ENV['RUBY_ENV'] == 'test'
-
-    return false unless @config.notify_users?
+    return false if @config.test?
 
     Net::SMTP.start(@config.smtp_host, @config.smtp_port, @config.smtp_domain, @config.smtp_account, @config.smtp_password, :plain) do |smtp|
       smtp.send_message message, 'southy@carbonfive.com', bound.reservation.email

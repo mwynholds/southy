@@ -64,7 +64,18 @@ module Southy
       client.start!
     end
 
+    def fuzzy_find_slack_users(fuzz)
+      options = [ fuzz ]
+      options << fuzz[1..-1] if fuzz =~ /^@/
+      return slack_users.select { |su| options.include?(su.name)    ||
+                                       options.include?(su.profile.email) ||
+                                       options.include?("#{su.profile.first_name} #{su.profile.last_name}")
+                                }
+    end
+
     def slack_users_to_notify(reservation)
+      return fuzzy_find_slack_users @config.fake_slack_user if @config.fake_slack_user
+
       email_slack_user = slack_users.find { |su| su.profile.email == reservation.email }
       name_slack_users = reservation.passengers.map { |p| slack_users.find { |su| p.name_matches? "#{su.profile.first_name} #{su.profile.last_name}" } }.compact
       to_notify = Set.new(name_slack_users)
@@ -73,13 +84,14 @@ module Southy
     end
 
     def notify_reconfirmed(reservation)
-      return if ENV['RUBY_ENV'] == 'test'
+      return unless @config.notify_users?
 
       slack_users_to_notify(reservation).each do |su|
-        next unless @config.notify_users?
-
         message   = "Your reservation has been updated for `#{reservation.conf}`."
         itinerary = "```#{Reservation.list(reservation.bounds, short: true)}```"
+
+        next if @config.test?
+
         resp = @webclient.im_open user: su.id
         @webclient.chat_postMessage channel: resp.channel.id, text: message,   as_user: true
         @webclient.chat_postMessage channel: resp.channel.id, text: itinerary, as_user: true
@@ -87,13 +99,14 @@ module Southy
     end
 
     def notify_checked_in(bound)
-      return if ENV['RUBY_ENV'] == 'test'
+      return unless @config.notify_users?
 
-      slack_users_to_notify(reservation).each do |su|
-        next unless @config.notify_users?
-
+      slack_users_to_notify(bound.reservation).each do |su|
         message   = "Your party has been checked in to flight `SW#{bound.flights.first}`"
         itinerary = "```#{Reservation.list([bound], short: true)}```"
+
+        next if @config.test?
+
         resp = @webclient.im_open user: su.id
         @webclient.chat_postMessage channel: resp.channel.id, text: message,   as_user: true
         @webclient.chat_postMessage channel: resp.channel.id, text: itinerary, as_user: true

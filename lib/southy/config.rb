@@ -17,6 +17,10 @@ class Southy::Config
     ENV['RUBY_ENV'] || 'development'
   end
 
+  def test?
+    env == 'test'
+  end
+
   def smtp_host
     @config[:smtp_host]
   end
@@ -51,6 +55,10 @@ class Southy::Config
 
   def notify_users?
     @config.fetch(:notify_users, false)
+  end
+
+  def fake_slack_user
+    @config[:fake_slack_user]
   end
 
   def reload(options = {})
