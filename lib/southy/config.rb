@@ -49,8 +49,8 @@ class Southy::Config
     @config.fetch(:slack_accept_channels, '').split ','
   end
 
-  def notify_on_slack?
-    @config.fetch(:notify_on_checkin, false) || @config.fetch(:notify_on_slack, false)
+  def notify_users?
+    @config.fetch(:notify_users, false)
   end
 
   def reload(options = {})

@@ -76,7 +76,7 @@ module Southy
       return if ENV['RUBY_ENV'] == 'test'
 
       slack_users_to_notify(reservation).each do |su|
-        next unless @config.notify_on_slack?
+        next unless @config.notify_users?
 
         message   = "Your reservation has been updated for `#{reservation.conf}`."
         itinerary = "```#{Reservation.list(reservation.bounds, short: true)}```"
@@ -90,7 +90,7 @@ module Southy
       return if ENV['RUBY_ENV'] == 'test'
 
       slack_users_to_notify(reservation).each do |su|
-        next unless @config.notify_on_slack?
+        next unless @config.notify_users?
 
         message   = "Your party has been checked in to flight `SW#{bound.flights.first}`"
         itinerary = "```#{Reservation.list([bound], short: true)}```"
