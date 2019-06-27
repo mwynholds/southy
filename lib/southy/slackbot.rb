@@ -16,6 +16,10 @@ module Southy
         slack_cfg.token = @config.slack_api_token
       end
 
+      Slack::RealTime.configure do |slack_cfg|
+        slack_cfg.concurrency = Slack::RealTime::Concurrency::Async
+      end
+
       @webclient = Slack::Web::Client.new
     end
 
