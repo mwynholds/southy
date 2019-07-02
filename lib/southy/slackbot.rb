@@ -173,6 +173,25 @@ EOM
       end
     end
 
+    def print_info(reservation, message)
+      message.reply "```#{reservation.info}```"
+    end
+
+    def info(data, args, message)
+      if args.length == 0
+        message.reply 'No confirmation number provided'
+        return
+      end
+
+      reservation = Reservation.where(confirmation_number: args[0]).first
+      unless reservation
+        message.reply 'No reservation found'
+        return
+      end
+
+      print_info(reservation, message)
+    end
+
     def print_bounds(bounds, message)
       if !bounds || bounds.empty?
         message.reply "```No available flights.```"

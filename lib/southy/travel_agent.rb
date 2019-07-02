@@ -14,7 +14,7 @@ module Southy
       @slackbot = slackbot
     end
 
-    def confirm(conf, first, last, email = nil)
+    def confirm(conf, first, last, email, force)
       flight_info = "#{conf} (#{first} #{last})"
 
       reservation = monkey.lookup conf, first, last
@@ -23,7 +23,7 @@ module Southy
       if ! Reservation.exists? reservation
         reservation.save!
         return reservation, true
-      elsif Reservation.matches? reservation
+      elsif Reservation.matches?(reservation) && ! force
         return Reservation.where(confirmation_number: conf).first, false
       else
         Reservation.where(confirmation_number: conf).destroy_all

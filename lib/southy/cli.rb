@@ -79,12 +79,27 @@ module Southy
       puts Reservation.list Bound.past
     end
 
+    def info(params)
+      if params.length == 0
+        puts 'No confirmation number provided'
+        return
+      end
+
+      reservation = Reservation.where(confirmation_number: params[0]).first
+      unless reservation
+        puts 'No reservation found'
+        return
+      end
+
+      puts reservation.info
+    end
+
     private
 
     def confirm_reservation(conf, first, last, email = nil)
       print "Confirming #{conf} for #{first} #{last}... "
       begin
-        reservation, is_new = @agent.confirm conf, first, last, email
+        reservation, is_new = @agent.confirm conf, first, last, email, @options[:force]
         puts is_new ? "success" : "no changes"
       rescue SouthyException => e
         puts e.message

@@ -67,6 +67,12 @@ module Southy
       end
     end
 
+    def seats_ident_for(passenger)
+      bounds.map do |b|
+        seats_for(passenger, b).map(&:ident).join(", ")
+      end.reject(&:blank?).join(" / ")
+    end
+
     def bound_for(flight)
       bounds.find { |b| b.flights.include? flight }
     end
@@ -78,6 +84,24 @@ module Southy
           seat.mark_for_destruction
         end
       end
+    end
+
+    def info
+      date_header = bounds.first.departure_time.strftime "%B %-d"
+      city_header = "#{bounds.first.arrival_city}, #{bounds.first.arrival_state}"
+      p_max       = passengers.map(&:name).map(&:length).max
+      pass_list   = passengers.map { |p| sprintf "%-#{p_max}s  %s", p.name, seats_ident_for(p) }.join "\n"
+      bound_list  = bounds.map(&:info).join("\n\n")
+      <<-EOF
+Reservation ##{conf}
+#{date_header} - #{city_header}
+
+PASSENGERS
+----------
+#{pass_list}
+
+#{bound_list}
+EOF
     end
 
     def self.exists?(reservation)
@@ -104,18 +128,25 @@ module Southy
       Airport.validate res.destination_code
 
       res.bounds = json.bounds.map do |boundJson|
-        bound                = Bound.new
-        bound.flights        = boundJson.flights.map(&:number)
-        bound.departure_code = boundJson.departureAirport.code
-        bound.arrival_code   = boundJson.arrivalAirport.code
-        bound.departure_time = bound.departure_airport.local_time "#{boundJson.departureDate} #{boundJson.departureTime}"
-        bound.arrival_time   = bound.arrival_airport.local_time   "#{boundJson.departureDate} #{boundJson.arrivalTime}"
+        bound                 = Bound.new
+        bound.boundType       = boundJson.boundType
+        bound.flights         = boundJson.flights.map(&:number)
+        bound.departure_code  = boundJson.departureAirport.code
+        bound.departure_city  = boundJson.departureAirport.name
+        bound.departure_state = boundJson.departureAirport.state
+        bound.arrival_code    = boundJson.arrivalAirport.code
+        bound.arrival_city    = boundJson.arrivalAirport.name
+        bound.arrival_state   = boundJson.arrivalAirport.state
+        bound.departure_time  = bound.departure_airport.local_time "#{boundJson.departureDate} #{boundJson.departureTime}"
+        bound.arrival_time    = bound.arrival_airport.local_time   "#{boundJson.departureDate} #{boundJson.arrivalTime}"
         Airport.validate bound.departure_code
         Airport.validate bound.arrival_code
 
         bound.stops = boundJson.stops.map do |stopJson|
           stop                = Stop.new
           stop.code           = stopJson.airport.code
+          stop.city           = stopJson.airport.name
+          stop.state          = stopJson.airport.state
           stop.arrival_time   = stop.airport.local_time "#{boundJson.departureDate} #{stopJson.arrivalTime}"
           stop.departure_time = stop.airport.local_time "#{boundJson.departureDate} #{stopJson.departureTime}"
           Airport.validate stop.code

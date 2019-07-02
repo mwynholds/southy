@@ -91,5 +91,39 @@ module Southy
         arrival_time == other.arrival_time &&
         arrival_code == other.arrival_code
     end
+
+    def get_legs
+      legs = [ Leg.new ]
+
+      legs.first.num = flights.first
+      legs.first.departure = self
+
+      stops.each_with_index do |stop, i|
+        legs.last.arrival = stop
+        legs << Leg.new
+        legs.last.num = flights[i+1]
+        legs.last.departure = stop
+      end
+
+      legs.last.arrival = self
+      legs
+    end
+
+    def info
+      legs  = get_legs
+      all   = reservation.bounds.map(&:get_legs).flatten
+      n_max = all.map(&:num).map(&:length).max
+      d_max = all.map(&:departure_airport_info).map(&:length).max
+      a_max = all.map(&:arrival_airport_info).map(&:length).max
+
+      str   = boundType + "\n" + ( "-" * boundType.length ) + "\n"
+      str  += legs.map do |leg|
+        sprintf "SW%-#{n_max}s  %-#{d_max}s  ->  %-#{a_max}s\n" +
+                 " %-#{n_max}s  %-#{d_max}s      %-#{a_max}s   %s",
+                leg.num, leg.departure_airport_info, leg.arrival_airport_info,
+                "", leg.departure_clock_time, leg.arrival_clock_time, leg.duration
+      end.join("\n")
+      str
+    end
   end
 end
