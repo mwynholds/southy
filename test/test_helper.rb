@@ -45,10 +45,12 @@ def expect_bound(bound, departure:, arrival:, flights:)
   code, time = parse_time departure
   expect(bound.departure_airport.code).must_equal code
   expect(bound.departure_time).must_equal time
+  expect(bound.departure_city).wont_be_empty
 
   code, time = parse_time arrival
   expect(bound.arrival_airport.code).must_equal code
   expect(bound.arrival_time).must_equal time
+  expect(bound.arrival_city).wont_be_empty
 
   expect(bound.flights).must_equal flights.map(&:to_s)
 end

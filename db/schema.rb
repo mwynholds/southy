@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_06_11_215952) do
+ActiveRecord::Schema.define(version: 2019_07_02_002627) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -24,6 +24,11 @@ ActiveRecord::Schema.define(version: 2019_06_11_215952) do
     t.bigint "reservation_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "departure_city"
+    t.string "departure_state"
+    t.string "arrival_city"
+    t.string "arrival_state"
+    t.string "boundType"
     t.index ["reservation_id"], name: "index_bounds_on_reservation_id"
   end
 
@@ -64,6 +69,8 @@ ActiveRecord::Schema.define(version: 2019_06_11_215952) do
     t.bigint "bound_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "city"
+    t.string "state"
     t.index ["bound_id"], name: "index_stops_on_bound_id"
   end
 

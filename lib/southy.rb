@@ -17,6 +17,7 @@ module Southy
   require 'southy/models/bound'
   require 'southy/models/reservation'
   require 'southy/models/message'
+  require 'southy/models/leg'
   require 'southy/mailer'
   require 'southy/monkey'
   require 'southy/service'

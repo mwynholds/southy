@@ -28,6 +28,14 @@ module Southy
       Airport.lookup arrival_code
     end
 
+    def departure_ident
+      "#{departure_city}, #{departure_state} (#{departure_code})"
+    end
+
+    def arrival_ident
+      "#{arrival_city}, #{arrival_state} (#{arrival_code})"
+    end
+
     def local_departure_time
       departure_airport.local_time departure_time
     end
@@ -90,6 +98,42 @@ module Southy
         departure_code == other.departure_code &&
         arrival_time == other.arrival_time &&
         arrival_code == other.arrival_code
+    end
+
+    def get_legs
+      legs = [ Leg.new ]
+
+      legs.first.num = flights.first
+      legs.first.departure = self
+
+      stops.each_with_index do |stop, i|
+        legs.last.arrival = stop
+        legs << Leg.new
+        legs.last.num = flights[i+1]
+        legs.last.departure = stop
+      end
+
+      legs.last.arrival = self
+      legs
+    end
+
+    def info
+      all      = reservation.bounds.map(&:get_legs).flatten
+      n_max    = all.map(&:num).map(&:length).max
+      d_max    = all.map(&:departure_ident).map(&:length).max
+      a_max    = all.map(&:arrival_ident).map(&:length).max
+
+      legs     = get_legs
+      layovers = legs.each_cons(2).map { |(l1, l2)| l1.layover_duration_until(l2) }
+
+      lines = legs.map do |leg|
+        sprintf "SW%-#{n_max}s  %-#{d_max}s  ->  %-#{a_max}s\n" +
+                 " %-#{n_max}s  %-#{d_max}s      %-#{a_max}s   %s",
+                leg.num, leg.departure_ident, leg.arrival_ident,
+                "", leg.departure_clock_time, leg.arrival_clock_time, leg.duration
+      end.zip(layovers).flatten.compact
+
+      boundType + "\n" + ( "-" * boundType.length ) + "\n" + lines.join("\n")
     end
   end
 end
