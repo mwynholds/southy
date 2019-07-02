@@ -169,8 +169,8 @@ EOF
       return "No available reservations" unless bounds && bounds.length > 0
 
       max_name   = bounds.map(&:passengers).flatten.map(&:name).map(&:length).max
-      max_depart = bounds.map(&:departure_airport).map(&:name).map(&:length).max + 6
-      max_arrive = bounds.map(&:arrival_airport).map(&:name).map(&:length).max + 6
+      max_depart = bounds.map(&:departure_ident).map(&:length).max
+      max_arrive = bounds.map(&:arrival_ident).map(&:length).max
 
       out = ""
       bounds.sort_by(&:departure_time).each do |b|
@@ -181,8 +181,8 @@ EOF
             arrive = b.arrival_airport.code
           else
             leader = i == 0 ? sprintf("#{b.reservation.conf} - SW%-4s:", b.flights.first) : "                "
-            depart = sprintf "%#{max_depart}s", "#{b.departure_airport.name} (#{b.departure_airport.code})"
-            arrive = sprintf "%#{max_arrive}s", "#{b.arrival_airport.name} (#{b.arrival_airport.code})"
+            depart = sprintf "%#{max_depart}s", b.departure_ident
+            arrive = sprintf "%#{max_arrive}s", b.arrival_ident
           end
 
           name     = sprintf "%-#{max_name}s", p.name

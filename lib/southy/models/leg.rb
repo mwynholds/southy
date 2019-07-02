@@ -18,8 +18,8 @@ module Southy
       @departure.departure_time
     end
 
-    def departure_airport_info
-      "#{departure_code} (#{departure_city}, #{departure_state})"
+    def departure_ident
+      "#{departure_city}, #{departure_state} (#{departure_code})"
     end
 
     def departure_clock_time
@@ -42,8 +42,8 @@ module Southy
       @arrival.arrival_time
     end
 
-    def arrival_airport_info
-      "#{arrival_code} (#{arrival_city}, #{arrival_state})"
+    def arrival_ident
+      "#{arrival_city}, #{arrival_state} (#{arrival_code})"
     end
 
     def arrival_clock_time
@@ -54,8 +54,8 @@ module Southy
       pretty_duration(arrival_time - departure_time)
     end
 
-    def layover_duration
-
+    def layover_duration_until(next_leg)
+      pretty_duraction(next_leg.departure_time - arrival_time)
     end
 
     def pretty_duration(seconds)
