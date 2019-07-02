@@ -141,6 +141,7 @@ southy hello             Say hello to me!
 southy whatsup           Show me ALL the flights upcoming
 southy list              Show me what flights I have upcoming
 southy history           Show me what flights I had in the past
+southy info <conf>       Show me details for a specific reservation
 southy add <conf>        Add this flight to Southy
 southy remove <conf>     Remove this flight from Southy
 southy reconfirm         Reconfirm your flights, if you have changed flight info
