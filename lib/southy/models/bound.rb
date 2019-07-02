@@ -67,7 +67,7 @@ module Southy
 
     def checkin_available?
       return false if departure_time < DateTime.now    # oops you missed your flight
-      DateTime.now >= departure_time - (60*60*24) - 1  # start trying 1 second early!
+      DateTime.now >= departure_time - (60*60*24) + 0  # -1 for 1 second early, +1 for one second late
     end
 
     def checkin_time?
