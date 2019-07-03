@@ -313,7 +313,7 @@ EOM
       print "Confirming #{conf} for #{first} #{last}... "
       message.reply "Confirming #{conf} for *#{first} #{last}*..."
       message.type
-      reservation, is_new = @agent.confirm conf, first, last, email
+      reservation, is_new = @agent.confirm conf, first, last, email, false
       puts ( is_new ? "success" : "no changes" )
       reservation
     rescue SouthyException => e
