@@ -133,7 +133,11 @@ module Southy
                 "", leg.departure_clock_time, leg.arrival_clock_time, leg.duration
       end.zip(layovers).flatten.compact
 
-      boundType + "\n" + ( "-" * boundType.length ) + "\n" + lines.join("\n")
+      date   = departure_time.strftime "%B %-d, %Y"
+      header = "#{bound_type} - #{date}"
+      hr     = "-" * header.length
+
+      header + "\n" + hr + "\n" + lines.join("\n")
     end
   end
 end
