@@ -129,7 +129,7 @@ EOF
 
       res.bounds = json.bounds.map do |boundJson|
         bound                 = Bound.new
-        bound.boundType       = boundJson.boundType
+        bound.bound_type      = boundJson.boundType
         bound.flights         = boundJson.flights.map(&:number)
         bound.departure_code  = boundJson.departureAirport.code
         bound.departure_city  = boundJson.departureAirport.name
