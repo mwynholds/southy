@@ -31,6 +31,11 @@ module Southy
         @slackbot.notify_reconfirmed reservation
         return reservation, true
       end
+    rescue SouthyException => e
+      if e.code == 400520414  # flight canceled
+        Reservation.where(confirmation_number: conf).destroy_all
+      end
+      raise e
     end
 
     def checkin(bound, force: false)

@@ -67,7 +67,7 @@ module Southy
 
       if statusCode
         ident = "#{conf} #{first_name} #{last_name}"
-        raise SouthyException.new("#{code} - #{message}")
+        raise SouthyException.new("#{code} - #{message}", code)
       end
 
       page = json.viewReservationViewPage
@@ -110,7 +110,7 @@ module Southy
       message = json.message
 
       if statusCode
-        raise SouthyException.new("#{code} - #{message}")
+        raise SouthyException.new("#{code} - #{message}", code)
       end
 
       errmsg = json.errmsg
