@@ -325,7 +325,7 @@ EOM
     def confirm_reservations(reservations, message)
       reservations.sort_by { |r| r.bounds.first.departure_time }.map do |r|
         confirm_reservation r.conf, r.first_name, r.last_name, r.email, message
-      end
+      end.compact
     end
 
     def get_slack_users
