@@ -91,6 +91,7 @@ module Southy
         return
       end
 
+      confirm_reservations [reservation]
       puts reservation.info
     end
 

@@ -128,7 +128,7 @@ module Southy
 
       lines = legs.map do |leg|
         sprintf "SW%-#{n_max}s  %-#{d_max}s  ->  %-#{a_max}s\n" +
-                 " %-#{n_max}s  %-#{d_max}s      %-#{a_max}s   %s",
+                "  %-#{n_max}s  %-#{d_max}s      %-#{a_max}s   %s",
                 leg.num, leg.departure_ident, leg.arrival_ident,
                 "", leg.departure_clock_time, leg.arrival_clock_time, leg.duration
       end.zip(layovers).flatten.compact

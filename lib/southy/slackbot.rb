@@ -190,7 +190,8 @@ EOM
         return
       end
 
-      print_info(reservation, message)
+      confirm_reservations [reservation], message
+      print_info reservation, message
     end
 
     def print_bounds(bounds, message)

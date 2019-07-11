@@ -23,7 +23,7 @@ module Southy
     end
 
     def departure_clock_time
-      departure_time.strftime "%l:%M%P"
+      departure_time.strftime("%l:%M%P").strip
     end
 
     def arrival_code
@@ -47,7 +47,7 @@ module Southy
     end
 
     def arrival_clock_time
-      arrival_time.strftime "%l:%M%P"
+      arrival_time.strftime("%l:%M%P").strip
     end
 
     def duration
