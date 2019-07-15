@@ -28,16 +28,6 @@ module Southy
       JSON.parse response.body, object_class: OpenStruct
     end
 
-    def alternate_names(first, last)
-      f, l = first.split(' '), last.split(' ')
-      if f.length == 1 && l.length == 2
-        return [ "#{f[0]} #{l[0]}", l[1] ]
-      elsif f.length == 2 && l.length == 1
-        return [ f[0], "#{f[1]} #{l[0]}" ]
-      end
-      [ first, last ]
-    end
-
     def fetch_trip_info(conf, first_name, last_name)
       uri = URI("https://#{@hostname}/api/mobile-air-booking/v1/mobile-air-booking/page/view-reservation/#{conf}")
       uri.query = URI.encode_www_form(
@@ -48,22 +38,21 @@ module Southy
       fetch_json conf, request, 'trip-info'
     end
 
-    def lookup(conf, first_name, last_name)
-      json = fetch_trip_info conf, first_name, last_name
-
-      statusCode = json.httpStatusCode
-
-      if statusCode == 'NOT_FOUND'
-        alternate_names(first_name, last_name).tap do |alt_first, alt_last|
-          if alt_first != first_name || alt_last != last_name
-            json = fetch_trip_info conf, alt_first, alt_last
-          end
-        end
+    def try_all_names(conf, first_name, last_name)
+      names = Passenger.possible_names first_name, last_name
+      json  = nil
+      names.each do |f, l|
+        json = fetch_trip_info conf, f, l
+        break if json.httpStatusCode != 'NOT_FOUND'
       end
+      json
+    end
 
+    def lookup(conf, first_name, last_name)
+      json       = try_all_names conf, first_name, last_name
       statusCode = json.httpStatusCode
-      code = json.code
-      message = json.message
+      code       = json.code
+      message    = json.message
 
       if statusCode
         ident = "#{conf} #{first_name} #{last_name}"

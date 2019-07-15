@@ -59,5 +59,23 @@ module Southy
     def checked_in_for?(bound)
       seats_for(bound).length == bound.flights.length
     end
+
+    def self.possible_names(first_name, last_name)
+      firsts = first_name.gsub(/-/, "").split " "
+      lasts  = last_name.gsub(/-/, "").split " "
+      names  = [ firsts, lasts ].flatten
+
+      if names.length > 3
+        names = names.take(1) + names.last(2)
+        puts "Warning - too many name combos for #{first_name} #{last_name} - using #{names.join(' ')}"
+      end
+
+      if names.length == 3
+        [ [ names[0], names.last(2).join(" ") ],
+          [ names.take(2).join(" "), names[2] ] ]
+      else
+        [ names ]
+      end
+    end
   end
 end
