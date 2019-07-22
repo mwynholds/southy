@@ -28,7 +28,7 @@ module Southy
       else
         Reservation.where(confirmation_number: conf).destroy_all
         reservation.save!
-        @slackbot.notify_reconfirmed reservation
+        @slackbot.notify_reconfirmed reservation unless force
         return reservation, true
       end
     rescue SouthyException => e
