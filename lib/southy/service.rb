@@ -22,7 +22,8 @@ module Southy
     def checkin_loop
       running = {}
       loop do
-        bounds = Bound.upcoming.uniq { |b| b.reservation.conf }
+        # bounds = Bound.upcoming.uniq { |b| b.reservation.conf }
+        bounds = Bound.upcoming
         bounds.each do |b|
           next unless b.ready_for_checkin?
 
