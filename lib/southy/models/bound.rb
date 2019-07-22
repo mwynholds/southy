@@ -102,14 +102,16 @@ module Southy
 
     def get_legs
       legs = [ Leg.new ]
+      flight = 0
 
-      legs.first.num = flights.first
+      legs.first.num = flights[flight]
       legs.first.departure = self
 
       stops.each_with_index do |stop, i|
         legs.last.arrival = stop
         legs << Leg.new
-        legs.last.num = flights[i+1]
+        flight += 1 if stop.plane_change
+        legs.last.num = flights[flight]
         legs.last.departure = stop
       end
 
@@ -125,6 +127,7 @@ module Southy
 
       legs     = get_legs
       layovers = legs.each_cons(2).map { |(l1, l2)| l1.layover_duration_until(l2) }
+      layovers = layovers.map { |l| sprintf "%#{2 + n_max + 2 + d_max + 6 + a_max + 2}s %s layover", "", l }
 
       lines = legs.map do |leg|
         sprintf "SW%-#{n_max}s  %-#{d_max}s  ->  %-#{a_max}s\n" +

@@ -147,6 +147,7 @@ EOF
           stop.code           = stopJson.airport.code
           stop.city           = stopJson.airport.name
           stop.state          = stopJson.airport.state
+          stop.plane_change   = stopJson.change_planes
           stop.arrival_time   = stop.airport.local_time "#{boundJson.departureDate} #{stopJson.arrivalTime}"
           stop.departure_time = stop.airport.local_time "#{boundJson.departureDate} #{stopJson.departureTime}"
           Airport.validate stop.code

@@ -35,7 +35,7 @@ module Southy
     end
 
     def arrival_state
-      @arrival.is_a?(Bound) ? @arrival.arrival_state : @departure.state
+      @arrival.is_a?(Bound) ? @arrival.arrival_state : @arrival.state
     end
 
     def arrival_time
@@ -55,7 +55,7 @@ module Southy
     end
 
     def layover_duration_until(next_leg)
-      pretty_duraction(next_leg.departure_time - arrival_time)
+      pretty_duration(next_leg.departure_time - arrival_time)
     end
 
     def pretty_duration(seconds)
