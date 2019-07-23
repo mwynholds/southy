@@ -23,17 +23,25 @@ module Southy
       if ! Reservation.exists? reservation
         reservation.save!
         return reservation, true
-      elsif Reservation.matches?(reservation) && ! force
-        return Reservation.where(confirmation_number: conf).first, false
-      else
+      end
+
+      matches = Reservation.matches? reservation
+
+      if force || ! matches
         Reservation.where(confirmation_number: conf).destroy_all
         reservation.save!
-        @slackbot.notify_reconfirmed reservation unless force
+        @slackbot.notify_reconfirmed reservation unless matches
         return reservation, true
       end
+
+      return Reservation.where(confirmation_number: conf).first, false
     rescue SouthyException => e
       if e.code == 400520414  # flight canceled
-        Reservation.where(confirmation_number: conf).destroy_all
+        reservation = Reservation.where(confirmation_number: conf).first
+        if reservation
+          @slackbot.notify_canceled reservation
+          reservation.destroy
+        end
       end
       raise e
     end
@@ -60,6 +68,15 @@ module Southy
         r.checkout
         r.save!
       end
+    end
+  end
+
+  class TestTravelAgent < TravelAgent
+    def confirm(conf, first, last, email, force, opts = {})
+      @monkey.json_num = opts[:json_num]
+      ret = super conf, first, last, email, force
+      @monkey.json_num = nil
+      ret
     end
   end
 end

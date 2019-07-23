@@ -1,0 +1,191 @@
+{
+  "viewReservationViewPage": {
+    "dates": {
+      "first": "2019-10-13",
+      "second": null
+    },
+    "messages": null,
+    "checkInIneligibilityReason": null,
+    "greyBoxMessage": null,
+    "greyBoxPassengerMessage": null,
+    "destinationDescription": "San Jose",
+    "originAirport": {
+      "name": "Tucson",
+      "state": "AZ",
+      "code": "TUS",
+      "country": null
+    },
+    "destinationAirport": {
+      "name": "San Jose",
+      "state": "CA",
+      "code": "SJC",
+      "country": null
+    },
+    "companion": null,
+    "passengers": [
+      {
+        "name": "Donald L Thompson",
+        "accountNumber": "88501486",
+        "passengerReference": "2",
+        "hasAnyEarlyBird": false,
+        "hasCompletePassportInfo": false,
+        "checkInIneligibilityReason": null,
+        "isCheckedIn": false,
+        "isCheckInEligible": false,
+        "isUnaccompaniedMinor": false
+      },
+      {
+        "name": "Maryann Thompson",
+        "accountNumber": "1012234565",
+        "passengerReference": "3",
+        "hasAnyEarlyBird": false,
+        "hasCompletePassportInfo": false,
+        "checkInIneligibilityReason": null,
+        "isCheckedIn": false,
+        "isCheckInEligible": false,
+        "isUnaccompaniedMinor": false
+      },
+      {
+        "name": "Pearl Thompson",
+        "accountNumber": "329004852",
+        "passengerReference": "4",
+        "hasAnyEarlyBird": false,
+        "hasCompletePassportInfo": false,
+        "checkInIneligibilityReason": null,
+        "isCheckedIn": false,
+        "isCheckInEligible": false,
+        "isUnaccompaniedMinor": false
+      }
+    ],
+    "confirmationNumber": "JBORBA",
+    "shouldShowAddEarlyBirdButton": false,
+    "bounds": [
+      {
+        "departureStatus": null,
+        "departureStatusType": null,
+        "arrivalStatus": null,
+        "arrivalStatusType": null,
+        "flights": [
+          {
+            "number": "4805",
+            "wifiOnBoard": true
+          }
+        ],
+        "travelTime": "3h 20m",
+        "departureDate": "2019-10-13",
+        "departureTime": "10:00",
+        "departureAirport": {
+          "name": "Tucson",
+          "state": "AZ",
+          "code": "TUS",
+          "country": null
+        },
+        "arrivalTime": "13:20",
+        "arrivalAirport": {
+          "name": "San Jose",
+          "state": "CA",
+          "code": "SJC",
+          "country": null
+        },
+        "passengerTypeCounts": {
+          "adult": 3,
+          "senior": 0
+        },
+        "fareType": "Unavailable",
+        "boundType": "DEPARTING",
+        "standbyFlight": null,
+        "stops": [
+          {
+            "departureStatus": null,
+            "departureStatusType": null,
+            "arrivalStatus": null,
+            "arrivalStatusType": null,
+            "airport": {
+              "name": "San Diego",
+              "state": "CA",
+              "code": "SAN",
+              "country": null
+            },
+            "arrivalTime": "11:15",
+            "departureTime": "11:55",
+            "changePlanes": false,
+            "missingAirportDetails": false
+          }
+        ],
+        "isNextDayArrival": false
+      }
+    ],
+    "pageHeader": "TUS - SJC",
+    "shareDetails": {
+      "subject": "Southwest Flight 4805 Tucson to San Jose",
+      "confirmationInfo": "Confirmation #: JBORBA",
+      "passengerInfo": "Passenger names: Donald L Thompson, Maryann Thompson, Pearl Thompson",
+      "flightInfo": [
+        {
+          "header": "Departing Flight: Sun, Oct 13, 2019",
+          "title": "Southwest Flight 4805 Tucson to San Jose",
+          "flightInfo": "Flight #: 4805",
+          "departureInfo": "Departs: 10:00 AM TUS",
+          "departureDateTime": "2019-10-13T10:00:00.000-07:00",
+          "stops": [
+            "Stop: San Diego, CA. No plane change"
+          ],
+          "arrivalInfo": "Arrives: 01:20 PM SJC",
+          "arrivalDateTime": "2019-10-13T13:20:00.000-07:00",
+          "travelTime": "Travel time: 3hr 20 mins"
+        }
+      ]
+    },
+    "hasAnyCancelledFlights": false,
+    "isCheckInEligible": false,
+    "isCheckedIn": false,
+    "isInternational": false,
+    "isDynamicWaiver": false,
+    "isNonRevPnr": false,
+    "isSwabiz": false,
+    "_links": {
+      "checkInSessionToken": null,
+      "earlyBird": null,
+      "change": null,
+      "reaccom": null,
+      "cancel": null,
+      "viewStandbyList": null,
+      "checkIn": null,
+      "viewBoardingPassIssuance": null,
+      "viewBoardingPass": null,
+      "viewBoardingPositions": null,
+      "addCompanion": null,
+      "passportEmergencyContacts": null,
+      "editPNRPassengers": [
+        {
+          "href": "/v1/mobile-air-booking/page/view-reservation/edit-pnr-passenger/JBORBA",
+          "method": "GET",
+          "query": {
+            "first-name": "Donald",
+            "last-name": "Thompson",
+            "passenger-reference": "2"
+          }
+        },
+        {
+          "href": "/v1/mobile-air-booking/page/view-reservation/edit-pnr-passenger/JBORBA",
+          "method": "GET",
+          "query": {
+            "first-name": "Maryann",
+            "last-name": "Thompson",
+            "passenger-reference": "3"
+          }
+        },
+        {
+          "href": "/v1/mobile-air-booking/page/view-reservation/edit-pnr-passenger/JBORBA",
+          "method": "GET",
+          "query": {
+            "first-name": "Pearl",
+            "last-name": "Thompson",
+            "passenger-reference": "4"
+          }
+        }
+      ]
+    },
+    "hasUnaccompaniedMinor": false
+  }
+}

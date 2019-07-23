@@ -1,0 +1,184 @@
+{
+  "viewReservationViewPage": {
+    "dates": {
+      "first": "2019-08-28",
+      "second": "2019-09-01"
+    },
+    "messages": null,
+    "checkInIneligibilityReason": null,
+    "greyBoxMessage": null,
+    "greyBoxPassengerMessage": null,
+    "destinationDescription": "Reno",
+    "originAirport": {
+      "name": "Oakland",
+      "state": "CA",
+      "code": "OAK",
+      "country": null
+    },
+    "destinationAirport": {
+      "name": "Reno/Tahoe",
+      "state": "NV",
+      "code": "RNO",
+      "country": null
+    },
+    "companion": null,
+    "passengers": [
+      {
+        "name": "Donald L Thompson",
+        "accountNumber": "88501486",
+        "passengerReference": "2",
+        "hasAnyEarlyBird": false,
+        "hasCompletePassportInfo": false,
+        "checkInIneligibilityReason": null,
+        "isCheckedIn": false,
+        "isCheckInEligible": false,
+        "isUnaccompaniedMinor": false
+      }
+    ],
+    "confirmationNumber": "TFAURT",
+    "shouldShowAddEarlyBirdButton": false,
+    "bounds": [
+      {
+        "departureStatus": null,
+        "departureStatusType": null,
+        "arrivalStatus": null,
+        "arrivalStatusType": null,
+        "flights": [
+          {
+            "number": "2331",
+            "wifiOnBoard": true
+          }
+        ],
+        "travelTime": "0h 55m",
+        "departureDate": "2019-08-28",
+        "departureTime": "08:35",
+        "departureAirport": {
+          "name": "Oakland",
+          "state": "CA",
+          "code": "OAK",
+          "country": null
+        },
+        "arrivalTime": "09:30",
+        "arrivalAirport": {
+          "name": "Reno/Tahoe",
+          "state": "NV",
+          "code": "RNO",
+          "country": null
+        },
+        "passengerTypeCounts": {
+          "adult": 1,
+          "senior": 0
+        },
+        "fareType": "WannaGetAway",
+        "boundType": "DEPARTING",
+        "standbyFlight": null,
+        "stops": [
+
+        ],
+        "isNextDayArrival": false
+      },
+      {
+        "departureStatus": null,
+        "departureStatusType": null,
+        "arrivalStatus": null,
+        "arrivalStatusType": null,
+        "flights": [
+          {
+            "number": "2524",
+            "wifiOnBoard": true
+          }
+        ],
+        "travelTime": "1h 5m",
+        "departureDate": "2019-09-01",
+        "departureTime": "19:55",
+        "departureAirport": {
+          "name": "Reno/Tahoe",
+          "state": "NV",
+          "code": "RNO",
+          "country": null
+        },
+        "arrivalTime": "21:00",
+        "arrivalAirport": {
+          "name": "Oakland",
+          "state": "CA",
+          "code": "OAK",
+          "country": null
+        },
+        "passengerTypeCounts": {
+          "adult": 1,
+          "senior": 0
+        },
+        "fareType": "WannaGetAway",
+        "boundType": "RETURNING",
+        "standbyFlight": null,
+        "stops": [
+
+        ],
+        "isNextDayArrival": false
+      }
+    ],
+    "pageHeader": "OAK - RNO",
+    "shareDetails": {
+      "subject": "Southwest Flight 2331 Oakland to Reno/Tahoe",
+      "confirmationInfo": "Confirmation #: TFAURT",
+      "passengerInfo": "Passenger names: Donald L Thompson",
+      "flightInfo": [
+        {
+          "header": "Departing Flight: Wed, Aug 28, 2019",
+          "title": "Southwest Flight 2331 Oakland to Reno/Tahoe",
+          "flightInfo": "Flight #: 2331",
+          "departureInfo": "Departs: 08:35 AM OAK",
+          "departureDateTime": "2019-08-28T08:35:00.000-07:00",
+          "stops": null,
+          "arrivalInfo": "Arrives: 09:30 AM RNO",
+          "arrivalDateTime": "2019-08-28T09:30:00.000-07:00",
+          "travelTime": "Travel time: 0hr 55 mins"
+        },
+        {
+          "header": "Returning Flight: Sun, Sep 01, 2019",
+          "title": "Southwest Flight 2524 Reno/Tahoe to Oakland",
+          "flightInfo": "Flight #: 2524",
+          "departureInfo": "Departs: 07:55 PM RNO",
+          "departureDateTime": "2019-09-01T19:55:00.000-07:00",
+          "stops": null,
+          "arrivalInfo": "Arrives: 09:00 PM OAK",
+          "arrivalDateTime": "2019-09-01T21:00:00.000-07:00",
+          "travelTime": "Travel time: 1hr 5 mins"
+        }
+      ]
+    },
+    "hasAnyCancelledFlights": false,
+    "isCheckInEligible": false,
+    "isCheckedIn": false,
+    "isInternational": false,
+    "isDynamicWaiver": false,
+    "isNonRevPnr": false,
+    "isSwabiz": false,
+    "_links": {
+      "checkInSessionToken": null,
+      "earlyBird": null,
+      "change": null,
+      "reaccom": null,
+      "cancel": null,
+      "viewStandbyList": null,
+      "checkIn": null,
+      "viewBoardingPassIssuance": null,
+      "viewBoardingPass": null,
+      "viewBoardingPositions": null,
+      "addCompanion": null,
+      "passportEmergencyContacts": null,
+      "editPNRPassengers": [
+        {
+          "href": "/v1/mobile-air-booking/page/view-reservation/edit-pnr-passenger/TFAURT",
+          "method": "GET",
+          "query": {
+            "first-name": "Donald",
+            "last-name": "Thompson",
+            "passenger-reference": "2"
+          }
+        }
+      ]
+    },
+    "hasUnaccompaniedMinor": false
+  }
+}

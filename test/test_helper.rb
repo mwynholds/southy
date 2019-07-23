@@ -17,7 +17,7 @@ def agent
   fixtures = "#{__dir__}/fixtures"
   monkey   = Southy::TestMonkey.new fixtures
   config   = Southy::Config.new
-  agent    = Southy::TravelAgent.new config
+  agent    = Southy::TestTravelAgent.new config
   slackbot = Southy::Slackbot.new config, agent
   agent.monkey   = monkey
   agent.slackbot = slackbot

@@ -22,8 +22,10 @@ module Southy
       "#{departure_city}, #{departure_state} (#{departure_code})"
     end
 
-    def departure_clock_time
-      departure_time.strftime("%l:%M%P").strip
+    def departure_local_clock_time
+      airport = Airport.lookup departure_code
+      local_time = airport.local_time departure_time
+      local_time.strftime("%l:%M%P").strip
     end
 
     def arrival_code
@@ -46,8 +48,10 @@ module Southy
       "#{arrival_city}, #{arrival_state} (#{arrival_code})"
     end
 
-    def arrival_clock_time
-      arrival_time.strftime("%l:%M%P").strip
+    def arrival_local_clock_time
+      airport = Airport.lookup arrival_code
+      local_time = airport.local_time arrival_time
+      local_time.strftime("%l:%M%P").strip
     end
 
     def duration

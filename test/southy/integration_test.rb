@@ -11,7 +11,7 @@ module Southy
 
       describe "Single passenger, single bound, no stops" do
         before do
-          agent.confirm "LNK23P", "Dimas", "Guardado"
+          agent.confirm "LNK23P", "Dimas", "Guardado", nil, false
           @reservations = Reservation.where confirmation_number: "LNK23P"
         end
 
@@ -26,9 +26,9 @@ module Southy
 
       end
 
-      describe "Multiple passengers, single bound, single stop" do
+      describe "Multiple passengers, single bound, single stop, plane change" do
         before do
-          agent.confirm "J9MZME", "Don", "Thompson"
+          agent.confirm "J9MZME", "Don", "Thompson", nil, false
           @reservations = Reservation.where confirmation_number: "J9MZME"
         end
 
@@ -42,9 +42,25 @@ module Southy
         end
       end
 
+      describe "Multiple passengers, single bound, single stop, no plane change" do
+        before do
+          agent.confirm "JBORBA", "Don", "Thompson", nil, false
+          @reservations = Reservation.where confirmation_number: "JBORBA"
+        end
+
+        it "adds the right flights" do
+          expect(@reservations.length).must_equal 1
+          expect(@reservations.first.bounds.length).must_equal 1
+          expect_reservation @reservations.first, conf: "JBORBA", email: nil
+          expect_passengers  @reservations.first, "Donald L Thompson", "Maryann Thompson", "Pearl Thompson"
+          expect_bound       @reservations.first.bounds.first, departure: "TUS 2019-10-13 10:00", arrival: "SJC 2019-10-13 13:20", flights: [ 4805 ]
+          expect_stops       @reservations.first.bounds.first.stops, "SAN 2019-10-13 11:15"
+        end
+      end
+
       describe "Multiple passengers, multiple bounds, no stops" do
         before do
-          agent.confirm "LALAGH", "Max", "Holder", "max@carbonfive.com"
+          agent.confirm "LALAGH", "Max", "Holder", "max@carbonfive.com", false
           @reservations = Reservation.where confirmation_number: "LALAGH"
           @reservations = @reservations.map { |r| agent.checkin r.bounds.first, force: true }
         end
@@ -63,6 +79,22 @@ module Southy
         it "gets the right seats" do
           expect_seats       @reservations.first.bounds.first, "Maxwell Hanson Holder" => "B04", "Clay Campbell Smalley" => "B03"
           expect_seats       @reservations.first.bounds.second, "Maxwell Hanson Holder" => "A55", "Clay Campbell Smalley" => "A54"
+        end
+      end
+
+      describe "Flight canceled" do
+        it "deletes the flights" do
+          agent.confirm "TFAURT", "Don", "Thompson", nil, false
+          reservations = Reservation.where confirmation_number: "TFAURT"
+          expect_reservation reservations.first, conf: "TFAURT", email: nil
+
+          begin
+            agent.confirm "TFAURT", "Don", "Thompson", nil, false, json_num: 2
+            fail "Confirm TFAURT should have raised"
+          rescue SouthyException => e
+          end
+          reservations = Reservation.where confirmation_number: "TFAURT"
+          expect(reservations.length).must_equal 0
         end
       end
     end

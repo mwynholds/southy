@@ -87,13 +87,12 @@ module Southy
       to_notify
     end
 
-    def notify_reconfirmed(reservation)
+    def notify(reservation, bounds, message)
       return unless @config.notify_users?
 
-      slack_users_to_notify(reservation).each do |su|
-        message   = "Your reservation has been updated for `#{reservation.conf}`."
-        itinerary = "```#{Reservation.list(reservation.bounds, short: true)}```"
+      itinerary = "```#{Reservation.list(bounds, short: true)}```"
 
+      slack_users_to_notify(reservation).each do |su|
         next if @config.test?
 
         resp = @webclient.im_open user: su.id
@@ -102,19 +101,19 @@ module Southy
       end
     end
 
+    def notify_reconfirmed(reservation)
+      message = "Your reservation has been _updated_ for `#{reservation.conf}`."
+      notify reservation, reservation.bounds, message
+    end
+
     def notify_checked_in(bound)
-      return unless @config.notify_users?
+      message = "Your party has been checked in to flight `SW#{bound.flights.first}`"
+      notify bound.reservation, [bound], message
+    end
 
-      slack_users_to_notify(bound.reservation).each do |su|
-        message   = "Your party has been checked in to flight `SW#{bound.flights.first}`"
-        itinerary = "```#{Reservation.list([bound], short: true)}```"
-
-        next if @config.test?
-
-        resp = @webclient.im_open user: su.id
-        @webclient.chat_postMessage channel: resp.channel.id, text: message,   as_user: true
-        @webclient.chat_postMessage channel: resp.channel.id, text: itinerary, as_user: true
-      end
+    def notify_canceled(reservation)
+      message = "Your reservation has been _canceled_ for `#{reservation.conf}`."
+      notify reservation, reservation.bounds, message
     end
 
     def user_profile(data)

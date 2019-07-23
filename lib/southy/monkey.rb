@@ -163,12 +163,15 @@ module Southy
   end
 
   class TestMonkey < Monkey
+    attr_accessor :json_num
+
     def initialize(dir)
       @dir = dir
     end
 
     def get_json(conf, name)
-      JSON.parse IO.read("#{@dir}/#{conf}/#{name}.json"), object_class: OpenStruct
+      fn = json_num ? "#{name}_#{json_num}" : name
+      JSON.parse IO.read("#{@dir}/#{conf}/#{fn}.json"), object_class: OpenStruct
     end
 
     def fetch_trip_info(conf, first, last)

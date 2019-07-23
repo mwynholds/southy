@@ -1,0 +1,18 @@
+{
+  "code": 400520414,
+  "message": "Sorry! This reservation has been cancelled.",
+  "messageKey": "ERROR__AIR_RESERVATION__PNR_CANCELLED",
+  "header": null,
+  "httpStatusCode": "BAD_REQUEST",
+  "requestId": "no-exp-id:OOk_hd1_Q4CO6LODR7v12g:unknown",
+  "infoList": [
+    {
+      "key": "action",
+      "value": "MANAGE"
+    },
+    {
+      "key": "PnrIsCancelled",
+      "value": "Cannot retrieve reservation for 'Manage' as PNR is cancelled"
+    }
+  ]
+}

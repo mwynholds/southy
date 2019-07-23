@@ -4,7 +4,7 @@ module Southy
     validates :origin_code, presence: true
     validates :destination_code, presence: true
 
-    has_many :bounds,     dependent: :destroy, autosave: true
+    has_many :bounds, -> { order departure_time: :asc }, dependent: :destroy, autosave: true
     has_many :passengers, dependent: :destroy, autosave: true
 
     scope    :upcoming, -> { joins(:bounds).where("bounds.departure_time >  ?", DateTime.now).distinct }
