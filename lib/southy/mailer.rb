@@ -39,7 +39,7 @@ You have been successfully checked in to your flight(s).  Details are as follows
 
 Confirmation number : #{bound.reservation.conf}
 Flight : SW#{bound.flights.first}
-Departing : #{bound.local_departure_time.strftime('%F %l:%M%P')}
+Departing : #{bound.departure_local_time.strftime('%F %l:%M%P')}
 Route : #{bound.departure_airport.ident} --> #{bound.arrival_airport.ident}
 
 #{seats}

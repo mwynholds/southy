@@ -36,11 +36,11 @@ module Southy
       "#{arrival_city}, #{arrival_state} (#{arrival_code})"
     end
 
-    def local_departure_time
+    def departure_local_time
       departure_airport.local_time departure_time
     end
 
-    def local_arrival_time
+    def arrival_local_time
       arrival_airport.local_time arrival_time
     end
 
@@ -136,7 +136,7 @@ module Southy
                 "", leg.departure_local_clock_time, leg.arrival_local_clock_time, leg.duration
       end.zip(layovers).flatten.compact
 
-      date   = departure_time.strftime "%B %-d, %Y"
+      date   = departure_local_time.strftime "%B %-d, %Y"
       header = "#{bound_type} - #{date}"
       hr     = "-" * header.length
 

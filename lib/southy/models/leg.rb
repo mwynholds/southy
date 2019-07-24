@@ -18,14 +18,17 @@ module Southy
       @departure.departure_time
     end
 
-    def departure_ident
-      "#{departure_city}, #{departure_state} (#{departure_code})"
+    def departure_local_time
+      airport = Airport.lookup departure_code
+      airport.local_time departure_time
     end
 
     def departure_local_clock_time
-      airport = Airport.lookup departure_code
-      local_time = airport.local_time departure_time
-      local_time.strftime("%l:%M%P").strip
+      departure_local_time.strftime("%l:%M%P").strip
+    end
+
+    def departure_ident
+      "#{departure_city}, #{departure_state} (#{departure_code})"
     end
 
     def arrival_code
@@ -44,14 +47,17 @@ module Southy
       @arrival.arrival_time
     end
 
-    def arrival_ident
-      "#{arrival_city}, #{arrival_state} (#{arrival_code})"
+    def arrival_local_time
+      airport = Airport.lookup arrival_code
+      airport.local_time arrival_time
     end
 
     def arrival_local_clock_time
-      airport = Airport.lookup arrival_code
-      local_time = airport.local_time arrival_time
-      local_time.strftime("%l:%M%P").strip
+      arrival_local_time.strftime("%l:%M%P").strip
+    end
+
+    def arrival_ident
+      "#{arrival_city}, #{arrival_state} (#{arrival_code})"
     end
 
     def duration

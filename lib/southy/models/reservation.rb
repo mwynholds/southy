@@ -87,7 +87,7 @@ module Southy
     end
 
     def info
-      date_header = bounds.first.departure_time.strftime "%B %-d"
+      date_header = bounds.first.departure_local_time.strftime "%B %-d"
       city_header = "#{bounds.first.arrival_city}, #{bounds.first.arrival_state}"
       p_max       = passengers.map(&:name).map(&:length).max
       pass_list   = passengers.map { |p| sprintf "%-#{p_max}s  %s", p.name, seats_ident_for(p) }.join "\n"
@@ -187,7 +187,7 @@ EOF
           end
 
           name     = sprintf "%-#{max_name}s", p.name
-          time     = b.local_departure_time.strftime "%Y-%m-%d %l:%M%P"
+          time     = b.departure_local_time.strftime "%Y-%m-%d %l:%M%P"
           seats    = p.seats_for(b).length > 0 ? " *** #{p.seats_ident_for(b)}" : ""
           stops    = b.stops.length > 0 ? " (+#{b.stops.length})" : "     "
 
