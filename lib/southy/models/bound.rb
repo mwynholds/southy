@@ -16,8 +16,8 @@ module Southy
       select { |b| b.reservation.conf == conf }
     end
 
-    def self.for_person(email, name)
-      select { |b| b.reservation.person_matches? email, name }
+    def self.for_person(id, email, name)
+      select { |b| b.reservation.person_matches? id, email, name }
     end
 
     def departure_airport

@@ -10,8 +10,8 @@ module Southy
     scope    :upcoming, -> { joins(:bounds).where("bounds.departure_time >  ?", DateTime.now).distinct }
     scope    :past    , -> { joins(:bounds).where("bounds.departure_time <= ?", DateTime.now).distinct }
 
-    def self.for_person(email, name)
-      select { |r| r.person_matches? email, name }
+    def self.for_person(id, email, name)
+      select { |r| r.person_matches? id, email, name }
     end
 
     def conf
@@ -34,8 +34,8 @@ module Southy
       passengers.first.last_name
     end
 
-    def person_matches?(email, name)
-      self.email == email || passengers.any? { |p| p.name_matches? name }
+    def person_matches?(id, email, name)
+      self.created_by == id || self.email == email || passengers.any? { |p| p.name_matches? name }
     end
 
     def ==(other)

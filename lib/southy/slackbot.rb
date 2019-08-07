@@ -212,7 +212,7 @@ EOM
       if args && args.length > 0
         bounds = Bound.upcoming.for_reservation args[0]
       else
-        bounds = Bound.upcoming.for_person profile[:email], profile[:full_name]
+        bounds = Bound.upcoming.for_person profile[:id], profile[:email], profile[:full_name]
       end
       print_bounds bounds, message
     end
@@ -237,7 +237,7 @@ EOM
       profile = user_profile data
       message.reply "Previous Southwest flights for #{profile[:full_name]}:"
       message.type
-      bounds = Bound.past.for_person profile[:email], profile[:full_name]
+      bounds = Bound.past.for_person profile[:id], profile[:email], profile[:full_name]
       print_bounds bounds, message
     end
 
@@ -270,6 +270,8 @@ EOM
         end
 
         reservation = confirm_reservation conf, fname, lname, email, message
+        reservation.created_by = profile[:id]
+        reservation.save!
         print_bounds reservation&.bounds, message
       end
     end
@@ -286,7 +288,7 @@ EOM
 
     def reconfirm(data, args, message)
       profile = user_profile data
-      reservations = Reservation.upcoming.for_person profile[:email], profile[:full_name]
+      reservations = Reservation.upcoming.for_person profile[:id], profile[:email], profile[:full_name]
       if reservations.empty?
         message.reply "No flights available for #{profile[:full_name]}"
         return
