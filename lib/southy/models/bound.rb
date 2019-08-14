@@ -20,6 +20,10 @@ module Southy
       select { |b| b.reservation.person_matches? id, email, name }
     end
 
+    def self.search(name)
+      select { |b| b.reservation.search_matches? name }
+    end
+
     def departure_airport
       Airport.lookup departure_code
     end

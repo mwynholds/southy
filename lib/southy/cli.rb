@@ -79,11 +79,14 @@ module Southy
       puts Reservation.list Bound.past
     end
 
+    def search(params)
+      return ( puts 'No search value provided' ) if params.length == 0
+
+      puts Reservation.list Bound.upcoming.search(params[0])
+    end
+
     def info(params)
-      if params.length == 0
-        puts 'No confirmation number provided'
-        return
-      end
+      return ( puts 'No confirmation number provided' ) if params.length == 0
 
       reservation = Reservation.where(confirmation_number: params[0]).first
       unless reservation

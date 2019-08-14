@@ -4,7 +4,7 @@ $LOAD_PATH << File.dirname(__FILE__) + "/../lib" if $0 == __FILE__
 require 'optparse'
 require 'southy'
 
-operations = %w(init run rundebug reconfirm checkin checkout add remove delete list history info)
+operations = %w(init run rundebug reconfirm checkin checkout add remove delete list history info search)
 
 config = { verbose: false, force: false }
 option_parser = OptionParser.new do |opts|
@@ -26,6 +26,7 @@ Supported commands:
  list                                Display upcoming flight check-ins
  history                             Display past flight check-ins
  info <conf>                         Shows detailed information for a reservation
+ search <name>                       Search reservations for a particular first or last name
  add <conf> [<personal_info>]        Add a new check-in
  remove <conf>                       Remove a check-in (synonym: delete)
  reconfirm [<conf>]                  Reconfirm flights (picks up any ticketing changes)

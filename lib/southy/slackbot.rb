@@ -140,6 +140,7 @@ southy hello             Say hello to me!
 southy whatsup           Show me ALL the flights upcoming
 southy list              Show me what flights I have upcoming
 southy history           Show me what flights I had in the past
+southy search <name>     Search upcoming flights by a first or last name
 southy info <conf>       Show me details for a specific reservation
 southy add <conf>        Add this flight to Southy
 southy remove <conf>     Remove this flight from Southy
@@ -245,6 +246,17 @@ EOM
       message.reply "Previous Southwest flights:"
       message.type
       bounds = Bound.past
+      print_bounds bounds, message
+    end
+
+    def search(data, args, message)
+      if args.length == 0
+        message.reply 'No search value provided'
+        return
+      end
+
+      message.type
+      bounds = Bound.upcoming.search args[0]
       print_bounds bounds, message
     end
 
