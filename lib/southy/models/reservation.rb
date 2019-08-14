@@ -38,6 +38,10 @@ module Southy
       self.created_by == id || self.email == email || passengers.any? { |p| p.name_matches? name }
     end
 
+    def search_matches?(name)
+      passengers.any? { |p| p.search_matches? name }
+    end
+
     def ==(other)
       conf == other.conf &&
         origin_code == other.origin_code &&

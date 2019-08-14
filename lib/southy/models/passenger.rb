@@ -28,6 +28,10 @@ module Southy
       ns.last == last_name && ( ns.first.starts_with?(first_name) || first_name.starts_with?(ns.first) )
     end
 
+    def search_matches?(n)
+      n.downcase == last_name.downcase || n.downcase == first_name.downcase
+    end
+
     def first_name_matches?(a, b)
       return true if a == b
       return true if a.starts_with b
