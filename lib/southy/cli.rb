@@ -40,13 +40,13 @@ module Southy
     end
 
     def reconfirm(params)
-      reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
+      reservations = params.length > 0 ? Reservation.for_conf(params[0]) : Reservation.upcoming
       reservations = confirm_reservations reservations
       puts Reservation.list reservations.map(&:bounds).flatten
     end
 
     def checkin(params)
-      reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
+      reservations = params.length > 0 ? Reservation.for_conf(params[0]) : Reservation.upcoming
       bounds   = reservations.map(&:bounds).flatten.sort_by(&:departure_time)
       max_pass = reservations.map(&:passengers_ident).map(&:length).max
       bounds.each do |b|
@@ -64,7 +64,7 @@ module Southy
     end
 
     def checkout(params)
-      reservations = params.length > 0 ? Reservation.where(confirmation_number: params[0]) : Reservation.upcoming
+      reservations = params.length > 0 ? Reservation.for_conf(params[0]) : Reservation.upcoming
       @agent.checkout reservations
       puts Reservation.list reservations.map(&:bounds).flatten
     end
@@ -88,7 +88,7 @@ module Southy
     def info(params)
       return ( puts 'No confirmation number provided' ) if params.length == 0
 
-      reservation = Reservation.where(confirmation_number: params[0]).first
+      reservation = Reservation.for_conf(params[0]).first
       unless reservation
         puts 'No reservation found'
         return

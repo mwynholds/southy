@@ -14,6 +14,10 @@ module Southy
       select { |r| r.person_matches? id, email, name }
     end
 
+    def self.for_conf(conf)
+      where(confirmation_number: conf.upcase)
+    end
+
     def conf
       confirmation_number
     end

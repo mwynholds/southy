@@ -185,7 +185,7 @@ EOM
         return
       end
 
-      reservation = Reservation.where(confirmation_number: args[0]).first
+      reservation = Reservation.for_conf(args[0]).first
       unless reservation
         message.reply 'No reservation found'
         return
@@ -294,7 +294,7 @@ EOM
     def remove(data, args, message)
       args.tap do |(conf)|
         return ( message.reply "You didn't enter a confirmation number!" ) unless conf
-        deleted = Reservation.where(confirmation_number: conf).destroy_all
+        deleted = Reservation.for_conf(conf).destroy_all
         response = "Removed #{deleted.length} reservation(s) - #{deleted.map(&:conf).join(', ')}"
         message.reply response
         puts response
