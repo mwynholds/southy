@@ -44,7 +44,7 @@ module Southy
       client.on :message do |data|
         next if data['user'] == 'U0HM6QX8Q' # this is Mr. Southy!
         next unless data['text']
-        tokens = data['text'].split ' '
+        tokens = data['text'].split(' ').map { |t| strip_markdown(t) }
         channel = data['channel']
         next unless tokens.length > 0
         next unless tokens[0].downcase == 'southy'
@@ -54,6 +54,7 @@ module Southy
         message.type
         @channels << channel
         ( help(data, [], message) and next ) unless tokens[1]
+        p tokens
         method = tokens[1].downcase
         args = tokens[2..-1]
         method = "#{method}_all" if args == [ 'all' ]
@@ -282,9 +283,11 @@ EOM
         end
 
         reservation = confirm_reservation conf, fname, lname, email, message
-        reservation.created_by = profile[:id]
-        reservation.save!
-        print_bounds reservation&.bounds, message
+        if reservation
+          reservation.created_by = profile[:id]
+          reservation.save!
+          print_bounds reservation&.bounds, message
+        end
       end
     end
 
@@ -356,6 +359,14 @@ EOM
     rescue => e
       #puts e.message
       raise e
+    end
+
+    def strip_markdown(str)
+      if str.first == str.last && str.first =~ /[\*_~]/
+        return strip_markdown str[1..-2]
+      end
+
+      str
     end
   end
 end
