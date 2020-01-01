@@ -147,6 +147,8 @@ EOF
         bound.arrival_state   = boundJson.arrivalAirport.state
         bound.departure_time  = bound.departure_airport.local_time "#{boundJson.departureDate} #{boundJson.departureTime}"
         bound.arrival_time    = bound.arrival_airport.local_time   "#{boundJson.departureDate} #{boundJson.arrivalTime}"
+
+        bound.arrival_time += 1 if boundJson.isNextDayArrival
         Airport.validate bound.departure_code
         Airport.validate bound.arrival_code
 
@@ -156,8 +158,8 @@ EOF
           stop.city           = stopJson.airport.name
           stop.state          = stopJson.airport.state
           stop.plane_change   = stopJson.change_planes
-          stop.arrival_time   = stop.airport.local_time "#{boundJson.departureDate} #{stopJson.arrivalTime}"
           stop.departure_time = stop.airport.local_time "#{boundJson.departureDate} #{stopJson.departureTime}"
+          stop.arrival_time   = stop.airport.local_time "#{boundJson.departureDate} #{stopJson.arrivalTime}"
           Airport.validate stop.code
           stop
         end
