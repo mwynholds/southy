@@ -18,6 +18,10 @@ module Southy
       where(confirmation_number: conf.upcase)
     end
 
+    def self.for_confs(confs)
+      where(confirmation_number: confs.map(&:upcase))
+    end
+
     def conf
       confirmation_number
     end

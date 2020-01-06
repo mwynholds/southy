@@ -136,16 +136,16 @@ module Southy
       message.reply "Hello, I am Southy.  I can do the following things:"
       message.reply <<EOM
 ```
-southy help              Show this message
-southy hello             Say hello to me!
-southy whatsup           Show me ALL the flights upcoming
-southy list              Show me what flights I have upcoming
-southy history           Show me what flights I had in the past
-southy search <name>     Search upcoming flights by a first or last name
-southy info <conf>       Show me details for a specific reservation
-southy add <conf>        Add this flight to Southy
-southy remove <conf>     Remove this flight from Southy
-southy reconfirm         Reconfirm your flights, if you have changed flight info
+southy help                 Show this message
+southy hello                Say hello to me!
+southy whatsup              Show me ALL the flights upcoming
+southy list                 Show me what flights I have upcoming
+southy history              Show me what flights I had in the past
+southy search <name>        Search upcoming flights by a first or last name
+southy info <conf>          Show me details for a specific reservation
+southy add <conf>           Add this flight to Southy
+southy remove <conf>        Remove this flight from Southy
+southy reconfirm [<confs>]  Reconfirm your flights, if you have changed flight info
 
 <conf> = Your flight confirmation number and optionally contact info, for example:
          southy add RB7L6K     <-- uses your name and email from Slack
@@ -302,11 +302,19 @@ EOM
     end
 
     def reconfirm(data, args, message)
-      profile = user_profile data
-      reservations = Reservation.upcoming.for_person profile[:id], profile[:email], profile[:full_name]
-      if reservations.empty?
-        message.reply "No flights available for #{profile[:full_name]}"
-        return
+      if args.length > 0
+        reservations = Reservation.for_confs args
+        if reservations.empty?
+          message.reply "No flights available for confirmations: #{args}"
+          return
+        end
+      else
+        profile = user_profile data
+        reservations = Reservation.upcoming.for_person profile[:id], profile[:email], profile[:full_name]
+        if reservations.empty?
+          message.reply "No flights available for #{profile[:full_name]}"
+          return
+        end
       end
 
       reservations = confirm_reservations reservations, message
