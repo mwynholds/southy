@@ -54,7 +54,6 @@ module Southy
         message.type
         @channels << channel
         ( help(data, [], message) and next ) unless tokens[1]
-        p tokens
         method = tokens[1].downcase
         args = tokens[2..-1]
         method = "#{method}_all" if args == [ 'all' ]
