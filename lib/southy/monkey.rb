@@ -38,23 +38,26 @@ module Southy
       fetch_json conf, request, 'trip-info'
     end
 
-    def try_all_names(conf, first_name, last_name)
+    def try_all_names(first_name, last_name)
       names = Passenger.possible_names first_name, last_name
       json  = nil
       names.each do |f, l|
-        json = fetch_trip_info conf, f, l
+        json = yield f, l
         break if json.httpStatusCode != 'NOT_FOUND'
       end
       json
     end
 
     def lookup(conf, first_name, last_name)
-      json       = try_all_names conf, first_name, last_name
-      statusCode = json.httpStatusCode
-      code       = json.code
-      message    = json.message
+      json = try_all_names first_name, last_name do |f, l|
+        fetch_trip_info conf, f, l
+      end
 
-      if statusCode
+      status_code = json.httpStatusCode
+      code        = json.code
+      message     = json.message
+
+      if status_code
         ident = "#{conf} #{first_name} #{last_name}"
         raise SouthyException.new("#{code} - #{message}", code)
       end
@@ -89,16 +92,21 @@ module Southy
     end
 
     def checkin(reservation)
-      json = fetch_checkin_info_1 reservation.conf, reservation.first_name, reservation.last_name
-      sessionToken = json.checkInSessionToken
+      json = try_all_names reservation.first_name, reservation.last_name do |f, l|
+        fetch_checkin_info_1 reservation.conf, f, l
+      end
 
-      json = fetch_checkin_info_2 reservation.conf, reservation.first_name, reservation.last_name, sessionToken
+      session_token = json.checkInSessionToken
 
-      statusCode = json.httpStatusCode
-      code = json.code
-      message = json.message
+      json = try_all_names reservation.first_name, reservation.last_name do |f, l|
+        fetch_checkin_info_2 reservation.conf, f, l, session_token
+      end
 
-      if statusCode
+      status_code = json.httpStatusCode
+      code        = json.code
+      message     = json.message
+
+      if status_code
         raise SouthyException.new("#{code} - #{message}", code)
       end
 
@@ -112,26 +120,25 @@ module Southy
         raise SouthyException.new("No check in information")
       end
 
-      flightNodes = page.flights
+      flight_nodes = page.flights
 
-      flightNodes.each do |flightNode|
-        flight = flightNode.flightNumber
+      flight_nodes.each do |flight_node|
+        flight = flight_node.flightNumber
         bound  = reservation.bound_for flight
         raise SouthyException.new("Missing bound for flight #{flight}") unless bound
 
-        flightNode.passengers.each do |passengerNode|
-          name = passengerNode.name.split " "
-
-          passenger = reservation.passengers.find { |p| p.first_name == name.first && p.last_name == name.last }
+        flight_node.passengers.each do |passenger_node|
+          name      = passenger_node.name
+          passenger = reservation.passengers.find { |p| p.name == name }
           if passenger
             seat = Seat.new
-            seat.group    = passengerNode.boardingGroup
-            seat.position = passengerNode.boardingPosition
-            seat.flight   = flightNode.flightNumber
+            seat.group    = passenger_node.boardingGroup
+            seat.position = passenger_node.boardingPosition
+            seat.flight   = flight_node.flightNumber
 
             passenger.assign_seat seat, bound
           else
-            raise SouthyException("Missing passenger #{passengerNode.name}")
+            raise SouthyException.new("Missing passenger #{passenger_node.name}")
           end
         end
       end

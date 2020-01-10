@@ -62,8 +62,8 @@ module Southy
 
     def seats_ident
       reservation.passengers.map do |passenger|
-        reservation.seats_for(passenger, self).map(&:ident).first
-      end.compact.join(', ')
+        reservation.seats_for(passenger, self).map(&:ident).join(', ')
+      end.compact.join(' / ')
     end
 
     def ready_for_checkin?

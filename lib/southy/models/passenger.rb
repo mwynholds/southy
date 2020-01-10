@@ -20,7 +20,7 @@ module Southy
     end
 
     def last_name
-      name.split(' ').last
+      name.split(' ')[1..-1].join(' ')
     end
 
     def name_matches?(n)
