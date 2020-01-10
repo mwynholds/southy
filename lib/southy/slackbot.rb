@@ -201,7 +201,7 @@ EOM
       end
 
       all = Reservation.list bounds, short: true
-      all.split("\n").each_slice(50) do |slice|
+      all.split("\n").each_slice(40) do |slice|
         message.reply "```#{slice.join("\n")}```"
       end
     end
