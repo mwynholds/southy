@@ -75,7 +75,8 @@ module Southy
       end
 
       if names.length == 3
-        [ [ names[0], names.last(2).join(" ") ],
+        [ [ names[0], names[2] ],
+          [ names[0], names.last(2).join(" ") ],
           [ names.take(2).join(" "), names[2] ] ]
       else
         [ names ]
