@@ -151,7 +151,8 @@ module Southy
     def fetch_json(conf, request, name, n=0)
       puts "Fetch #{request.path}" if DEBUG
       request['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4'
-      request['X-API-Key'] = @api_key
+      request['x-api-key'] = @api_key
+      request['x-channel-id'] = "MWEB"
 
       https = Net::HTTP.new @hostname, 443
       https.use_ssl = true
