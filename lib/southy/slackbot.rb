@@ -95,7 +95,7 @@ module Southy
       slack_users_to_notify(reservation).each do |su|
         next if @config.test?
 
-        resp = @webclient.im_open user: su.id
+        resp = @webclient.conversations_open users: su.id
         @webclient.chat_postMessage channel: resp.channel.id, text: message,   as_user: true
         @webclient.chat_postMessage channel: resp.channel.id, text: itinerary, as_user: true
       end
