@@ -114,7 +114,10 @@ module Southy
 
     def confirm_reservations(reservations)
       reservations.sort_by { |r| r.bounds.first.departure_time }.map do |r|
-        confirm_reservation r.conf, r.first_name, r.last_name, r.email
+        r.passengers.each do |p|
+          res = confirm_reservation r.conf, p.first_name, p.last_name, r.email
+          break res if res
+        end
       end.compact
     end
 
