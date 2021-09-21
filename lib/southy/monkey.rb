@@ -14,7 +14,7 @@ module Southy
       @config = config
 
       @hostname = 'mobile.southwest.com'
-      @api_key = 'l7xx0a43088fe6254712b10787646d1b298e'
+      @api_key = 'l7xx44e0282659f14664b831eeba67b38a6e'
     end
 
     def parse_json(conf, response, name)
