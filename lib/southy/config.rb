@@ -88,7 +88,7 @@ class Southy::Config
 
   def load_config(options)
     config = if_updated? config_file, options do
-      YAML.load( IO.read(config_file) )
+      YAML.load( IO.read(config_file), aliases: true )
     end
     @config = config if config
     @config ||= {}
