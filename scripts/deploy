@@ -4,10 +4,10 @@ version=`ruby -r ./lib/southy/version.rb -e 'puts Southy::VERSION'`
 dest=$1
 ssh="ssh deploy@$dest"
 
-rake build
+bundle exec rake build
 scp pkg/southy-$version.gem deploy@$dest:
 $ssh "sudo systemctl stop southy"
-$ssh "gem list | grep southy && sudo gem uninstall southy"
-$ssh "sudo gem install ./southy-$version.gem"
+$ssh "gem list | grep southy && gem uninstall southy"
+$ssh "gem install -N ./southy-$version.gem"
 $ssh "sudo systemctl start southy"
 $ssh "rm -f ./southy-$version.gem"
