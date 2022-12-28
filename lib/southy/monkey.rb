@@ -91,16 +91,26 @@ module Southy
       fetch_json conf, request, "checkin-info-2--#{first_name.downcase}-#{last_name.downcase}"
     end
 
+    def fetch_checkin_info_2_alt(link)
+      uri = URI("https://#{@hostname}/api/mobile-air-operations#{link.href}")
+      request = Net::HTTP::Post.new uri
+      request.body = link.body.to_json
+      request.content_type = 'application/json'
+      fetch_json link.body.recordLocator, request, "checkin-info-2--#{link.body.firstName.downcase}-#{link.body.lastName.downcase}"
+    end
+
     def checkin(reservation)
       json = try_all_names reservation.first_name, reservation.last_name do |f, l|
         fetch_checkin_info_1 reservation.conf, f, l
       end
 
-      session_token = json.checkInSessionToken
+      #session_token = json.checkInSessionToken
 
-      json = try_all_names reservation.first_name, reservation.last_name do |f, l|
-        fetch_checkin_info_2 reservation.conf, f, l, session_token
-      end
+      #json = try_all_names reservation.first_name, reservation.last_name do |f, l|
+      #  fetch_checkin_info_2 reservation.conf, f, l, session_token
+      #end
+
+      json = fetch_checkin_info_2_alt json.checkInViewReservationPage._links.checkIn
 
       status_code = json.httpStatusCode
       code        = json.code
