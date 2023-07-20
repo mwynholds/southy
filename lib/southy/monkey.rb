@@ -96,6 +96,14 @@ module Southy
         fetch_checkin_info_1 reservation.conf, f, l
       end
 
+      status_code = json.httpStatusCode
+      code        = json.code
+      message     = json.message
+
+      if status_code
+        raise SouthyException.new("#{code} - #{message}", code)
+      end
+
       session_token = json.checkInSessionToken
 
       json = try_all_names reservation.first_name, reservation.last_name do |f, l|
