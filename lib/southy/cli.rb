@@ -55,7 +55,7 @@ module Southy
         pident = sprintf "%-#{max_pass}s", r.passengers_ident
         print "Checking in #{r.conf} #{fnum} for #{pident} ... "
         begin
-          checked_in = @agent.checkin b
+          checked_in = @agent.checkin b, @options[:force]
           puts checked_in ? b.seats_ident : "unable to check in"
         rescue SouthyException => e
           puts e.message

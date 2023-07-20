@@ -46,7 +46,7 @@ module Southy
       raise e
     end
 
-    def checkin(bound, force: false)
+    def checkin(bound, force = false)
       return bound.reservation if bound.checked_in?
 
       unless force
