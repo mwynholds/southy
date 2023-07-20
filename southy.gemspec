@@ -21,8 +21,8 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'net-smtp'
   s.add_runtime_dependency 'slack-ruby-client'
   s.add_runtime_dependency 'async-websocket', "~> 0.8.0"  # slack-ruby-client breaks with anything greater
-  s.add_runtime_dependency 'activerecord', "~> 6"      # 6.0 not supported by standalone_migrations gemspec
-  s.add_runtime_dependency 'standalone_migrations', "~> 6"
+  s.add_runtime_dependency 'activerecord', "~> 7"      # 6.0 not supported by standalone_migrations gemspec
+  s.add_runtime_dependency 'standalone_migrations', "~> 7"
   s.add_runtime_dependency 'pg'
 
   s.add_development_dependency 'rake'

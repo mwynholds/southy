@@ -2,42 +2,41 @@ PATH
   remote: .
   specs:
     southy (2.0)
-      activerecord (~> 6)
+      activerecord (~> 7)
       async-websocket (~> 0.8.0)
       json
       net-smtp
       pg
       slack-ruby-client
-      standalone_migrations (~> 6)
+      standalone_migrations (~> 7)
       tzinfo
 
 GEM
   remote: http://rubygems.org/
   specs:
-    actionpack (6.1.7.4)
-      actionview (= 6.1.7.4)
-      activesupport (= 6.1.7.4)
-      rack (~> 2.0, >= 2.0.9)
+    actionpack (7.0.6)
+      actionview (= 7.0.6)
+      activesupport (= 7.0.6)
+      rack (~> 2.0, >= 2.2.4)
       rack-test (>= 0.6.3)
       rails-dom-testing (~> 2.0)
       rails-html-sanitizer (~> 1.0, >= 1.2.0)
-    actionview (6.1.7.4)
-      activesupport (= 6.1.7.4)
+    actionview (7.0.6)
+      activesupport (= 7.0.6)
       builder (~> 3.1)
       erubi (~> 1.4)
       rails-dom-testing (~> 2.0)
       rails-html-sanitizer (~> 1.1, >= 1.2.0)
-    activemodel (6.1.7.4)
-      activesupport (= 6.1.7.4)
-    activerecord (6.1.7.4)
-      activemodel (= 6.1.7.4)
-      activesupport (= 6.1.7.4)
-    activesupport (6.1.7.4)
+    activemodel (7.0.6)
+      activesupport (= 7.0.6)
+    activerecord (7.0.6)
+      activemodel (= 7.0.6)
+      activesupport (= 7.0.6)
+    activesupport (7.0.6)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
-      zeitwerk (~> 2.3)
     async (2.6.2)
       console (~> 1.10)
       fiber-annotation
@@ -98,12 +97,13 @@ GEM
     rails-html-sanitizer (1.6.0)
       loofah (~> 2.21)
       nokogiri (~> 1.14)
-    railties (6.1.7.4)
-      actionpack (= 6.1.7.4)
-      activesupport (= 6.1.7.4)
+    railties (7.0.6)
+      actionpack (= 7.0.6)
+      activesupport (= 7.0.6)
       method_source
       rake (>= 12.2)
       thor (~> 1.0)
+      zeitwerk (~> 2.5)
     rake (13.0.6)
     ruby2_keywords (0.0.5)
     slack-ruby-client (2.1.0)
@@ -112,9 +112,9 @@ GEM
       faraday-multipart
       gli
       hashie
-    standalone_migrations (6.1.0)
-      activerecord (>= 4.2.7, < 6.2.0, != 5.2.3.rc1, != 5.2.3)
-      railties (>= 4.2.7, < 6.2.0, != 5.2.3.rc1, != 5.2.3)
+    standalone_migrations (7.1.1)
+      activerecord (>= 4.2.7, < 7.1.0, != 5.2.3.rc1, != 5.2.3)
+      railties (>= 4.2.7, < 7.1.0, != 5.2.3.rc1, != 5.2.3)
       rake (>= 10.0)
     thor (1.2.2)
     timeout (0.4.0)

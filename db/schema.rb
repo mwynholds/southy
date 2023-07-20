@@ -10,20 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_08_07_211604) do
-
+ActiveRecord::Schema[7.0].define(version: 2019_08_07_211604) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "bounds", force: :cascade do |t|
-    t.datetime "departure_time", null: false
+    t.timestamptz "departure_time", null: false
     t.string "departure_code", null: false
-    t.datetime "arrival_time", null: false
+    t.timestamptz "arrival_time", null: false
     t.string "arrival_code", null: false
     t.string "flights", default: [], array: true
     t.bigint "reservation_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "departure_city"
     t.string "departure_state"
     t.string "arrival_city"
@@ -35,8 +34,8 @@ ActiveRecord::Schema.define(version: 2019_08_07_211604) do
   create_table "passengers", force: :cascade do |t|
     t.string "name", null: false
     t.bigint "reservation_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["reservation_id"], name: "index_passengers_on_reservation_id"
   end
 
@@ -45,9 +44,9 @@ ActiveRecord::Schema.define(version: 2019_08_07_211604) do
     t.string "origin_code", null: false
     t.string "destination_code", null: false
     t.string "email"
-    t.datetime "last_checkin_attempt"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.timestamptz "last_checkin_attempt"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "created_by"
   end
 
@@ -57,19 +56,19 @@ ActiveRecord::Schema.define(version: 2019_08_07_211604) do
     t.string "flight", null: false
     t.bigint "bound_id"
     t.bigint "passenger_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["bound_id"], name: "index_seats_on_bound_id"
     t.index ["passenger_id"], name: "index_seats_on_passenger_id"
   end
 
   create_table "stops", force: :cascade do |t|
     t.string "code", null: false
-    t.datetime "arrival_time", null: false
-    t.datetime "departure_time", null: false
+    t.timestamptz "arrival_time", null: false
+    t.timestamptz "departure_time", null: false
     t.bigint "bound_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "city"
     t.string "state"
     t.boolean "plane_change", default: true
