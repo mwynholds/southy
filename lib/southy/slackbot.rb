@@ -41,6 +41,10 @@ module Southy
 
       client = Slack::RealTime::Client.new
 
+      client.on :hello do
+        puts "Slackbot real time messaging is up and running as #{client.self.name}"
+      end
+
       client.on :message do |data|
         next if data['user'] == 'U0HM6QX8Q' # this is Mr. Southy!
         next unless data['text']

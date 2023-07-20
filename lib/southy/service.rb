@@ -12,7 +12,7 @@ module Southy
       puts "Southy is running with env #{@config.env}."
       Thread.abort_on_exception = true
       Thread.report_on_exception = false if defined? Thread.report_on_exception
-      # Thread.new { @slackbot.run }
+      Thread.new { @slackbot.run }
       sleep 1
       checkin_loop
     end
